@@ -1,0 +1,6 @@
+{
+  "name": "WebClock",
+  "description": "Moderne digitale Internet-Uhr für Desktop und Smartphone mit anpassbaren Designs, Farben, Hintergrundbildern und Datum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,59 @@
+/* ==========================================================================
+   WebClock - Standalone Style Sheet
+   Moderne digitale Internet-Uhr für Desktop und Smartphone
+   ========================================================================== */
+
+:root {
+  --clock-color: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.2);
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-display);
+  background-color: #0b0f19;
+  color: #f8fafc;
+}
+
+.webclock-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.webclock-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: clamp(3.5rem, 14vw, 12rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--clock-color);
+}
+
+.webclock-date {
+  margin-top: clamp(1rem, 2.5vw, 2.5rem);
+  font-size: clamp(1.1rem, 2.5vw, 2rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+  text-align: center;
+  color: var(--clock-color);
+}
