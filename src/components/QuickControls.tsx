@@ -30,7 +30,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           onClick={onToggleFullscreen}
           title={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus'}
           aria-label={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus'}
-          className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 cursor-pointer"
+          className="bg-white/10 backdrop-blur-xl border p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 cursor-pointer"
+          style={{ borderColor: 'var(--surface-border, rgba(255,255,255,0.2))' }}
         >
           {isFullscreen ? (
             <Minimize2 className="w-5 h-5" />
@@ -45,7 +46,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           onClick={onOpenSettings}
           title="Einstellungen öffnen"
           aria-label="Einstellungen öffnen"
-          className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 hover:rotate-45 cursor-pointer"
+          className="bg-white/10 backdrop-blur-xl border p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 hover:rotate-45 cursor-pointer"
+          style={{ borderColor: 'var(--surface-border, rgba(255,255,255,0.2))' }}
         >
           <Settings className="w-5 h-5" />
         </button>

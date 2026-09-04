@@ -124,6 +124,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       bgColor: theme.bgColor || prev.bgColor,
       gradientPresetId: theme.gradientPresetId || prev.gradientPresetId,
       customGradient: theme.customGradient || prev.customGradient,
+      accentColor: theme.accentColor,
       themeMode: theme.themeMode || 'dark',
       hasCustomImage: false,
       bgOverlayOpacity: 0,
@@ -301,21 +302,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             )}
           </section>
 
-          {/* SECTION: Curated Cohesive Themes */}
-          <section>
+          {/* SECTION: Themes */}
+          <section id="settings-themes-section">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Sparkles className="w-4 h-4" style={{ color: 'var(--accent-color, #3b82f6)' }} />
                 <h3 className="text-xs font-bold text-white/90 uppercase tracking-widest">
-                  Kuratierte Farbthemen
+                  Themes
                 </h3>
               </div>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-                1-Klick
+              <span
+                className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border border-white/10"
+                style={{ color: 'var(--accent-color, #38bdf8)', backgroundColor: 'rgba(255,255,255,0.05)' }}
+              >
+                Presets
               </span>
             </div>
             <p className="text-xs text-white/60 mb-3.5 leading-relaxed">
-              Perfekt aufeinander abgestimmte Kombinationen aus Zeittypografie, Kontrastfarben und Hintergrundstilen.
+              Vordefinierte Themes aktualisieren die globalen CSS-Variablen für Zeittypografie, Hintergrundverläufe und Akzente gleichzeitig.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -328,10 +332,16 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     onClick={() => handleSelectTheme(theme)}
                     className={`relative p-3 rounded-xl text-left transition-all duration-200 cursor-pointer overflow-hidden border group ${
                       active
-                        ? 'border-blue-400 ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20 scale-[1.01]'
+                        ? 'scale-[1.02]'
                         : 'border-white/15 hover:border-white/35 hover:scale-[1.01]'
                     }`}
-                    style={{ background: theme.previewBg }}
+                    style={{
+                      background: theme.previewBg,
+                      borderColor: active ? theme.accentColor : undefined,
+                      boxShadow: active
+                        ? `0 0 18px ${theme.accentGlow || 'rgba(59,130,246,0.35)'}`
+                        : undefined,
+                    }}
                   >
                     {/* Top Row: Mini Time Preview & Status Check */}
                     <div className="flex items-center justify-between mb-2">
@@ -350,7 +360,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         12:34:56
                       </span>
                       {active ? (
-                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white shadow-md shadow-blue-500/40">
+                        <span
+                          className="flex items-center justify-center w-5 h-5 rounded-full text-white shadow-md"
+                          style={{
+                            backgroundColor: theme.accentColor,
+                            boxShadow: `0 0 8px ${theme.accentGlow || 'rgba(59,130,246,0.5)'}`,
+                          }}
+                        >
                           <Check className="w-3 h-3 stroke-[3]" />
                         </span>
                       ) : (

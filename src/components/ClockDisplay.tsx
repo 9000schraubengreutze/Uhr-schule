@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useAnimation } from 'motion/react';
+import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { ClockSettings } from '../types';
 
 interface ClockDisplayProps {
@@ -114,77 +114,97 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({
       ? 'Exakt synchron'
       : `${offsetMs > 0 ? '+' : ''}${(offsetMs / 1000).toFixed(2)}s zur PC-Uhr`;
 
+  // Signature of active format & theme styling to drive smooth cross-fade
+  const formatSignature = `${settings.themeId || 'custom'}_${settings.clockColor}_${settings.clockFont}_${settings.clockWeight}_${settings.is24Hour}_${settings.showSeconds}_${settings.showDate}`;
+
   return (
     <main
       id="clock-container"
       className="flex flex-col items-center justify-center text-center select-none z-10 px-4 py-8 max-w-7xl w-full mx-auto"
     >
-      {/* Time Display with Bold Typography, subtle ambient drop shadow and gentle second breathing */}
-      <motion.div
-        id="digital-clock"
-        animate={clockControls}
-        className={`flex items-baseline justify-center tracking-tighter leading-none ${fontClass} ${weightClass} tabular-numbers drop-shadow-2xl transition-all duration-300 origin-center will-change-transform`}
-        style={{
-          color: settings.clockColor,
-          filter: 'drop-shadow(0 0 40px rgba(255,255,255,0.12))',
-        }}
-      >
-        {/* Hours */}
-        <span className="text-[clamp(4rem,18vw,13.5rem)] inline-block">
-          {formattedHours}
-        </span>
-
-        {/* Colon 1 */}
-        <span
-          className={`text-[clamp(3.5rem,15vw,11.5rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-300 ${
-            settings.showBlinkingSeparator && rawSeconds % 2 !== 0 ? 'opacity-30' : 'opacity-100'
-          }`}
-        >
-          :
-        </span>
-
-        {/* Minutes */}
-        <span className="text-[clamp(4rem,18vw,13.5rem)] inline-block">
-          {formattedMinutes}
-        </span>
-
-        {/* Seconds (optional) */}
-        {settings.showSeconds && (
-          <>
-            <span
-              className={`text-[clamp(3.5rem,15vw,11.5rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-300 ${
-                settings.showBlinkingSeparator && rawSeconds % 2 !== 0 ? 'opacity-30' : 'opacity-100'
-              }`}
+      <div className="relative flex flex-col items-center justify-center w-full">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={formatSignature}
+            initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.988 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+            exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.012 }}
+            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center justify-center w-full"
+          >
+            {/* Time Display with Bold Typography, subtle ambient drop shadow and gentle second breathing */}
+            <motion.div
+              id="digital-clock"
+              animate={clockControls}
+              className={`flex items-baseline justify-center tracking-tighter leading-none ${fontClass} ${weightClass} tabular-numbers drop-shadow-2xl origin-center will-change-transform`}
+              style={{
+                color: 'var(--clock-color, ' + settings.clockColor + ')',
+                filter: 'drop-shadow(0 0 38px var(--clock-accent, rgba(255,255,255,0.12)))',
+                transition: 'color 500ms cubic-bezier(0.16, 1, 0.3, 1), filter 500ms cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
             >
-              :
-            </span>
-            <motion.span
-              animate={secondsControls}
-              className="text-[clamp(3.2rem,14.5vw,11rem)] inline-block opacity-95 origin-center will-change-transform"
-            >
-              {formattedSeconds}
-            </motion.span>
-          </>
-        )}
+              {/* Hours */}
+              <span className="text-[clamp(4rem,18vw,13.5rem)] inline-block">
+                {formattedHours}
+              </span>
 
-        {/* AM/PM indicator for 12-hour mode */}
-        {!settings.is24Hour && (
-          <span className="ml-3 sm:ml-5 text-[clamp(1rem,3vw,2.2rem)] tracking-wider font-semibold uppercase opacity-80 self-center py-1 px-3 rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl">
-            {ampm}
-          </span>
-        )}
-      </motion.div>
+              {/* Colon 1 */}
+              <span
+                className={`text-[clamp(3.5rem,15vw,11.5rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-300 ${
+                  settings.showBlinkingSeparator && rawSeconds % 2 !== 0 ? 'opacity-30' : 'opacity-100'
+                }`}
+              >
+                :
+              </span>
 
-      {/* Date Display: font-light tracking-[0.2em] uppercase opacity-70 */}
-      {settings.showDate && (
-        <div
-          id="date-display"
-          className="mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.65rem)] font-light tracking-[0.2em] uppercase opacity-70 transition-all duration-300"
-          style={{ color: settings.clockColor }}
-        >
-          {germanDate}
-        </div>
-      )}
+              {/* Minutes */}
+              <span className="text-[clamp(4rem,18vw,13.5rem)] inline-block">
+                {formattedMinutes}
+              </span>
+
+              {/* Seconds (optional) */}
+              {settings.showSeconds && (
+                <>
+                  <span
+                    className={`text-[clamp(3.5rem,15vw,11.5rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-300 ${
+                      settings.showBlinkingSeparator && rawSeconds % 2 !== 0 ? 'opacity-30' : 'opacity-100'
+                    }`}
+                  >
+                    :
+                  </span>
+                  <motion.span
+                    animate={secondsControls}
+                    className="text-[clamp(3.2rem,14.5vw,11rem)] inline-block opacity-95 origin-center will-change-transform"
+                  >
+                    {formattedSeconds}
+                  </motion.span>
+                </>
+              )}
+
+              {/* AM/PM indicator for 12-hour mode */}
+              {!settings.is24Hour && (
+                <span className="ml-3 sm:ml-5 text-[clamp(1rem,3vw,2.2rem)] tracking-wider font-semibold uppercase opacity-80 self-center py-1 px-3 rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-lg transition-colors duration-500">
+                  {ampm}
+                </span>
+              )}
+            </motion.div>
+
+            {/* Date Display: font-light tracking-[0.2em] uppercase opacity-70 */}
+            {settings.showDate && (
+              <div
+                id="date-display"
+                className="mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.65rem)] font-light tracking-[0.2em] uppercase opacity-75"
+                style={{
+                  color: 'var(--clock-color, ' + settings.clockColor + ')',
+                  transition: 'color 500ms cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                {germanDate}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </main>
   );
 };

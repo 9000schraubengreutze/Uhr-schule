@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+:root {
+  --clock-color: #ffffff;
+  --clock-accent: rgba(255, 255, 255, 0.25);
+  --bg-gradient: radial-gradient(circle at 30% 30%, #1a1a2e 0%, #0a0a0c 100%);
+  --bg-color: #0a0a0c;
+  --accent-color: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.35);
+  --surface-border: rgba(255, 255, 255, 0.12);
+}
+
 @layer base {
   * {
     box-sizing: border-box;

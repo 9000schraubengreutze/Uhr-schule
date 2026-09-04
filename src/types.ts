@@ -21,12 +21,17 @@ export interface CuratedTheme {
   name: string;
   description: string;
   clockColor: string;
+  clockAccent?: string;
   clockFont: ClockFont;
   clockWeight: ClockWeight;
   bgType: BgType;
   bgColor?: string;
   gradientPresetId?: string;
+  gradientCss?: string;
   customGradient?: CustomGradient;
+  accentColor: string;
+  accentGlow?: string;
+  surfaceBorder?: string;
   themeMode?: ThemeMode;
   previewBg: string;
   previewTextColor: string;
@@ -52,4 +57,5 @@ export interface ClockSettings {
   showSyncBadge: boolean;
   enableBreathingAnimation: boolean;
   themeId?: string;
+  accentColor?: string;
 }

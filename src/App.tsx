@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, type CSSProperties } from 'react';
 import { ClockSettings } from './types';
 import { loadSettings, saveSettings, storeLocalImage, loadStoredImage, removeStoredImage } from './utils/storage';
-import { GRADIENT_PRESETS } from './utils/presets';
+import { GRADIENT_PRESETS, CURATED_THEMES } from './utils/presets';
 import { ClockDisplay } from './components/ClockDisplay';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { QuickControls } from './components/QuickControls';
@@ -153,11 +153,61 @@ export default function App() {
     }));
   };
 
+  // Dynamically synchronize the application's CSS variables for clock color, background gradients, and accents
+  useEffect(() => {
+    const root = document.documentElement;
+
+    // Clock text color
+    root.style.setProperty('--clock-color', settings.clockColor);
+
+    // Active theme lookup
+    const activeTheme = CURATED_THEMES.find((t) => t.id === settings.themeId);
+
+    // Clock accent / glow
+    const clockAccent = activeTheme?.clockAccent || `${settings.clockColor}40`;
+    root.style.setProperty('--clock-accent', clockAccent);
+
+    // Accent elements color
+    const accentColor = settings.accentColor || activeTheme?.accentColor || '#3b82f6';
+    root.style.setProperty('--accent-color', accentColor);
+
+    // Accent glow
+    const accentGlow = activeTheme?.accentGlow || `${accentColor}40`;
+    root.style.setProperty('--accent-glow', accentGlow);
+
+    // Surface border
+    const surfaceBorder = activeTheme?.surfaceBorder || 'rgba(255, 255, 255, 0.15)';
+    root.style.setProperty('--surface-border', surfaceBorder);
+
+    // Background color
+    root.style.setProperty('--bg-color', settings.bgColor);
+
+    // Background gradient CSS
+    let bgGradient = activeTheme?.gradientCss;
+    if (!bgGradient) {
+      if (settings.gradientPresetId === 'custom') {
+        const { color1, color2, angle } = settings.customGradient;
+        bgGradient = `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`;
+      } else {
+        const matched = GRADIENT_PRESETS.find((p) => p.id === settings.gradientPresetId);
+        bgGradient = matched ? matched.css : GRADIENT_PRESETS[0].css;
+      }
+    }
+    root.style.setProperty('--bg-gradient', bgGradient);
+  }, [
+    settings.clockColor,
+    settings.themeId,
+    settings.accentColor,
+    settings.bgColor,
+    settings.gradientPresetId,
+    settings.customGradient,
+  ]);
+
   // Compute active background styles
   const backgroundStyle = useMemo<CSSProperties>(() => {
     if (settings.bgType === 'color') {
       return {
-        backgroundColor: settings.bgColor,
+        backgroundColor: 'var(--bg-color, ' + settings.bgColor + ')',
       };
     }
 
@@ -170,19 +220,11 @@ export default function App() {
       };
     }
 
-    // Default to gradient
-    if (settings.gradientPresetId === 'custom') {
-      const { color1, color2, angle } = settings.customGradient;
-      return {
-        backgroundImage: `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`,
-      };
-    }
-
-    const matched = GRADIENT_PRESETS.find((p) => p.id === settings.gradientPresetId);
+    // Default to gradient driven by CSS variable
     return {
-      backgroundImage: matched ? matched.css : GRADIENT_PRESETS[0].css,
+      backgroundImage: 'var(--bg-gradient)',
     };
-  }, [settings.bgType, settings.bgColor, settings.gradientPresetId, settings.customGradient, customImageUrl]);
+  }, [settings.bgType, settings.bgColor, customImageUrl]);
 
   return (
     <div
