@@ -1,6 +1,7 @@
 import React from 'react';
-import { Settings, Maximize2, Minimize2, Sun, Moon } from 'lucide-react';
+import { Settings, Maximize2, Minimize2, Sun, Moon, Radio, RefreshCw, AlertCircle } from 'lucide-react';
 import { ColorScheme } from '../types';
+import { AtomicTimeState } from '../utils/atomicTime';
 
 interface QuickControlsProps {
   onOpenSettings: () => void;
@@ -8,6 +9,9 @@ interface QuickControlsProps {
   onToggleFullscreen: () => void;
   colorScheme?: ColorScheme;
   onToggleThemeMode?: () => void;
+  atomicState?: AtomicTimeState;
+  onTriggerSync?: () => void;
+  showSyncBadge?: boolean;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -16,16 +20,62 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onToggleFullscreen,
   colorScheme,
   onToggleThemeMode,
+  atomicState,
+  onTriggerSync,
+  showSyncBadge = true,
 }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
-      {/* Brand Title Pill */}
-      <div className="pointer-events-auto flex items-center gap-2.5 bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 px-3.5 py-1.5 rounded-2xl shadow-sm text-slate-100">
-        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-        <span className="text-xs sm:text-sm font-bold tracking-tight">WebClock</span>
-        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">
-          Digital
-        </span>
+      {/* Brand & Atomic Clock Status Pills */}
+      <div className="pointer-events-auto flex items-center gap-2">
+        {/* Brand Title Pill */}
+        <div className="flex items-center gap-2.5 bg-slate-900/70 backdrop-blur-xl border border-slate-800/80 px-3.5 py-1.5 rounded-2xl shadow-sm text-slate-100">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-xs sm:text-sm font-bold tracking-tight">WebClock</span>
+        </div>
+
+        {/* Online Atomic Clock Badge */}
+        {showSyncBadge && atomicState && (
+          <button
+            id="atomic-clock-sync-pill"
+            type="button"
+            onClick={onTriggerSync}
+            title={
+              atomicState.status === 'synced'
+                ? `Online-Atomuhr aktiv (${atomicState.syncSource}). Abweichung zur Geräte-Uhr: ${atomicState.offsetMs > 0 ? '+' : ''}${atomicState.offsetMs}ms. Klicken zum Neu-Synchronisieren.`
+                : atomicState.status === 'syncing'
+                ? 'Gleiche mit Online-Atomuhr ab...'
+                : 'Verbindung zur Atomuhr fehlgeschlagen. Klicken zum erneuten Versuch.'
+            }
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-900/70 hover:bg-slate-850 backdrop-blur-xl border border-slate-800/80 text-slate-200 text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+          >
+            {atomicState.status === 'syncing' ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
+                <span className="text-[11px] font-mono text-blue-300 hidden sm:inline">
+                  Atomuhr Sync...
+                </span>
+              </>
+            ) : atomicState.status === 'synced' ? (
+              <>
+                <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-medium text-emerald-300">
+                  Atomuhr
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded hidden md:inline">
+                  {atomicState.offsetMs >= 0 ? `+${atomicState.offsetMs}` : atomicState.offsetMs}ms
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] text-amber-300 hidden sm:inline">
+                  Atomuhr Offline
+                </span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Action Buttons in Material 3 container */}

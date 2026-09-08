@@ -38,6 +38,8 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   appLanguage: 'de',
   soundEnabled: false,
   vibrationEnabled: true,
+  useAtomicSync: true,
+  showSyncBadge: true,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [

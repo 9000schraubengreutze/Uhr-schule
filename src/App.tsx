@@ -8,6 +8,7 @@ import {
   removeStoredImage,
 } from './utils/storage';
 import { GRADIENT_PRESETS, CURATED_THEMES } from './utils/presets';
+import { syncWithAtomicClock, AtomicTimeState } from './utils/atomicTime';
 import { DigitalClock } from './components/DigitalClock';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
@@ -17,6 +18,58 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Online Atomic Clock synchronization state
+  const [atomicState, setAtomicState] = useState<AtomicTimeState>({
+    status: 'idle',
+    offsetMs: 0,
+    latencyMs: 0,
+    lastSyncTime: null,
+    syncSource: '',
+    errorMessage: null,
+  });
+
+  // Perform time synchronization with online atomic clock servers
+  const performSync = useCallback(async () => {
+    setAtomicState((prev) => ({ ...prev, status: 'syncing', errorMessage: null }));
+    try {
+      const res = await syncWithAtomicClock();
+      setAtomicState({
+        status: 'synced',
+        offsetMs: res.offsetMs,
+        latencyMs: res.latencyMs,
+        lastSyncTime: res.syncedAt,
+        syncSource: res.source,
+        errorMessage: null,
+      });
+    } catch (err: any) {
+      console.warn('Atomic clock sync failed:', err);
+      setAtomicState((prev) => ({
+        ...prev,
+        status: 'error',
+        errorMessage: err?.message || 'Sync-Fehler',
+      }));
+    }
+  }, []);
+
+  // Sync on startup and re-sync periodically (every 5 minutes) or on window focus
+  useEffect(() => {
+    performSync();
+
+    const interval = setInterval(performSync, 5 * 60 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        performSync();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [performSync]);
 
   // Load persistent local wallpaper image on startup
   useEffect(() => {
@@ -223,11 +276,17 @@ export default function App() {
         onToggleFullscreen={toggleFullscreen}
         colorScheme={settings.colorScheme}
         onToggleThemeMode={handleToggleThemeMode}
+        atomicState={atomicState}
+        onTriggerSync={performSync}
+        showSyncBadge={settings.showSyncBadge}
       />
 
-      {/* Centerpiece: Clean, Gorgeous Digital Clock */}
+      {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
       <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4">
-        <DigitalClock settings={settings} />
+        <DigitalClock
+          settings={settings}
+          offsetMs={atomicState.offsetMs}
+        />
       </main>
 
       {/* Redesigned Material 3 Settings Drawer */}
@@ -238,6 +297,8 @@ export default function App() {
         onUpdateSettings={setSettings}
         onUploadImage={handleUploadImage}
         onRemoveImage={handleRemoveImage}
+        atomicState={atomicState}
+        onTriggerSync={performSync}
       />
     </div>
   );

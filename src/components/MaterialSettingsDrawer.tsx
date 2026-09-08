@@ -10,6 +10,7 @@ import {
 import { CURATED_THEMES, GRADIENT_PRESETS, COLOR_PALETTES } from '../utils/presets';
 import { saveCustomDefaultView, resetAllSettings } from '../utils/storage';
 import { triggerHaptic } from '../utils/audio';
+import { AtomicTimeState } from '../utils/atomicTime';
 import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
 import {
@@ -34,6 +35,8 @@ import {
   FileText,
   Upload,
   Trash2,
+  Radio,
+  RefreshCw,
 } from 'lucide-react';
 
 interface MaterialSettingsDrawerProps {
@@ -43,6 +46,8 @@ interface MaterialSettingsDrawerProps {
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
   onUploadImage?: (file: File) => void;
   onRemoveImage?: () => void;
+  atomicState?: AtomicTimeState;
+  onTriggerSync?: () => void;
 }
 
 interface NavItem {
@@ -67,6 +72,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onUpdateSettings,
   onUploadImage,
   onRemoveImage,
+  atomicState,
+  onTriggerSync,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('darstellung');
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,7 +148,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   const FAQ_ITEMS = [
     {
       q: 'Welche Uhrzeit wird verwendet?',
-      a: 'Die WebClock nutzt direkt und ausschließlich die interne Systemuhr deines Endgeräts (Smartphone, Tablet oder PC). Es werden keine externen Server oder Atomuhren abgefragt, wodurch die Uhr ohne Verzögerung und offline funktioniert.',
+      a: 'Die WebClock synchronisiert sich mit weltweiten Online-Atomuhren (UTC-Referenzzeit via WorldTimeAPI / NTP). Dadurch zeigt die Uhr die exakte Atomzeit – selbst wenn die interne Uhrzeit deines Smartphones oder PCs falsch eingestellt ist.',
     },
     {
       q: 'Wie schalte ich zwischen 24- und 12-Stunden-Format um?',
@@ -172,6 +179,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
       { tab: 'darstellung' as SettingsTab, title: 'Themen-Presets', desc: 'Midnight Blue, Cyberpunk, OLED uvm.' },
+      { tab: 'uhr' as SettingsTab, title: 'Online-Atomuhr (NTP)', desc: 'Zeitsynchronisation mit Atomuhr-Servern' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
@@ -710,6 +718,106 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
+                {/* Online-Atomuhr Synchronisation */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                        Online-Atomuhr (NTP)
+                      </span>
+                    </div>
+                    {atomicState && (
+                      <span
+                        className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-md font-semibold border ${
+                          atomicState.status === 'synced'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                            : atomicState.status === 'syncing'
+                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                        }`}
+                      >
+                        {atomicState.status === 'synced'
+                          ? 'Synchronisiert'
+                          : atomicState.status === 'syncing'
+                          ? 'Sync läuft...'
+                          : 'Offline-Fallback'}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Gleicht die Uhrzeit automatisch mit weltweiten Atomuhr-Servern (UTC) ab. Deine Uhrzeit ist damit atomuhrgenau – selbst wenn die interne Uhr deines Geräts verstellt ist.
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/70 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-slate-300">
+                      <span className="text-slate-400">Abweichung zur Geräte-Uhr:</span>
+                      <span className="font-mono font-semibold text-emerald-400">
+                        {atomicState
+                          ? `${atomicState.offsetMs >= 0 ? '+' : ''}${atomicState.offsetMs} ms`
+                          : '0 ms'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-300">
+                      <span className="text-slate-400">Zeitserver-Quelle:</span>
+                      <span className="text-slate-200 font-medium truncate max-w-[200px]">
+                        {atomicState?.syncSource || 'Online UTC Atomuhr'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-300">
+                      <span className="text-slate-400">Netzwerk-Latenz (RTT):</span>
+                      <span className="font-mono text-slate-200">
+                        {atomicState?.latencyMs ? `${atomicState.latencyMs} ms` : '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-300">
+                      <span className="text-slate-400">Letzter Abgleich:</span>
+                      <span className="text-slate-200">
+                        {atomicState?.lastSyncTime
+                          ? atomicState.lastSyncTime.toLocaleTimeString()
+                          : 'Wird ermittelt...'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onTriggerSync) onTriggerSync();
+                        showFeedback('Atomuhr-Abgleich gestartet...');
+                      }}
+                      disabled={atomicState?.status === 'syncing'}
+                      className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/50 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${
+                          atomicState?.status === 'syncing' ? 'animate-spin' : ''
+                        }`}
+                      />
+                      <span>Jetzt mit Atomuhr abgleichen</span>
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800/60 divide-y divide-slate-800/40">
+                    <MaterialSwitch
+                      label="Atomuhr-Synchronisation verwenden"
+                      description="Uhrzeit nach Online-Atomuhr statt nach lokaler Geräte-Uhr ausrichten"
+                      checked={settings.useAtomicSync}
+                      onChange={(v) => onUpdateSettings((p) => ({ ...p, useAtomicSync: v }))}
+                    />
+
+                    <MaterialSwitch
+                      label="Atomuhr-Status im Header"
+                      description="Kompaktes Status-Badge oben links einblenden"
+                      checked={settings.showSyncBadge}
+                      onChange={(v) => onUpdateSettings((p) => ({ ...p, showSyncBadge: v }))}
+                    />
+                  </div>
+                </div>
+
+                {/* Display & Layout Options */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-2 divide-y divide-slate-800/60">
                   <MaterialSwitch
                     label="24-Stunden-Format"
@@ -859,11 +967,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                 </div>
 
-                {/* Datenschutz Kurzhinweis */}
+                {/* Datenschutz & Atomuhr Kurzhinweis */}
                 <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <Radio className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold text-slate-200">100% Geräte-Uhr:</span> Diese Anwendung liest die Zeit direkt und verzögerungsfrei von der Systemuhr deines Geräts ab. Keine Atomuhr-Abfragen oder Datenübertragungen an externe Server.
+                    <span className="font-semibold text-slate-200">Online-Atomuhr aktiv:</span> Diese Anwendung gleicht die Uhrzeit mit offiziellen UTC-Atomuhr-Servern ab und kompensiert Übertragungsverzögerungen. Deine Uhrzeit ist dadurch absolut präzise und unabhängig von lokalen Uhrenfehlern.
                   </div>
                 </div>
               </motion.div>

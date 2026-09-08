@@ -5,23 +5,30 @@ import { playTickSound } from '../utils/audio';
 
 interface DigitalClockProps {
   settings: ClockSettings;
+  offsetMs?: number;
 }
 
-export const DigitalClock: React.FC<DigitalClockProps> = ({ settings }) => {
-  // Directly track the device's clock via new Date()
-  const [time, setTime] = useState<Date>(() => new Date());
+export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs = 0 }) => {
+  // Directly calculate time based on online atomic clock offset
+  const getCalculatedTime = () => {
+    const nowMs = Date.now();
+    return new Date(settings.useAtomicSync ? nowMs + offsetMs : nowMs);
+  };
+
+  const [time, setTime] = useState<Date>(getCalculatedTime);
   const lastSecondRef = useRef<number>(time.getSeconds());
 
   const clockControls = useAnimation();
   const secondsControls = useAnimation();
 
   useEffect(() => {
-    // High-frequency polling (50ms) guarantees exact alignment with device clock
+    // High-frequency polling (50ms) guarantees exact alignment with online atomic clock
     const interval = setInterval(() => {
-      const now = new Date();
-      setTime(now);
+      const nowMs = Date.now();
+      const current = new Date(settings.useAtomicSync ? nowMs + offsetMs : nowMs);
+      setTime(current);
 
-      const curSec = now.getSeconds();
+      const curSec = current.getSeconds();
       if (curSec !== lastSecondRef.current) {
         lastSecondRef.current = curSec;
         if (settings.soundEnabled) {
@@ -31,7 +38,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings }) => {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [settings.soundEnabled]);
+  }, [settings.soundEnabled, settings.useAtomicSync, offsetMs]);
 
   // Breathing pulse animation synchronized with device second tick
   useEffect(() => {

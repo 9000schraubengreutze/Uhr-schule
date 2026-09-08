@@ -1,6 +1,6 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Vollbild-Uhr im Material 3 Design für Desktop und Smartphone mit anpassbaren Schriftarten, Farben, Themes und Datum.",
+  "description": "Moderne digitale Vollbild-Uhr mit Online-Atomuhr-Synchronisation (NTP/UTC) im Material 3 Design mit anpassbaren Schriftarten, Farben, Themes und Datum.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

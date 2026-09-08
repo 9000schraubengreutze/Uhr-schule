@@ -79,4 +79,6 @@ export interface ClockSettings {
   appLanguage: 'de' | 'en';
   soundEnabled: boolean; // Subtle second tick audio
   vibrationEnabled: boolean; // Haptic feedback on mobile
+  useAtomicSync: boolean; // Use online atomic clock (NTP) instead of device clock
+  showSyncBadge: boolean; // Display sync indicator on the main screen
 }
