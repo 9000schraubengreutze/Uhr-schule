@@ -1,6 +1,6 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Internet-Uhr für Desktop und Smartphone mit anpassbaren Designs, Farben, Hintergrundbildern und Datum.",
+  "description": "Moderne interaktive Schuluhr im Material 3 Design zum Lernen und Einstellen der Uhrzeit mit didaktischen Ringen, Quiz und Themes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

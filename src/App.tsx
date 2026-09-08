@@ -1,15 +1,23 @@
 import { useEffect, useState, useMemo, useCallback, type CSSProperties } from 'react';
-import { ClockSettings } from './types';
-import { loadSettings, saveSettings, storeLocalImage, loadStoredImage, removeStoredImage } from './utils/storage';
+import { ClockSettings, ColorScheme } from './types';
+import {
+  loadSettings,
+  saveSettings,
+  storeLocalImage,
+  loadStoredImage,
+  removeStoredImage,
+} from './utils/storage';
 import { GRADIENT_PRESETS, CURATED_THEMES } from './utils/presets';
-import { ClockDisplay } from './components/ClockDisplay';
-import { SettingsDrawer } from './components/SettingsDrawer';
+import { AnalogSchoolClock } from './components/AnalogSchoolClock';
+import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
+import { QuizOverlay } from './components/QuizOverlay';
 import { QuickControls } from './components/QuickControls';
 import { syncWithAtomicClock, AtomicTimeState } from './utils/atomicTime';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -57,17 +65,6 @@ export default function App() {
     }
   }, [settings.useAtomicSync, triggerSync]);
 
-  // Re-sync when tab visibility is restored
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && settings.useAtomicSync) {
-        triggerSync();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [settings.useAtomicSync, triggerSync]);
-
   // Load persistent local wallpaper image on startup
   useEffect(() => {
     let active = true;
@@ -81,7 +78,7 @@ export default function App() {
     };
   }, []);
 
-  // Sync settings changes to localStorage
+  // Sync settings changes to localStorage automatically
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
@@ -95,24 +92,27 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Keyboard shortcuts (Esc, F, S)
+  // Keyboard shortcuts (Esc, F, S, Q)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
         return;
       }
-      if (e.key === 'Escape' && isSettingsOpen) {
-        setIsSettingsOpen(false);
+      if (e.key === 'Escape') {
+        if (isSettingsOpen) setIsSettingsOpen(false);
+        if (isQuizOpen) setIsQuizOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       } else if (e.key === 's' || e.key === 'S') {
         setIsSettingsOpen((prev) => !prev);
+      } else if (e.key === 'q' || e.key === 'Q') {
+        setIsQuizOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSettingsOpen]);
+  }, [isSettingsOpen, isQuizOpen]);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -153,36 +153,41 @@ export default function App() {
     }));
   };
 
-  // Dynamically synchronize the application's CSS variables for clock color, background gradients, and accents
+  // Quick light/dark mode switcher
+  const handleToggleThemeMode = () => {
+    setSettings((prev) => {
+      const newMode = prev.themeMode === 'light' ? 'dark' : 'light';
+      return {
+        ...prev,
+        themeMode: newMode,
+        colorScheme: newMode as ColorScheme,
+        bgColor: newMode === 'light' ? '#f8fafc' : '#0f172a',
+        clockColor: newMode === 'light' ? '#0f172a' : '#f8fafc',
+      };
+    });
+  };
+
+  // Dynamically synchronize the application's CSS variables
   useEffect(() => {
     const root = document.documentElement;
 
-    // Clock text color
     root.style.setProperty('--clock-color', settings.clockColor);
 
-    // Active theme lookup
     const activeTheme = CURATED_THEMES.find((t) => t.id === settings.themeId);
-
-    // Clock accent / glow
     const clockAccent = activeTheme?.clockAccent || `${settings.clockColor}40`;
     root.style.setProperty('--clock-accent', clockAccent);
 
-    // Accent elements color
     const accentColor = settings.accentColor || activeTheme?.accentColor || '#3b82f6';
     root.style.setProperty('--accent-color', accentColor);
 
-    // Accent glow
     const accentGlow = activeTheme?.accentGlow || `${accentColor}40`;
     root.style.setProperty('--accent-glow', accentGlow);
 
-    // Surface border
     const surfaceBorder = activeTheme?.surfaceBorder || 'rgba(255, 255, 255, 0.15)';
     root.style.setProperty('--surface-border', surfaceBorder);
 
-    // Background color
     root.style.setProperty('--bg-color', settings.bgColor);
 
-    // Background gradient CSS
     let bgGradient = activeTheme?.gradientCss;
     if (!bgGradient) {
       if (settings.gradientPresetId === 'custom') {
@@ -220,7 +225,6 @@ export default function App() {
       };
     }
 
-    // Default to gradient driven by CSS variable
     return {
       backgroundImage: 'var(--bg-gradient)',
     };
@@ -229,11 +233,15 @@ export default function App() {
   return (
     <div
       id="app-root"
-      className="relative w-screen h-screen overflow-hidden flex items-center justify-center font-inter"
+      className="relative w-screen h-screen overflow-hidden flex flex-col items-center justify-center font-inter"
       onDoubleClick={(e) => {
-        // Toggle fullscreen on double click unless clicking on a button/modal
         const target = e.target as HTMLElement;
-        if (!target.closest('button') && !target.closest('#settings-panel')) {
+        if (
+          !target.closest('button') &&
+          !target.closest('#settings-panel') &&
+          !target.closest('#quiz-overlay-card') &&
+          !target.closest('#school-clock-wrapper')
+        ) {
           toggleFullscreen();
         }
       }}
@@ -259,39 +267,54 @@ export default function App() {
         }}
       />
 
-      {/* Quick Access Top Controls */}
+      {/* Quick Access Material 3 Top Controls */}
       <QuickControls
         onOpenSettings={() => setIsSettingsOpen(true)}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         clockColor={settings.clockColor}
-        isAtomicActive={atomicState.status === 'synced'}
-        syncStatus={atomicState.status}
-        offsetMs={atomicState.offsetMs}
-        useAtomicSync={settings.useAtomicSync}
+        onOpenQuiz={() => setIsQuizOpen(true)}
+        colorScheme={settings.colorScheme}
+        onToggleThemeMode={handleToggleThemeMode}
       />
 
-      {/* Center Clock & Date Component with Atomic Time Precision */}
-      <ClockDisplay
+      {/* Centerpiece: Interactive Material 3 Schuluhr */}
+      <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4">
+        <AnalogSchoolClock
+          settings={settings}
+          onUpdateSettings={setSettings}
+          offsetMs={settings.useAtomicSync ? atomicState.offsetMs : 0}
+          onOpenQuiz={() => setIsQuizOpen(true)}
+        />
+      </main>
+
+      {/* Interactive Quiz Mode Overlay */}
+      <QuizOverlay
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
         settings={settings}
-        offsetMs={settings.useAtomicSync ? atomicState.offsetMs : 0}
-        isAtomicActive={atomicState.status === 'synced'}
-        syncStatus={atomicState.status}
-        onOpenSyncSettings={() => setIsSettingsOpen(true)}
+        onSetClockTime={(h, m) => {
+          setSettings((prev) => ({
+            ...prev,
+            isLiveMode: false,
+            manualHour: h,
+            manualMinute: m,
+            manualSecond: 0,
+          }));
+        }}
       />
 
-      {/* Settings Glassmorphic Slide-over Panel */}
-      <SettingsDrawer
+      {/* Redesigned Material 3 Settings Drawer */}
+      <MaterialSettingsDrawer
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onUpdateSettings={setSettings}
+        onOpenQuiz={() => {
+          setIsQuizOpen(true);
+        }}
         onUploadImage={handleUploadImage}
         onRemoveImage={handleRemoveImage}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggleFullscreen}
-        atomicState={atomicState}
-        onTriggerSync={triggerSync}
       />
     </div>
   );

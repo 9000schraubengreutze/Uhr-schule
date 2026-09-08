@@ -2,6 +2,7 @@ import { ClockSettings } from '../types';
 import { DEFAULT_SETTINGS } from './presets';
 
 const SETTINGS_KEY = 'webclock_settings_v1';
+const USER_DEFAULT_KEY = 'webclock_user_default_v1';
 const DB_NAME = 'webclock_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'images';
@@ -32,6 +33,34 @@ export function saveSettings(settings: ClockSettings): void {
   } catch (err) {
     console.warn('Failed to save settings to localStorage', err);
   }
+}
+
+export function saveCustomDefaultView(settings: ClockSettings): void {
+  try {
+    localStorage.setItem(USER_DEFAULT_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.warn('Failed to save custom default view', err);
+  }
+}
+
+export function loadCustomDefaultView(): ClockSettings | null {
+  try {
+    const raw = localStorage.getItem(USER_DEFAULT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function resetAllSettings(): ClockSettings {
+  try {
+    localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(USER_DEFAULT_KEY);
+  } catch {
+    // Ignored
+  }
+  return DEFAULT_SETTINGS;
 }
 
 // Open IndexedDB database for local image persistence without server

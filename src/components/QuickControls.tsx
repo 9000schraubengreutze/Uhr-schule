@@ -1,55 +1,92 @@
 import React from 'react';
-import { Settings, Maximize2, Minimize2 } from 'lucide-react';
+import { Settings, Maximize2, Minimize2, GraduationCap, Sun, Moon } from 'lucide-react';
+import { ColorScheme } from '../types';
 
 interface QuickControlsProps {
   onOpenSettings: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   clockColor: string;
-  isAtomicActive?: boolean;
-  syncStatus?: 'idle' | 'syncing' | 'synced' | 'error';
-  offsetMs?: number;
-  useAtomicSync?: boolean;
+  onOpenQuiz?: () => void;
+  colorScheme?: ColorScheme;
+  onToggleThemeMode?: () => void;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenSettings,
   isFullscreen,
   onToggleFullscreen,
+  onOpenQuiz,
+  colorScheme,
+  onToggleThemeMode,
 }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 p-5 sm:p-8 flex items-center justify-between pointer-events-none">
-      {/* Spacer to keep action buttons aligned to the right */}
-      <div />
+    <header className="fixed top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
+      {/* Brand Title Pill */}
+      <div className="pointer-events-auto flex items-center gap-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 px-3.5 py-1.5 rounded-2xl shadow-sm text-slate-100">
+        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+        <span className="text-xs sm:text-sm font-bold tracking-tight">WebClock</span>
+        <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded-md bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">
+          Schuluhr
+        </span>
+      </div>
 
-      {/* Action Buttons */}
-      <div className="pointer-events-auto flex items-center gap-3">
+      {/* Action Buttons in Material 3 container */}
+      <div className="pointer-events-auto flex items-center gap-2">
+        {onOpenQuiz && (
+          <button
+            id="quick-quiz-action-btn"
+            type="button"
+            onClick={onOpenQuiz}
+            title="Schuluhr Quiz starten"
+            aria-label="Schuluhr Quiz starten"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span className="hidden sm:inline">Quiz</span>
+          </button>
+        )}
+
+        {onToggleThemeMode && (
+          <button
+            id="quick-theme-toggle-btn"
+            type="button"
+            onClick={onToggleThemeMode}
+            title="Hell/Dunkel umschalten"
+            aria-label="Hell/Dunkel umschalten"
+            className="p-2.5 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 backdrop-blur-xl border border-slate-800/80 text-slate-200 transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            {colorScheme === 'light' ? (
+              <Moon className="w-4 h-4 text-amber-300" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400" />
+            )}
+          </button>
+        )}
+
         {/* Fullscreen Button */}
         <button
           id="quick-fullscreen-btn"
+          type="button"
           onClick={onToggleFullscreen}
-          title={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus'}
+          title={isFullscreen ? 'Vollbild beenden (F)' : 'Vollbildmodus (F)'}
           aria-label={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus'}
-          className="bg-white/10 backdrop-blur-xl border p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 cursor-pointer"
-          style={{ borderColor: 'var(--surface-border, rgba(255,255,255,0.2))' }}
+          className="p-2.5 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 backdrop-blur-xl border border-slate-800/80 text-slate-200 transition-all shadow-md active:scale-95 cursor-pointer"
         >
-          {isFullscreen ? (
-            <Minimize2 className="w-5 h-5" />
-          ) : (
-            <Maximize2 className="w-5 h-5" />
-          )}
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
 
-        {/* Settings Gear Button */}
+        {/* Settings Button */}
         <button
           id="open-settings-btn"
+          type="button"
           onClick={onOpenSettings}
-          title="Einstellungen öffnen"
+          title="Einstellungen öffnen (S)"
           aria-label="Einstellungen öffnen"
-          className="bg-white/10 backdrop-blur-xl border p-3 rounded-full hover:bg-white/20 transition-all shadow-lg text-white/80 hover:text-white active:scale-95 hover:rotate-45 cursor-pointer"
-          style={{ borderColor: 'var(--surface-border, rgba(255,255,255,0.2))' }}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="w-4 h-4" />
+          <span className="hidden sm:inline">Menü</span>
         </button>
       </div>
     </header>
