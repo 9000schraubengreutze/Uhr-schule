@@ -1,16 +1,12 @@
-export type ClockFont = 'inter' | 'mono' | 'outfit' | 'school';
+export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school';
 export type ClockWeight = '300' | '400' | '600' | '800';
 export type BgType = 'color' | 'gradient' | 'image';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
-export type TimeLanguage = 'de-standard' | 'de-regional' | 'en';
-export type QuizDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
-export type SecondHandMode = 'ticking' | 'smooth';
 
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
-  | 'quiz'
   | 'einstellungen'
   | 'hilfe'
   | 'rechtliches';
@@ -47,15 +43,10 @@ export interface CuratedTheme {
   themeMode?: ThemeMode;
   previewBg: string;
   previewTextColor: string;
-  // School clock specific colors
-  hourHandColor?: string;
-  minuteHandColor?: string;
-  secondHandColor?: string;
-  ringColor?: string;
 }
 
 export interface ClockSettings {
-  // === DARSTELLUNG (Alle Designoptionen) ===
+  // === DARSTELLUNG (Designoptionen) ===
   bgType: BgType;
   bgColor: string;
   gradientPresetId: string;
@@ -63,57 +54,29 @@ export interface ClockSettings {
   bgOverlayOpacity: number; // 0 to 90 %
   bgBlur: number; // 0 to 25 px
   colorScheme: ColorScheme; // 'light' | 'dark' | 'system'
-  themeMode: ThemeMode; // computed/active light | dark
+  themeMode: ThemeMode; // 'dark' | 'light'
   themeId?: string;
 
-  // Hand & Dial Colors
-  hourHandColor: string;
-  minuteHandColor: string;
-  secondHandColor: string;
-  ringColor: string;
-  accentColor: string;
-  dialTransparency: number; // 0 (transparent) to 100 (opaque)
-
-  // Typography & Scaling
+  // Digital Clock Typography & Appearance
+  clockColor: string; // Digit text color
+  accentColor: string; // Glow / badge / button accent color
   clockFont: ClockFont;
   clockWeight: ClockWeight;
   clockScale: number; // 70 to 140 percent
-  enableAnimations: boolean;
+  enableBreathingAnimation: boolean;
+  enableGlow: boolean; // Ambient neon / soft backlight glow
   hasCustomImage: boolean;
 
-  // === UHR (Schuluhr-Funktionen) ===
-  showMinuteRing: boolean; // 5, 10, 15 ... 60
-  showHourNumbers: boolean; // 1-12
-  show24HourNumbers: boolean; // 13-24
-  showHelpLines: boolean; // Minutenstriche & 5-Minuten-Markierungen
-  showQuarterHalfSectors: boolean; // Farbige Viertel-/Halbkreis Sektoren
-  showDigitalClock: boolean; // zuschaltbare Digitaluhr
-  showSecondHand: boolean;
-  secondHandMode: SecondHandMode; // 'ticking' | 'smooth'
-  isLiveMode: boolean; // 'Jetzt'-Modus vs. manuell/lernen
-  manualHour: number; // 0-23 when isLiveMode is false
-  manualMinute: number; // 0-59
-  manualSecond: number; // 0-59
+  // === UHR (Digitale Uhr-Funktionen) ===
+  is24Hour: boolean; // 24-hour vs 12-hour AM/PM format
+  showSeconds: boolean; // Toggle seconds display
+  showDate: boolean; // Toggle date string
+  showDayOfWeek: boolean; // Toggle weekday name (e.g. Dienstag)
+  showBlinkingSeparator: boolean; // Toggle blinking colons
+  showCardContainer: boolean; // Material 3 surface container around digits
 
-  // Digital clock options
-  is24Hour: boolean;
-  showSeconds: boolean;
-  showDate: boolean;
-  showBlinkingSeparator: boolean;
-  clockColor: string; // digital text color
-
-  // === QUIZ & LERNEN ===
-  isQuizActive: boolean;
-  quizDifficulty: QuizDifficulty; // easy (volle/halbe), medium (viertel), hard (5m), expert (1m)
-  timeLanguage: TimeLanguage; // de-standard, de-regional, en
-  showQuizSolutionHint: boolean;
-  quizTimerDuration: number; // 0 = unlimited, 15, 30, 45, 60 seconds
-
-  // === EINSTELLUNGEN (Nur allgemeine Optionen) ===
+  // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';
-  soundEnabled: boolean;
-  vibrationEnabled: boolean;
-  useAtomicSync: boolean;
-  showSyncBadge: boolean;
-  enableBreathingAnimation: boolean;
+  soundEnabled: boolean; // Subtle second tick audio
+  vibrationEnabled: boolean; // Haptic feedback on mobile
 }
