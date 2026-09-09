@@ -16,11 +16,17 @@ interface Particle {
   radius: number;
   baseAlpha: number;
   alpha: number;
+  rotation: number;
+  rotationSpeed: number;
   swayAngle: number;
   swaySpeed: number;
+  driftAngleX: number;
+  driftAngleY: number;
   pulsePhase: number;
   pulseSpeed: number;
-  length?: number; // For rain
+  // Unique characteristics for specific particle types
+  particleSubtype: 'crystal' | 'fluffy' | 'speck' | 'mote' | 'fiber' | 'star' | 'bubble';
+  length?: number;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -62,7 +68,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     // Parse color
     const rgb = hexToRgb(color);
-    const speedFactor = Math.max(0.4, Math.min(3.0, (speed || 2) * 0.5));
+    const speedFactor = Math.max(0.35, Math.min(3.0, (speed || 2) * 0.5));
     const intensityClamped = Math.max(10, Math.min(100, intensity || 50));
 
     // Handle high DPI
@@ -86,11 +92,11 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     // Calculate particle count according to resolution and intensity
     const area = width * height;
-    const baseDensity = effect === 'rain' ? 22000 : 16000;
+    const baseDensity = effect === 'rain' ? 22000 : 15000;
     const computedCount = Math.round(
       (area / baseDensity) * (intensityClamped / 50)
     );
-    const particleCount = Math.max(15, Math.min(220, computedCount));
+    const particleCount = Math.max(16, Math.min(240, computedCount));
 
     // Initialize particles
     const particles: Particle[] = [];
@@ -100,33 +106,63 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
       let vy = 0;
       let radius = 2;
       let baseAlpha = 0.5;
+      let subtype: Particle['particleSubtype'] = 'speck';
       let length = 10;
 
       if (effect === 'snow') {
-        radius = 1.2 + Math.random() * 2.8;
-        vy = (0.5 + Math.random() * 1.3) * speedFactor;
-        vx = (Math.random() - 0.5) * 0.4;
-        baseAlpha = 0.35 + Math.random() * 0.55;
+        // Snow has 3 subtypes: 6-arm ice crystals, fluffy flakes, and round pellets
+        const rand = Math.random();
+        if (rand < 0.4) {
+          subtype = 'crystal'; // Hexagonal rotating snowflake crystal
+          radius = 3.2 + Math.random() * 3.5;
+          baseAlpha = 0.5 + Math.random() * 0.45;
+        } else if (rand < 0.75) {
+          subtype = 'fluffy'; // Soft fluffy snow puff with halo
+          radius = 2.5 + Math.random() * 3.2;
+          baseAlpha = 0.35 + Math.random() * 0.45;
+        } else {
+          subtype = 'speck'; // Fine crisp snowflake dot
+          radius = 1.2 + Math.random() * 1.6;
+          baseAlpha = 0.4 + Math.random() * 0.5;
+        }
+
+        // Snow MUST fall clearly downwards with gravity
+        vy = (0.75 + Math.random() * 1.5) * speedFactor;
+        vx = (Math.random() - 0.5) * 0.3;
       } else if (effect === 'dust') {
-        radius = 0.9 + Math.random() * 2.2;
-        vx = (Math.random() - 0.5) * 0.35 * speedFactor;
-        vy = (Math.random() - 0.5) * 0.35 * speedFactor;
-        baseAlpha = 0.25 + Math.random() * 0.5;
+        // DUST does NOT fall! It stays suspended and floats in all directions (Brownian motion)
+        const rand = Math.random();
+        if (rand < 0.35) {
+          subtype = 'fiber'; // Microscopic dust lint/fiber
+          radius = 1.6 + Math.random() * 2.2;
+          baseAlpha = 0.25 + Math.random() * 0.45;
+        } else {
+          subtype = 'mote'; // Ambient light mote with soft glowing halo
+          radius = 1.0 + Math.random() * 2.6;
+          baseAlpha = 0.2 + Math.random() * 0.55;
+        }
+
+        // Random hovering drift: NO downward bias!
+        vx = (Math.random() - 0.5) * 0.3 * speedFactor;
+        vy = (Math.random() - 0.5) * 0.25 * speedFactor;
       } else if (effect === 'stars') {
-        radius = 0.8 + Math.random() * 2.0;
-        vx = (Math.random() - 0.5) * 0.05 * speedFactor;
-        vy = (Math.random() - 0.5) * 0.05 * speedFactor;
+        subtype = 'star';
+        radius = 0.8 + Math.random() * 2.2;
+        vx = (Math.random() - 0.5) * 0.04 * speedFactor;
+        vy = (Math.random() - 0.5) * 0.04 * speedFactor;
         baseAlpha = 0.3 + Math.random() * 0.6;
       } else if (effect === 'rain') {
+        subtype = 'speck';
         radius = 1.0;
-        vy = (8 + Math.random() * 7) * speedFactor;
-        vx = -1.2 * speedFactor;
-        length = 10 + Math.random() * 18;
+        vy = (9 + Math.random() * 7) * speedFactor;
+        vx = -1.5 * speedFactor;
+        length = 12 + Math.random() * 18;
         baseAlpha = 0.25 + Math.random() * 0.45;
       } else if (effect === 'bubbles') {
-        radius = 2.0 + Math.random() * 4.5;
-        vy = -(0.5 + Math.random() * 1.1) * speedFactor;
-        vx = (Math.random() - 0.5) * 0.3;
+        subtype = 'bubble';
+        radius = 2.5 + Math.random() * 4.5;
+        vy = -(0.5 + Math.random() * 1.2) * speedFactor;
+        vx = (Math.random() - 0.5) * 0.35;
         baseAlpha = 0.25 + Math.random() * 0.4;
       }
 
@@ -138,15 +174,21 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
         radius,
         baseAlpha,
         alpha: baseAlpha,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.03 * speedFactor,
         swayAngle: Math.random() * Math.PI * 2,
-        swaySpeed: 0.01 + Math.random() * 0.025,
+        swaySpeed: 0.008 + Math.random() * 0.02,
+        driftAngleX: Math.random() * Math.PI * 2,
+        driftAngleY: Math.random() * Math.PI * 2,
         pulsePhase: Math.random() * Math.PI * 2,
         pulseSpeed: 0.015 + Math.random() * 0.03,
+        particleSubtype: subtype,
         length,
       });
     }
 
     let lastTime = performance.now();
+    let globalWindTime = 0;
 
     // Render loop
     const render = (time: number) => {
@@ -154,6 +196,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
       const dt = Math.min((time - lastTime) / 16.67, 2.5);
       lastTime = time;
+      globalWindTime += 0.006 * dt;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -163,87 +206,204 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
         const p = particles[i];
 
         if (effect === 'snow') {
+          // ==================== SNOW PHYSICS & RENDERING ====================
+          // Natural wind drift with oscillating horizontal flutter
           p.swayAngle += p.swaySpeed * dt * speedFactor;
-          p.x += (p.vx + Math.sin(p.swayAngle) * 0.7) * dt;
+          p.rotation += p.rotationSpeed * dt;
+
+          const windGust = Math.sin(globalWindTime) * 0.6;
+          p.x += (p.vx + Math.sin(p.swayAngle) * 1.1 + windGust) * dt;
           p.y += p.vy * dt;
 
-          if (p.y > height + 10) {
-            p.y = -10;
+          // Wrap around edges
+          if (p.y > height + 15) {
+            p.y = -15;
             p.x = Math.random() * width;
           }
-          if (p.x < -10) p.x = width + 10;
-          if (p.x > width + 10) p.x = -10;
+          if (p.x < -15) p.x = width + 15;
+          if (p.x > width + 15) p.x = -15;
 
-          // Draw snowflake with subtle soft edge
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `${colorPrefix} ${p.alpha})`;
-          ctx.fill();
+          const drawAlpha = Math.min(1, p.alpha);
+
+          if (p.particleSubtype === 'crystal') {
+            // Draw 6-armed crystalline snowflake
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation);
+
+            ctx.strokeStyle = `${colorPrefix} ${drawAlpha * 0.9})`;
+            ctx.lineWidth = 1.1;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+
+            const r = p.radius;
+            // 3 main crossbars = 6 spokes
+            for (let a = 0; a < 3; a++) {
+              const angle = (a * Math.PI) / 3;
+              const cos = Math.cos(angle);
+              const sin = Math.sin(angle);
+              ctx.moveTo(-cos * r, -sin * r);
+              ctx.lineTo(cos * r, sin * r);
+
+              // Tiny decorative branches on larger crystals
+              if (r > 4.2) {
+                const bDist = r * 0.6;
+                const bLen = r * 0.32;
+                // Branch 1
+                const bx = cos * bDist;
+                const by = sin * bDist;
+                ctx.moveTo(bx - sin * bLen, by + cos * bLen);
+                ctx.lineTo(bx, by);
+                ctx.lineTo(bx + sin * bLen, by - cos * bLen);
+                // Branch 2 (opposite side)
+                ctx.moveTo(-bx - sin * bLen, -by + cos * bLen);
+                ctx.lineTo(-bx, -by);
+                ctx.lineTo(-bx + sin * bLen, -by - cos * bLen);
+              }
+            }
+            ctx.stroke();
+
+            // Center crystal pip
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.8, r * 0.22), 0, Math.PI * 2);
+            ctx.fillStyle = `${colorPrefix} ${drawAlpha})`;
+            ctx.fill();
+
+            ctx.restore();
+          } else if (p.particleSubtype === 'fluffy') {
+            // Soft fluffy snowflake with gentle radial falloff
+            const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 1.6);
+            grad.addColorStop(0, `${colorPrefix} ${drawAlpha * 0.95})`);
+            grad.addColorStop(0.4, `${colorPrefix} ${drawAlpha * 0.6})`);
+            grad.addColorStop(1, `${colorPrefix} 0)`);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius * 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // Crisp small snowflake dot
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `${colorPrefix} ${drawAlpha})`;
+            ctx.fill();
+          }
         } else if (effect === 'dust') {
-          p.pulsePhase += p.pulseSpeed * dt;
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
+          // ==================== DUST PHYSICS & RENDERING ====================
+          // Dust floats weightlessly with Brownian air currents (curling 2D motion, NOT falling)
+          p.driftAngleX += 0.012 * dt * speedFactor;
+          p.driftAngleY += 0.009 * dt * speedFactor;
+          p.rotation += p.rotationSpeed * 0.6 * dt;
 
-          // Gentle bounce/wrap
-          if (p.x < 0) p.x = width;
-          else if (p.x > width) p.x = 0;
-          if (p.y < 0) p.y = height;
-          else if (p.y > height) p.y = 0;
+          // Wandering sinusoidal drift
+          const wanderX = Math.sin(p.driftAngleX) * 0.45;
+          const wanderY = Math.cos(p.driftAngleY) * 0.35;
+          p.x += (p.vx + wanderX) * dt;
+          p.y += (p.vy + wanderY) * dt;
 
-          // Smooth pulse
-          const pulse = (Math.sin(p.pulsePhase) + 1) * 0.5;
-          p.alpha = p.baseAlpha * (0.4 + 0.6 * pulse);
+          // Wrap edges smoothly
+          if (p.x < -10) p.x = width + 10;
+          else if (p.x > width + 10) p.x = -10;
+          if (p.y < -10) p.y = height + 10;
+          else if (p.y > height + 10) p.y = -10;
 
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `${colorPrefix} ${p.alpha})`;
-          ctx.fill();
+          // Sunbeam / room light reflection pulse: dust catches the light then fades
+          p.pulsePhase += p.pulseSpeed * 0.8 * dt;
+          const lightGlimmer = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 1.8);
+          const currentAlpha = p.baseAlpha * (0.2 + 0.8 * lightGlimmer);
+
+          if (p.particleSubtype === 'fiber') {
+            // Microscopic floating lint/fiber speck (curved pill line)
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation);
+
+            // Halo around fiber
+            const haloGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2.2);
+            haloGrad.addColorStop(0, `${colorPrefix} ${currentAlpha * 0.4})`);
+            haloGrad.addColorStop(1, `${colorPrefix} 0)`);
+            ctx.fillStyle = haloGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tiny elongated fiber
+            ctx.strokeStyle = `${colorPrefix} ${currentAlpha * 0.95})`;
+            ctx.lineWidth = 1.2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-p.radius * 1.4, -p.radius * 0.3);
+            ctx.quadraticCurveTo(0, p.radius * 0.5, p.radius * 1.4, -p.radius * 0.2);
+            ctx.stroke();
+
+            ctx.restore();
+          } else {
+            // Illuminated dust mote with wide diffuse ambient glow
+            const glowRadius = p.radius * 2.6;
+            const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRadius);
+            grad.addColorStop(0, `${colorPrefix} ${currentAlpha * 1.0})`);
+            grad.addColorStop(0.35, `${colorPrefix} ${currentAlpha * 0.5})`);
+            grad.addColorStop(1, `${colorPrefix} 0)`);
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bright pinhead core
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, Math.max(0.6, p.radius * 0.45), 0, Math.PI * 2);
+            ctx.fillStyle = `${colorPrefix} ${Math.min(1, currentAlpha * 1.3)})`;
+            ctx.fill();
+          }
         } else if (effect === 'stars') {
-          p.pulsePhase += p.pulseSpeed * 1.5 * dt;
+          // ==================== STARS ====================
+          p.pulsePhase += p.pulseSpeed * 1.4 * dt;
           p.x += p.vx * dt;
           p.y += p.vy * dt;
 
-          const twinkle = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 2);
-          p.alpha = p.baseAlpha * (0.2 + 0.8 * twinkle);
+          const twinkle = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 2.2);
+          const starAlpha = p.baseAlpha * (0.2 + 0.8 * twinkle);
 
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `${colorPrefix} ${p.alpha})`;
+          ctx.fillStyle = `${colorPrefix} ${starAlpha})`;
           ctx.fill();
 
-          // Subtle diamond sparkle for larger twinkling stars
-          if (p.radius > 2.0 && twinkle > 0.85) {
-            const sparkleLen = p.radius * 2.4;
+          // 4-point sparkle cross on brighter twinkling stars
+          if (p.radius > 1.6 && twinkle > 0.8) {
+            const sparkleLen = p.radius * 2.5;
             ctx.beginPath();
             ctx.moveTo(p.x - sparkleLen, p.y);
             ctx.lineTo(p.x + sparkleLen, p.y);
             ctx.moveTo(p.x, p.y - sparkleLen);
             ctx.lineTo(p.x, p.y + sparkleLen);
-            ctx.strokeStyle = `${colorPrefix} ${p.alpha * 0.6})`;
-            ctx.lineWidth = 0.75;
+            ctx.strokeStyle = `${colorPrefix} ${starAlpha * 0.7})`;
+            ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         } else if (effect === 'rain') {
+          // ==================== RAIN ====================
           p.x += p.vx * dt;
           p.y += p.vy * dt;
 
-          if (p.y > height + (p.length || 15)) {
-            p.y = -(p.length || 15);
-            p.x = Math.random() * (width + 100);
+          const len = p.length || 15;
+          if (p.y > height + len) {
+            p.y = -len;
+            p.x = Math.random() * (width + 120);
           }
           if (p.x < -20) p.x = width + 20;
 
-          const len = p.length || 14;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(p.x + (p.vx / p.vy) * len, p.y + len);
           ctx.strokeStyle = `${colorPrefix} ${p.alpha})`;
-          ctx.lineWidth = 1.0;
+          ctx.lineWidth = 1.1;
           ctx.lineCap = 'round';
           ctx.stroke();
         } else if (effect === 'bubbles') {
+          // ==================== BUBBLES ====================
           p.swayAngle += p.swaySpeed * dt;
-          p.x += (p.vx + Math.sin(p.swayAngle) * 0.4) * dt;
+          p.x += (p.vx + Math.sin(p.swayAngle) * 0.45) * dt;
           p.y += p.vy * dt;
 
           if (p.y < -p.radius * 2) {
@@ -253,14 +413,26 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
           if (p.x < -10) p.x = width + 10;
           if (p.x > width + 10) p.x = -10;
 
-          // Glowing bubble circle
+          // Glowing bubble body
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `${colorPrefix} ${p.alpha * 0.35})`;
+          ctx.fillStyle = `${colorPrefix} ${p.alpha * 0.3})`;
           ctx.fill();
-          ctx.strokeStyle = `${colorPrefix} ${p.alpha * 0.8})`;
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = `${colorPrefix} ${p.alpha * 0.85})`;
+          ctx.lineWidth = 1.0;
           ctx.stroke();
+
+          // Specular crescent light reflection inside bubble
+          ctx.beginPath();
+          ctx.arc(
+            p.x - p.radius * 0.3,
+            p.y - p.radius * 0.3,
+            Math.max(0.6, p.radius * 0.28),
+            0,
+            Math.PI * 2
+          );
+          ctx.fillStyle = `${colorPrefix} ${p.alpha * 0.9})`;
+          ctx.fill();
         }
       }
 

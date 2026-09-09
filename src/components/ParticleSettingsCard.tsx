@@ -30,8 +30,8 @@ interface EffectItem {
 
 const EFFECTS: EffectItem[] = [
   { id: 'none', label: 'Keine', desc: 'Deaktiviert', icon: Ban },
-  { id: 'snow', label: 'Schnee', desc: 'Fallend & schwebend', icon: Snowflake },
-  { id: 'dust', label: 'Staub', desc: 'Träge Licht-Partikel', icon: Sparkles },
+  { id: 'snow', label: 'Schnee', desc: 'Fallende Kristalle', icon: Snowflake },
+  { id: 'dust', label: 'Staub', desc: 'Schwebende Moten', icon: Sparkles },
   { id: 'stars', label: 'Sterne', desc: 'Funkelndes Glitzern', icon: Star },
   { id: 'rain', label: 'Regen', desc: 'Sanfte Regenfäden', icon: CloudRain },
   { id: 'bubbles', label: 'Lichtpunkte', desc: 'Aufsteigende Blasen', icon: CircleDot },
