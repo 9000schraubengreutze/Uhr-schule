@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion, useAnimation, AnimatePresence } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
@@ -227,23 +227,16 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
 
           {/* Optional Date String */}
           {settings.showDate && (
-            <AnimatePresence mode="wait">
-              <motion.div
-                id="digital-date-display"
-                key={formattedDate}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 0.85, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.25 }}
-                className="mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.6rem)] font-light tracking-[0.18em] uppercase select-none"
-                style={{
-                  color: 'var(--clock-color, ' + settings.clockColor + ')',
-                  textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                }}
-              >
-                {formattedDate}
-              </motion.div>
-            </AnimatePresence>
+            <div
+              id="digital-date-display"
+              className="mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.6rem)] font-light tracking-[0.18em] uppercase select-none opacity-85 transition-colors duration-300"
+              style={{
+                color: 'var(--clock-color, ' + settings.clockColor + ')',
+                textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              }}
+            >
+              {formattedDate}
+            </div>
           )}
 
           {/* Additional Time Zones (World Clock directly below main clock) */}

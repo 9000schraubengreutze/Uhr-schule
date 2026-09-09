@@ -173,22 +173,36 @@ export const GamesModal: React.FC<GamesModalProps> = ({
     setStatsRefreshKey((k) => k + 1);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return (
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+    );
+  }
 
   return (
-    <AnimatePresence>
-      <div
-        id="games-modal-container"
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-200"
-      >
-        {/* Modal Window Container */}
+    <>
+      <AnimatePresence>
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 12 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-4xl h-[92vh] max-h-[820px] bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+          key="games-modal-backdrop"
+          id="games-modal-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl"
         >
+          {/* Modal Window Container */}
+          <motion.div
+            key="games-modal-dialog"
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="relative w-full max-w-4xl h-[92vh] max-h-[820px] bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+          >
           {/* Header Bar */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md shrink-0">
             <div className="flex items-center gap-2.5">
@@ -595,14 +609,15 @@ export const GamesModal: React.FC<GamesModalProps> = ({
               )}
             </div>
           )}
+          </motion.div>
         </motion.div>
-      </div>
+      </AnimatePresence>
 
       {/* Auth Modal for Login & Account Details */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
-    </AnimatePresence>
+    </>
   );
 };

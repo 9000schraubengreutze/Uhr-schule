@@ -350,7 +350,7 @@ export const TimeZonesSettingsSection: React.FC<TimeZonesSettingsSectionProps> =
 
               return (
                 <div
-                  key={zone.id}
+                  key={`${zone.id || zone.timeZone}-${idx}`}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700/80 transition-all"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -461,13 +461,13 @@ export const TimeZonesSettingsSection: React.FC<TimeZonesSettingsSectionProps> =
 
             {/* Scrollable list of cities */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
-              {filteredPresets.map((city) => {
+              {filteredPresets.map((city, idx) => {
                 const isAlreadyAdded = currentZones.some((z) => z.timeZone === city.timeZone);
                 const liveCityTime = getFormattedTimeInZone(city.timeZone);
 
                 return (
                   <button
-                    key={city.timeZone + city.name}
+                    key={`${city.timeZone}-${city.name}-${idx}`}
                     type="button"
                     onClick={() => handleAddPreset(city)}
                     disabled={isAlreadyAdded}
@@ -534,8 +534,8 @@ export const TimeZonesSettingsSection: React.FC<TimeZonesSettingsSectionProps> =
                 onChange={(e) => setSelectedPresetTz(e.target.value)}
                 className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
-                {PRESET_WORLD_TIMEZONES.map((p) => (
-                  <option key={p.timeZone + p.name} value={p.timeZone}>
+                {PRESET_WORLD_TIMEZONES.map((p, idx) => (
+                  <option key={`${p.timeZone}-${p.name}-${idx}`} value={p.timeZone}>
                     {p.name} ({p.timeZone}) [{p.region}]
                   </option>
                 ))}

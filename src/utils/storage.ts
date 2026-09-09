@@ -22,7 +22,12 @@ export function loadSettings(): ClockSettings {
           ? parsed.showAdditionalTimeZones
           : DEFAULT_SETTINGS.showAdditionalTimeZones,
       additionalTimeZones: Array.isArray(parsed.additionalTimeZones)
-        ? parsed.additionalTimeZones
+        ? parsed.additionalTimeZones.map((z: any, idx: number) => ({
+            id: typeof z?.id === 'string' && z.id.trim() ? z.id : `tz-${idx}-${z?.timeZone || 'zone'}`,
+            name: typeof z?.name === 'string' ? z.name : 'Zeitzone',
+            timeZone: typeof z?.timeZone === 'string' ? z.timeZone : 'UTC',
+            customLabel: typeof z?.customLabel === 'string' ? z.customLabel : undefined,
+          }))
         : DEFAULT_SETTINGS.additionalTimeZones,
       particleEffect: parsed.particleEffect || DEFAULT_SETTINGS.particleEffect,
       particleIntensity:

@@ -47,11 +47,11 @@ export const ColorPickerCard: React.FC<ColorPickerCardProps> = ({
 
       {/* Quick Swatches */}
       <div className="flex flex-wrap gap-1.5 pt-1">
-        {presetPalette.slice(0, 8).map((color) => {
+        {presetPalette.slice(0, 8).map((color, idx) => {
           const isSelected = value.toLowerCase() === color.value.toLowerCase();
           return (
             <button
-              key={color.name}
+              key={`${color.name}-${color.value}-${idx}`}
               type="button"
               title={color.name}
               onClick={() => onChange(color.value)}

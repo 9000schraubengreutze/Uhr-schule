@@ -166,10 +166,10 @@ export const AdditionalTimeZonesBar: React.FC<AdditionalTimeZonesBarProps> = ({
       className="mt-6 sm:mt-8 w-full flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 px-2"
     >
       <AnimatePresence>
-        {zoneList.map((item) => (
+        {zoneList.map((item, idx) => (
           <motion.div
-            key={item.id}
-            id={`timezone-chip-${item.id}`}
+            key={`${item.id || item.timeZone}-${idx}`}
+            id={`timezone-chip-${item.id || idx}`}
             layout
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
