@@ -11,6 +11,7 @@ import { GRADIENT_PRESETS, CURATED_THEMES } from './utils/presets';
 import { syncWithAtomicClock, AtomicTimeState } from './utils/atomicTime';
 import { DigitalClock } from './components/DigitalClock';
 import { ParticleBackground } from './components/ParticleBackground';
+import { SmoothBackground } from './components/SmoothBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { GamesModal } from './games/GamesModal';
@@ -196,7 +197,16 @@ export default function App() {
     root.style.setProperty('--surface-border', surfaceBorder);
 
     root.style.setProperty('--bg-color', settings.bgColor);
+  }, [
+    settings.clockColor,
+    settings.themeId,
+    settings.accentColor,
+    settings.bgColor,
+  ]);
 
+  // Resolve current background gradient string directly
+  const resolvedBgGradient = useMemo(() => {
+    const activeTheme = CURATED_THEMES.find((t) => t.id === settings.themeId);
     let bgGradient = activeTheme?.gradientCss;
     if (!bgGradient) {
       if (settings.gradientPresetId === 'custom') {
@@ -207,21 +217,19 @@ export default function App() {
         bgGradient = matched ? matched.css : GRADIENT_PRESETS[0].css;
       }
     }
-    root.style.setProperty('--bg-gradient', bgGradient);
-  }, [
-    settings.clockColor,
-    settings.themeId,
-    settings.accentColor,
-    settings.bgColor,
-    settings.gradientPresetId,
-    settings.customGradient,
-  ]);
+    return bgGradient;
+  }, [settings.themeId, settings.gradientPresetId, settings.customGradient]);
 
-  // Compute active background styles
+  // Keep root CSS variable in sync as well
+  useEffect(() => {
+    document.documentElement.style.setProperty('--bg-gradient', resolvedBgGradient);
+  }, [resolvedBgGradient]);
+
+  // Compute active background styles with concrete values for smooth cross-fading
   const backgroundStyle = useMemo<CSSProperties>(() => {
     if (settings.bgType === 'color') {
       return {
-        backgroundColor: 'var(--bg-color, ' + settings.bgColor + ')',
+        backgroundColor: settings.bgColor,
       };
     }
 
@@ -235,9 +243,11 @@ export default function App() {
     }
 
     return {
-      backgroundImage: 'var(--bg-gradient)',
+      backgroundImage: resolvedBgGradient,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
     };
-  }, [settings.bgType, settings.bgColor, customImageUrl]);
+  }, [settings.bgType, settings.bgColor, customImageUrl, resolvedBgGradient]);
 
   return (
     <div
@@ -254,15 +264,10 @@ export default function App() {
         }
       }}
     >
-      {/* Background Layer with optional blur & scale */}
-      <div
-        id="clock-bg-layer"
-        className="absolute inset-0 transition-all duration-700 pointer-events-none"
-        style={{
-          ...backgroundStyle,
-          filter: settings.bgBlur > 0 ? `blur(${settings.bgBlur}px)` : undefined,
-          transform: settings.bgBlur > 0 ? 'scale(1.06)' : 'none',
-        }}
+      {/* Smoothly Cross-Fading Background Layer with optional blur & scale */}
+      <SmoothBackground
+        style={backgroundStyle}
+        blur={settings.bgBlur}
       />
 
       {/* Dimming / Overlay Layer for maximum readability */}
@@ -287,13 +292,6 @@ export default function App() {
       <QuickControls
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenGames={() => setIsGamesOpen(true)}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggleFullscreen}
-        colorScheme={settings.colorScheme}
-        onToggleThemeMode={handleToggleThemeMode}
-        atomicState={atomicState}
-        onTriggerSync={performSync}
-        showSyncBadge={settings.showSyncBadge}
       />
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}

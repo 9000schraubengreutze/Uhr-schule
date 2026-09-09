@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and role assignments",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique user ID matching auth.uid"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name or handle"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "admin", "user"],
+          "description": "User access level"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "GameSettings": {
+      "title": "Game Settings",
+      "description": "Global permissions and configuration for arcade games",
+      "type": "object",
+      "properties": {
+        "allowGuestPlaying": {
+          "type": "boolean",
+          "description": "Whether non-admin guests are permitted to play"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "UID of owner/admin who updated the setting"
+        }
+      },
+      "required": ["allowGuestPlaying"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and assigned roles"
+    },
+    "/settings/games": {
+      "schema": "GameSettings",
+      "description": "System-wide game access rules controlled by the owner"
+    }
+  }
+}

@@ -18,6 +18,15 @@ import {
   Bomb,
   Layers,
   Award,
+  Lock,
+  ShieldCheck,
+  Crown,
+  LogIn,
+  LogOut,
+  AlertCircle,
+  ToggleLeft,
+  ToggleRight,
+  User as UserIcon,
 } from 'lucide-react';
 import { GameId, GameCategory, GameMeta, GAME_CAT_LABELS } from './types';
 import { getAllGamesStats, getDailyChallenge } from './storage';
@@ -27,6 +36,8 @@ import { SnakeGame } from './SnakeGame';
 import { MinesweeperGame } from './MinesweeperGame';
 import { MemoryGame } from './MemoryGame';
 import { FlappyBirdGame } from './FlappyBirdGame';
+import { useAuth, APP_OWNER_EMAIL } from '../context/AuthContext';
+import { AuthModal } from '../components/AuthModal';
 
 export const GAMES_CATALOG: GameMeta[] = [
   {
@@ -96,11 +107,21 @@ export const GamesModal: React.FC<GamesModalProps> = ({
   onClose,
   soundEnabled = true,
 }) => {
+  const {
+    user,
+    isOwner,
+    isAdmin,
+    canPlayGames,
+    gameSettings,
+    toggleGuestPlay,
+  } = useAuth();
+
   const [activeGameId, setActiveGameId] = useState<GameId | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<GameCategory>('all');
   const [soundOn, setSoundOn] = useState(soundEnabled);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Load all stats and daily challenge
   const allStats = useMemo(() => {
@@ -140,6 +161,10 @@ export const GamesModal: React.FC<GamesModalProps> = ({
   }, [searchQuery, selectedCategory]);
 
   const handleStartGame = (id: GameId) => {
+    if (!canPlayGames) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setActiveGameId(id);
   };
 
@@ -180,12 +205,52 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden sm:block">
-                  Schnelle Minispiele für die Pause – funktioniert ohne Neuladen & speichert Rekorde lokal.
+                  Schnelle Minispiele für die Pause – geschützt mit Inhaber- & Admin-Zugriff.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Account / Login Badge Button */}
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  title="Konto-Details & Abmelden"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-750 border border-slate-700/80 text-xs transition-all cursor-pointer"
+                >
+                  {isOwner ? (
+                    <span className="flex items-center gap-1 text-amber-400 font-semibold">
+                      <Crown className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Inhaber</span>
+                    </span>
+                  ) : isAdmin ? (
+                    <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Admin</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-slate-300">
+                      <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="hidden sm:inline">Gast</span>
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-400 font-mono hidden md:inline max-w-[110px] truncate">
+                    {user.email}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  title="Als Admin / Inhaber anmelden"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Anmelden</span>
+                </button>
+              )}
+
               {/* Sound Toggle */}
               <button
                 type="button"
@@ -211,8 +276,72 @@ export const GamesModal: React.FC<GamesModalProps> = ({
             </div>
           </div>
 
-          {/* Active Game View */}
-          {activeGameId ? (
+          {/* Locked View if user is not authorized */}
+          {!canPlayGames ? (
+            <div className="flex-1 w-full flex flex-col items-center justify-center p-6 sm:p-10 text-center overflow-y-auto">
+              <div className="max-w-md w-full p-7 sm:p-8 rounded-3xl bg-slate-950/80 border border-slate-800 shadow-2xl space-y-5 relative overflow-hidden">
+                {/* Background Ambient Glow */}
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Big Lock Icon */}
+                <div className="relative inline-flex p-4 rounded-3xl bg-slate-900 border border-slate-800 text-blue-400 shadow-lg">
+                  <Lock className="w-10 h-10 text-blue-400" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-extrabold text-white tracking-tight">
+                    Admin- & Inhaber-Zugriff erforderlich
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                    Die Pausen-Spiele sind geschützt. Bitte melde dich an, um deinen Inhaber- (<span className="text-blue-300 font-mono">{APP_OWNER_EMAIL}</span>) oder Administrator-Status zu verifizieren.
+                  </p>
+                </div>
+
+                {user ? (
+                  <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-left space-y-2.5">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Konto nicht für Spiele autorisiert</span>
+                    </div>
+                    <p className="text-[11px] text-amber-200/80">
+                      Du bist als <strong className="text-white">{user.email}</strong> angemeldet. Dieses Konto besitzt keine Administrator- oder Inhaber-Rechte.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="w-full py-2 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/30 transition-all cursor-pointer"
+                    >
+                      Konto wechseln / Abmelden
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="w-full py-3 px-5 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold text-xs tracking-wide shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Jetzt als Inhaber / Admin anmelden</span>
+                    </button>
+                    <p className="text-[10px] text-slate-500">
+                      Google-Login & E-Mail-Anmeldung verfügbar
+                    </p>
+                  </div>
+                )}
+
+                {/* Game teaser list */}
+                <div className="pt-3 border-t border-slate-800/80">
+                  <div className="text-[11px] text-slate-500 flex flex-wrap items-center justify-center gap-2">
+                    <span>Enthaltene Spiele:</span>
+                    <span className="text-slate-400 font-medium">Tetris • 2048 • Snake • Minesweeper • Memory • Flappy</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeGameId ? (
+            /* Active Game View */
             <div className="flex-1 w-full h-full overflow-hidden flex flex-col p-2 sm:p-4 bg-slate-950/40">
               {activeGameId === 'tetris' && (
                 <TetrisGame onBack={handleBackToOverview} soundEnabled={soundOn} />
@@ -236,6 +365,33 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           ) : (
             /* Games Overview with Cards */
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+              {/* Inhaber Steuerung Banner */}
+              {isOwner && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      <strong className="text-white">Inhaber-Zugriff aktiv:</strong> Du kannst alle Spiele spielen und den Gast-Zugriff verwalten.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuestPlay(!gameSettings.allowGuestPlaying)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-100 transition-all font-semibold cursor-pointer shrink-0"
+                  >
+                    <span>Gast-Modus für Besucher:</span>
+                    {gameSettings.allowGuestPlaying ? (
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <ToggleRight className="w-4 h-4" /> An
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-bold flex items-center gap-1">
+                        <ToggleLeft className="w-4 h-4" /> Aus
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
               {/* Daily Challenge & Summary Banner */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 {/* Daily Challenge Card */}
@@ -441,6 +597,12 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           )}
         </motion.div>
       </div>
+
+      {/* Auth Modal for Login & Account Details */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </AnimatePresence>
   );
 };
