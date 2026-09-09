@@ -17,6 +17,23 @@ export function loadSettings(): ClockSettings {
       ...DEFAULT_SETTINGS,
       ...parsed,
       timeZone: parsed.timeZone || DEFAULT_SETTINGS.timeZone,
+      showAdditionalTimeZones:
+        typeof parsed.showAdditionalTimeZones === 'boolean'
+          ? parsed.showAdditionalTimeZones
+          : DEFAULT_SETTINGS.showAdditionalTimeZones,
+      additionalTimeZones: Array.isArray(parsed.additionalTimeZones)
+        ? parsed.additionalTimeZones
+        : DEFAULT_SETTINGS.additionalTimeZones,
+      particleEffect: parsed.particleEffect || DEFAULT_SETTINGS.particleEffect,
+      particleIntensity:
+        typeof parsed.particleIntensity === 'number'
+          ? parsed.particleIntensity
+          : DEFAULT_SETTINGS.particleIntensity,
+      particleColor: parsed.particleColor || DEFAULT_SETTINGS.particleColor,
+      particleSpeed:
+        typeof parsed.particleSpeed === 'number'
+          ? parsed.particleSpeed
+          : DEFAULT_SETTINGS.particleSpeed,
       customGradient: {
         ...DEFAULT_SETTINGS.customGradient,
         ...(parsed.customGradient || {}),

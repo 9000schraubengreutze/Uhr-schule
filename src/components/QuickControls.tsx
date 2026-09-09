@@ -1,10 +1,11 @@
 import React from 'react';
-import { Settings, Maximize2, Minimize2, Sun, Moon, Radio, RefreshCw, AlertCircle } from 'lucide-react';
+import { Settings, Maximize2, Minimize2, Sun, Moon, Radio, RefreshCw, AlertCircle, Gamepad2 } from 'lucide-react';
 import { ColorScheme } from '../types';
 import { AtomicTimeState, formatTimeOffset, formatTimeOffsetDetailed } from '../utils/atomicTime';
 
 interface QuickControlsProps {
   onOpenSettings: () => void;
+  onOpenGames?: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   colorScheme?: ColorScheme;
@@ -16,6 +17,7 @@ interface QuickControlsProps {
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenSettings,
+  onOpenGames,
   isFullscreen,
   onToggleFullscreen,
   colorScheme,
@@ -94,6 +96,21 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             ) : (
               <Sun className="w-4 h-4 text-amber-400" />
             )}
+          </button>
+        )}
+
+        {/* Games Button */}
+        {onOpenGames && (
+          <button
+            id="open-games-btn"
+            type="button"
+            onClick={onOpenGames}
+            title="Pausen-Spiele öffnen (G)"
+            aria-label="Pausen-Spiele öffnen"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 backdrop-blur-xl border border-slate-800/80 text-slate-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <Gamepad2 className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline text-xs font-semibold">Games</span>
           </button>
         )}
 

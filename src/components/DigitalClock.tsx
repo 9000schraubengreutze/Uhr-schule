@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
+import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
 
 interface DigitalClockProps {
   settings: ClockSettings;
@@ -243,6 +244,15 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
                 {formattedDate}
               </motion.div>
             </AnimatePresence>
+          )}
+
+          {/* Additional Time Zones (World Clock directly below main clock) */}
+          {settings.showAdditionalTimeZones && (
+            <AdditionalTimeZonesBar
+              time={time}
+              settings={settings}
+              mainTimeZone={targetTimeZone}
+            />
           )}
         </motion.div>
       </div>

@@ -10,12 +10,15 @@ import {
 import { GRADIENT_PRESETS, CURATED_THEMES } from './utils/presets';
 import { syncWithAtomicClock, AtomicTimeState } from './utils/atomicTime';
 import { DigitalClock } from './components/DigitalClock';
+import { ParticleBackground } from './components/ParticleBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
+import { GamesModal } from './games/GamesModal';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isGamesOpen, setIsGamesOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -110,7 +113,7 @@ export default function App() {
     }
   }, []);
 
-  // Keyboard shortcuts (Esc, F, S)
+  // Keyboard shortcuts (Esc, F, S, G)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -118,16 +121,19 @@ export default function App() {
         return;
       }
       if (e.key === 'Escape') {
-        if (isSettingsOpen) setIsSettingsOpen(false);
+        if (isGamesOpen) setIsGamesOpen(false);
+        else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       } else if (e.key === 's' || e.key === 'S') {
         setIsSettingsOpen((prev) => !prev);
+      } else if (e.key === 'g' || e.key === 'G') {
+        setIsGamesOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSettingsOpen, toggleFullscreen]);
+  }, [isGamesOpen, isSettingsOpen, toggleFullscreen]);
 
   const handleUploadImage = async (file: File) => {
     try {
@@ -269,9 +275,18 @@ export default function App() {
         }}
       />
 
+      {/* Animated Background Particles (e.g. Snow, Dust, Stars, Rain) */}
+      <ParticleBackground
+        effect={settings.particleEffect}
+        intensity={settings.particleIntensity}
+        color={settings.particleColor}
+        speed={settings.particleSpeed}
+      />
+
       {/* Quick Access Material 3 Top Controls */}
       <QuickControls
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenGames={() => setIsGamesOpen(true)}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         colorScheme={settings.colorScheme}
@@ -289,10 +304,18 @@ export default function App() {
         />
       </main>
 
+      {/* Games Arcade Modal */}
+      <GamesModal
+        isOpen={isGamesOpen}
+        onClose={() => setIsGamesOpen(false)}
+        soundEnabled={settings.soundEnabled}
+      />
+
       {/* Redesigned Material 3 Settings Drawer */}
       <MaterialSettingsDrawer
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        onOpenGames={() => setIsGamesOpen(true)}
         settings={settings}
         onUpdateSettings={setSettings}
         onUploadImage={handleUploadImage}

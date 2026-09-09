@@ -4,6 +4,8 @@ export type BgType = 'color' | 'gradient' | 'image';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 
+export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
+
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
@@ -22,6 +24,13 @@ export interface GradientPreset {
   name: string;
   css: string;
   textColorHint?: string;
+}
+
+export interface AdditionalTimeZone {
+  id: string;
+  name: string;
+  timeZone: string;
+  customLabel?: string;
 }
 
 export interface CuratedTheme {
@@ -57,6 +66,12 @@ export interface ClockSettings {
   themeMode: ThemeMode; // 'dark' | 'light'
   themeId?: string;
 
+  // Animierte Partikeleffekte im Hintergrund
+  particleEffect: ParticleEffect; // 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles'
+  particleIntensity: number; // 10 to 100 percent
+  particleColor: string; // Particle color (hex, e.g. '#ffffff')
+  particleSpeed: number; // 1 to 5 (speed multiplier)
+
   // Digital Clock Typography & Appearance
   clockColor: string; // Digit text color
   accentColor: string; // Glow / badge / button accent color
@@ -75,6 +90,10 @@ export interface ClockSettings {
   showBlinkingSeparator: boolean; // Toggle blinking colons
   showCardContainer: boolean; // Material 3 surface container around digits
   timeZone: string; // Target time zone (default 'Europe/Berlin' for Germany/Central Europe)
+
+  // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)
+  showAdditionalTimeZones: boolean;
+  additionalTimeZones: AdditionalTimeZone[];
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';

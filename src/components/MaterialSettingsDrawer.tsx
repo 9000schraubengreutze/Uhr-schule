@@ -13,6 +13,8 @@ import { triggerHaptic } from '../utils/audio';
 import { AtomicTimeState, formatTimeOffset, formatTimeOffsetDetailed } from '../utils/atomicTime';
 import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
+import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
+import { ParticleSettingsCard } from './ParticleSettingsCard';
 import {
   X,
   Search,
@@ -38,11 +40,13 @@ import {
   Radio,
   RefreshCw,
   Globe,
+  Gamepad2,
 } from 'lucide-react';
 
 interface MaterialSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenGames?: () => void;
   settings: ClockSettings;
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
   onUploadImage?: (file: File) => void;
@@ -69,6 +73,7 @@ const NAV_ITEMS: NavItem[] = [
 export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   isOpen,
   onClose,
+  onOpenGames,
   settings,
   onUpdateSettings,
   onUploadImage,
@@ -174,6 +179,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Ziffernfarbe', desc: 'Textfarbe der digitalen Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Akzentfarbe', desc: 'Farbe für Glüheffekte und Badges' },
       { tab: 'darstellung' as SettingsTab, title: 'Hintergrund', desc: 'Farbe, Farbverlauf oder eigenes Bild' },
+      { tab: 'darstellung' as SettingsTab, title: 'Animierte Partikeleffekte', desc: 'Schnee, Staub, funkelnde Sterne, Regen, Intensität und Partikelfarbe' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftart', desc: 'Outfit, Inter, Monospace Digital, Schulbuch' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftstärke', desc: 'Light, Normal, Semibold, Extrabold' },
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
@@ -181,6 +187,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
       { tab: 'darstellung' as SettingsTab, title: 'Themen-Presets', desc: 'Midnight Blue, Cyberpunk, OLED uvm.' },
       { tab: 'uhr' as SettingsTab, title: 'Online-Atomuhr (NTP)', desc: 'Zeitsynchronisation mit Atomuhr-Servern' },
+      { tab: 'uhr' as SettingsTab, title: 'Zusätzliche Zeitzonen (Weltuhr)', desc: 'Weltzeit-Uhren (z. B. New York, Tokio, London) unter der Hauptuhr' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
@@ -612,6 +619,13 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                 </div>
 
+                {/* Animierte Partikeleffekte (Schnee, Staub, Sterne etc.) */}
+                <ParticleSettingsCard
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  showFeedback={showFeedback}
+                />
+
                 {/* Schriftart & Schriftstärke */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-4">
                   <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
@@ -878,6 +892,13 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                 </div>
 
+                {/* Zusätzliche Zeitzonen (Weltuhr unter Hauptuhr) */}
+                <TimeZonesSettingsSection
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  showFeedback={showFeedback}
+                />
+
                 {/* Display & Layout Options */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-2 divide-y divide-slate-800/60">
                   <MaterialSwitch
@@ -991,6 +1012,35 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   />
                 </div>
 
+                {/* Pausen-Spiele Schnellzugriff */}
+                {onOpenGames && (
+                  <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                        <Gamepad2 className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-slate-200">
+                          Pausen-Spiele (Arcade)
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Tetris, 2048, Snake, Minesweeper, Memory & Flappy Bird
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenGames();
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                    >
+                      Spielen
+                    </button>
+                  </div>
+                )}
+
                 {/* Standardansicht speichern & Reset */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                   <div>
@@ -1094,9 +1144,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                   <div className="space-y-1.5 text-xs">
                     {[
+                      { key: 'G', desc: 'Pausen-Spiele (Games) öffnen' },
                       { key: 'F', desc: 'Vollbildmodus umschalten' },
                       { key: 'S', desc: 'Einstellungen / Menü öffnen oder schließen' },
-                      { key: 'Esc', desc: 'Menü schließen' },
+                      { key: 'Esc', desc: 'Menü oder Spiel schließen' },
                       { key: 'Doppelklick', desc: 'Vollbildmodus starten / beenden' },
                     ].map((hk) => (
                       <div
