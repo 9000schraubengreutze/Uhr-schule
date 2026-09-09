@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, Maximize2, Minimize2, Sun, Moon, Radio, RefreshCw, AlertCircle } from 'lucide-react';
 import { ColorScheme } from '../types';
-import { AtomicTimeState } from '../utils/atomicTime';
+import { AtomicTimeState, formatTimeOffset, formatTimeOffsetDetailed } from '../utils/atomicTime';
 
 interface QuickControlsProps {
   onOpenSettings: () => void;
@@ -42,7 +42,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             onClick={onTriggerSync}
             title={
               atomicState.status === 'synced'
-                ? `Online-Atomuhr aktiv (${atomicState.syncSource}). Abweichung zur Geräte-Uhr: ${atomicState.offsetMs > 0 ? '+' : ''}${atomicState.offsetMs}ms. Klicken zum Neu-Synchronisieren.`
+                ? `Online-Atomuhr aktiv (${atomicState.syncSource}). Deine Geräte-Uhr ${formatTimeOffsetDetailed(atomicState.offsetMs)} – automatisch von der Atomuhr korrigiert. Klicken zum Neu-Synchronisieren.`
                 : atomicState.status === 'syncing'
                 ? 'Gleiche mit Online-Atomuhr ab...'
                 : 'Verbindung zur Atomuhr fehlgeschlagen. Klicken zum erneuten Versuch.'
@@ -62,8 +62,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                 <span className="text-[11px] font-medium text-emerald-300">
                   Atomuhr
                 </span>
-                <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded hidden md:inline">
-                  {atomicState.offsetMs >= 0 ? `+${atomicState.offsetMs}` : atomicState.offsetMs}ms
+                <span className="text-[10px] font-mono text-slate-300 bg-slate-800/90 px-1.5 py-0.5 rounded border border-slate-700/60 hidden md:inline">
+                  {formatTimeOffset(atomicState.offsetMs)}
                 </span>
               </>
             ) : (

@@ -66,25 +66,37 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
     }
   }, [time.getSeconds(), settings.enableBreathingAnimation, settings.showSeconds, clockControls, secondsControls]);
 
-  // Time calculations
-  let hours = time.getHours();
-  const minutes = time.getMinutes();
-  const seconds = time.getSeconds();
+  // Resolve target timezone (default to 'Europe/Berlin' so devices with wrong Windows timezones still show exact German atomic time)
+  const targetTimeZone =
+    !settings.timeZone || settings.timeZone === 'Europe/Berlin'
+      ? 'Europe/Berlin'
+      : settings.timeZone === 'auto'
+      ? undefined
+      : settings.timeZone;
 
-  let ampm = '';
-  if (!settings.is24Hour) {
-    ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    if (hours === 0) hours = 12;
-  }
+  // High-precision time formatting in target timezone
+  const timeParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: targetTimeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: !settings.is24Hour,
+  }).formatToParts(time);
 
-  const formattedHours = hours.toString().padStart(2, '0');
-  const formattedMinutes = minutes.toString().padStart(2, '0');
-  const formattedSeconds = seconds.toString().padStart(2, '0');
+  const formattedHours = timeParts.find((p) => p.type === 'hour')?.value || '00';
+  const formattedMinutes = timeParts.find((p) => p.type === 'minute')?.value || '00';
+  const formattedSeconds = timeParts.find((p) => p.type === 'second')?.value || '00';
+  const ampm =
+    (!settings.is24Hour &&
+      timeParts.find((p) => p.type === 'dayPeriod')?.value?.toUpperCase()) ||
+    '';
 
-  // Date formatting based on selected language and options
+  const currentSecondsNum = parseInt(formattedSeconds, 10) || 0;
+
+  // Date formatting based on selected language and target timezone
   const locale = settings.appLanguage === 'en' ? 'en-US' : 'de-DE';
   const formattedDate = new Intl.DateTimeFormat(locale, {
+    timeZone: targetTimeZone,
     weekday: settings.showDayOfWeek ? 'long' : undefined,
     day: 'numeric',
     month: 'long',
@@ -112,7 +124,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
       : 'font-semibold';
 
   // Colon blink logic
-  const isColonVisible = !settings.showBlinkingSeparator || seconds % 2 === 0;
+  const isColonVisible = !settings.showBlinkingSeparator || currentSecondsNum % 2 === 0;
 
   // Glow styling
   const glowStyle = settings.enableGlow

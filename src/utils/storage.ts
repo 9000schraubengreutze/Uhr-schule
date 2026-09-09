@@ -16,6 +16,7 @@ export function loadSettings(): ClockSettings {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      timeZone: parsed.timeZone || DEFAULT_SETTINGS.timeZone,
       customGradient: {
         ...DEFAULT_SETTINGS.customGradient,
         ...(parsed.customGradient || {}),

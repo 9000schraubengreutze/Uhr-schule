@@ -74,6 +74,7 @@ export interface ClockSettings {
   showDayOfWeek: boolean; // Toggle weekday name (e.g. Dienstag)
   showBlinkingSeparator: boolean; // Toggle blinking colons
   showCardContainer: boolean; // Material 3 surface container around digits
+  timeZone: string; // Target time zone (default 'Europe/Berlin' for Germany/Central Europe)
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';

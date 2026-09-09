@@ -10,7 +10,7 @@ import {
 import { CURATED_THEMES, GRADIENT_PRESETS, COLOR_PALETTES } from '../utils/presets';
 import { saveCustomDefaultView, resetAllSettings } from '../utils/storage';
 import { triggerHaptic } from '../utils/audio';
-import { AtomicTimeState } from '../utils/atomicTime';
+import { AtomicTimeState, formatTimeOffset, formatTimeOffsetDetailed } from '../utils/atomicTime';
 import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
 import {
@@ -37,6 +37,7 @@ import {
   Trash2,
   Radio,
   RefreshCw,
+  Globe,
 } from 'lucide-react';
 
 interface MaterialSettingsDrawerProps {
@@ -718,6 +719,55 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
+                {/* Zeitzone & Synchronisation */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      Zeitzone & Atomzeit-Standort
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Stellt sicher, dass alle Geräte synchron die exakte Uhrzeit anzeigen – selbst wenn ein Laptop eine falsche Windows-Zeitzone oder deaktivierte Sommerzeit hat.
+                  </p>
+
+                  <div className="space-y-1.5 pt-1">
+                    <label htmlFor="settings-timezone-select" className="text-xs font-semibold text-slate-300 block">
+                      Aktive Zeitzone
+                    </label>
+                    <select
+                      id="settings-timezone-select"
+                      value={settings.timeZone || 'Europe/Berlin'}
+                      onChange={(e) =>
+                        onUpdateSettings((p) => ({
+                          ...p,
+                          timeZone: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all cursor-pointer"
+                    >
+                      <option value="Europe/Berlin">
+                        Deutschland, Österreich, Schweiz (Berlin, Wien, Zürich – MEZ / MESZ) [Standard]
+                      </option>
+                      <option value="auto">
+                        Automatisch (Lokale System-Zeitzone des Geräts)
+                      </option>
+                      <option value="Europe/London">
+                        Großbritannien (London – GMT / BST)
+                      </option>
+                      <option value="UTC">
+                        Koordinierte Weltzeit (UTC)
+                      </option>
+                      <option value="America/New_York">
+                        USA Ostküste (New York – EST / EDT)
+                      </option>
+                      <option value="Asia/Tokyo">
+                        Japan (Tokio – JST)
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Online-Atomuhr Synchronisation */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -747,16 +797,27 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Gleicht die Uhrzeit automatisch mit weltweiten Atomuhr-Servern (UTC) ab. Deine Uhrzeit ist damit atomuhrgenau – selbst wenn die interne Uhr deines Geräts verstellt ist.
+                    Gleicht die Uhrzeit über NTP-Protokolle mit weltweiten Atomuhr-Servern ab. Deine Uhrzeit ist damit sekundengenau synchronisiert – unabhängig von der Systemzeit deines Geräts.
                   </p>
+
+                  {/* Offset Notification if device clock is inaccurate */}
+                  {atomicState && Math.abs(atomicState.offsetMs) > 1000 && (
+                    <div className="p-3 rounded-xl bg-blue-500/15 border border-blue-500/30 text-xs text-blue-200 space-y-1">
+                      <div className="font-semibold text-blue-100 flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Geräte-Uhr automatisch korrigiert</span>
+                      </div>
+                      <p className="text-[11px] text-blue-300/90 leading-relaxed">
+                        Deine interne Systemuhr {formatTimeOffsetDetailed(atomicState.offsetMs)}. Die WebClock gleicht diesen Unterschied automatisch aus, damit deine Uhrzeit mit allen anderen Geräten übereinstimmt!
+                      </p>
+                    </div>
+                  )}
 
                   <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/70 space-y-2 text-xs">
                     <div className="flex items-center justify-between text-slate-300">
-                      <span className="text-slate-400">Abweichung zur Geräte-Uhr:</span>
+                      <span className="text-slate-400">Korrektur zur Geräte-Uhr:</span>
                       <span className="font-mono font-semibold text-emerald-400">
-                        {atomicState
-                          ? `${atomicState.offsetMs >= 0 ? '+' : ''}${atomicState.offsetMs} ms`
-                          : '0 ms'}
+                        {atomicState ? `${formatTimeOffset(atomicState.offsetMs)} (${atomicState.offsetMs} ms)` : '0 ms'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-slate-300">

@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   showDayOfWeek: true,
   showBlinkingSeparator: false,
   showCardContainer: false,
+  timeZone: 'Europe/Berlin',
 
   // EINSTELLUNGEN
   appLanguage: 'de',
