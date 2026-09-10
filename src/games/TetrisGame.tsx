@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { playSound } from './audio';
 import { saveGameResult, getGameStats } from './storage';
-import { RotateCw, ArrowDown, ArrowLeft, ArrowRight, Play, Pause, RotateCcw, Volume2, VolumeX, ChevronsDown } from 'lucide-react';
+import { RotateCw, ArrowLeft, ArrowRight, Play, Pause, RotateCcw, Volume2, VolumeX, ChevronsDown } from 'lucide-react';
 
 const COLS = 10;
 const ROWS = 20;
@@ -474,14 +474,6 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
             aria-label="Rechts"
           >
             <ArrowRight className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => movePiece(0, 1)}
-            className="w-12 h-11 bg-slate-800/90 hover:bg-slate-700 active:scale-95 rounded-xl flex items-center justify-center text-slate-200 shadow-md cursor-pointer"
-            aria-label="Unten"
-          >
-            <ArrowDown className="w-5 h-5" />
           </button>
         </div>
 
