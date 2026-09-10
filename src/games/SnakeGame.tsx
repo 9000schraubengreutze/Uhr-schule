@@ -13,9 +13,10 @@ interface Point {
 interface SnakeGameProps {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = true }) => {
+export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = true, onRestart }) => {
   const [snake, setSnake] = useState<Point[]>([
     { x: 10, y: 10 },
     { x: 10, y: 11 },
@@ -162,6 +163,7 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
     setIsGameOver(false);
     setIsPaused(false);
     startTimeRef.current = Date.now();
+    onRestart?.();
   };
 
   return (

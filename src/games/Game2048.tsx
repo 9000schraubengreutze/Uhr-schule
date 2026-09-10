@@ -25,9 +25,10 @@ const TILE_COLORS: Record<number, string> = {
 interface Game2048Props {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true }) => {
+export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true, onRestart }) => {
   const getEmptyBoard = (): Board => Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
 
   const addRandomTile = (b: Board): Board => {
@@ -240,6 +241,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true 
     setIsGameOver(false);
     setHasWon(false);
     startTimeRef.current = Date.now();
+    onRestart?.();
   };
 
   return (

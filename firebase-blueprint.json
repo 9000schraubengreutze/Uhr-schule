@@ -48,6 +48,46 @@
         }
       },
       "required": ["allowGuestPlaying"]
+    },
+    "GameStartEvent": {
+      "title": "Game Start Event",
+      "description": "Log record tracking whenever a player launches or plays a game",
+      "type": "object",
+      "properties": {
+        "gameId": {
+          "type": "string",
+          "description": "Identifier of the game that was started"
+        },
+        "gameTitle": {
+          "type": "string",
+          "description": "Human-readable title of the game"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID or anonymous client ID"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Player name, display name or email"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email address of authenticated player, if signed in"
+        },
+        "isGuest": {
+          "type": "boolean",
+          "description": "Whether the user started the game as an unauthenticated guest"
+        },
+        "startedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the game was triggered"
+        },
+        "device": {
+          "type": "string",
+          "description": "Device category (desktop, mobile, tablet)"
+        }
+      },
+      "required": ["gameId", "gameTitle", "userId", "userName", "startedAt"]
     }
   },
   "firestore": {
@@ -58,6 +98,10 @@
     "/settings/games": {
       "schema": "GameSettings",
       "description": "System-wide game access rules controlled by the owner"
+    },
+    "/gameEvents/{eventId}": {
+      "schema": "GameStartEvent",
+      "description": "Audit log of all game start events tracking which player launched each game"
     }
   }
 }

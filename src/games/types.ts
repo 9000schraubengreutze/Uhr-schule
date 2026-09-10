@@ -36,3 +36,16 @@ export const GAME_CAT_LABELS: Record<GameCategory, string> = {
   klassiker: 'Klassiker',
   denksport: 'Denksport',
 };
+
+export interface GameStartRecord {
+  id?: string;
+  gameId: string;
+  gameTitle: string;
+  userId: string;
+  userName: string;
+  userEmail?: string | null;
+  isGuest: boolean;
+  startedAt: string;
+  device?: string;
+}
+

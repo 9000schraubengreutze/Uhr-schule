@@ -30,9 +30,10 @@ const NUMBER_COLORS: Record<number, string> = {
 interface MinesweeperGameProps {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundEnabled = true }) => {
+export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundEnabled = true, onRestart }) => {
   const createEmptyBoard = (): Cell[][] =>
     Array.from({ length: ROWS }, (_, r) =>
       Array.from({ length: COLS }, (_, c) => ({
@@ -214,6 +215,7 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
     setIsGameOver(false);
     setHasWon(false);
     setTimer(0);
+    onRestart?.();
   };
 
   return (

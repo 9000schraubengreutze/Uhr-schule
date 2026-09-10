@@ -29,9 +29,10 @@ interface Piece {
 interface TetrisGameProps {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = true }) => {
+export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = true, onRestart }) => {
   const [board, setBoard] = useState<(string | null)[][]>(() =>
     Array.from({ length: ROWS }, () => Array(COLS).fill(null))
   );
@@ -274,6 +275,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
     startTimeRef.current = Date.now();
     const p = spawnPiece();
     setCurrentPiece(p);
+    onRestart?.();
   };
 
   // Compute ghost piece position

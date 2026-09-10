@@ -15,9 +15,10 @@ const ICONS = ['🚀', '💡', '🎨', '🎵', '📚', '⚡', '🌟', '⏱️'];
 interface MemoryGameProps {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = true }) => {
+export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = true, onRestart }) => {
   const generateDeck = (): CardItem[] => {
     const pairs = [...ICONS, ...ICONS];
     // Shuffle
@@ -129,6 +130,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
     setIsStarted(false);
     setHasWon(false);
     lockRef.current = false;
+    onRestart?.();
   };
 
   return (

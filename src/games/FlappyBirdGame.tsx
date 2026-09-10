@@ -22,9 +22,10 @@ const BIRD_SIZE = 24;
 interface FlappyBirdGameProps {
   onBack: () => void;
   soundEnabled?: boolean;
+  onRestart?: () => void;
 }
 
-export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEnabled = true }) => {
+export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEnabled = true, onRestart }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'gameover'>('ready');
@@ -60,7 +61,8 @@ export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEna
     scoreRef.current = 0;
     setScore(0);
     setGameState('ready');
-  }, []);
+    onRestart?.();
+  }, [onRestart]);
 
   // Main game animation loop
   useEffect(() => {
