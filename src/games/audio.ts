@@ -136,3 +136,24 @@ export function playSound(
     // Audio errors gracefully swallowed
   }
 }
+
+export function playTone(frequency: number, durationSec = 0.25, muted = false) {
+  if (muted) return;
+  try {
+    const ctx = getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequency, now);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + durationSec + 0.05);
+  } catch {
+    // ignore
+  }
+}

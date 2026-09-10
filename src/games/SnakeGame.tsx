@@ -137,6 +137,19 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault();
       }
+
+      if (isGameOver) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+          resetGame();
+          return;
+        }
+      }
+
+      if (e.key === ' ' && !isGameOver) {
+        setIsPaused((p) => !p);
+        return;
+      }
+
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') changeDirection({ x: 0, y: -1 });
       else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') changeDirection({ x: 0, y: 1 });
       else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') changeDirection({ x: -1, y: 0 });
@@ -146,7 +159,7 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [changeDirection]);
+  }, [changeDirection, isGameOver]);
 
   const resetGame = () => {
     const initialSnake = [
@@ -220,7 +233,7 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
       </div>
 
       {/* Snake Canvas / Grid Stage */}
-      <div className="relative bg-slate-950/90 border-2 border-slate-800/90 p-2 rounded-3xl shadow-2xl w-full max-w-[340px] aspect-square flex items-center justify-center overflow-hidden">
+      <div className="relative bg-slate-950/90 border-2 border-slate-800/90 p-2 rounded-3xl shadow-2xl w-full max-w-[min(340px,46vh)] aspect-square flex items-center justify-center overflow-hidden">
         <div
           className="grid grid-cols-20 grid-rows-20 gap-[1px] w-full h-full bg-slate-900/40 p-1 rounded-2xl"
           style={{
@@ -272,6 +285,9 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
             >
               Nochmal versuchen
             </button>
+            <div className="text-[11px] text-slate-400 mt-2.5">
+              Oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste</kbd> drücken
+            </div>
           </div>
         )}
 
@@ -286,12 +302,26 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onBack, soundEnabled = tru
             >
               Weiter
             </button>
+            <div className="text-[11px] text-slate-400 mt-2">
+              Drücke <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste</kbd> oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">P</kbd>
+            </div>
           </div>
         )}
       </div>
 
-      {/* D-Pad On-Screen Controls */}
-      <div className="w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex flex-col items-center gap-1.5">
+      {/* Laptop Keyboard Controls Helper (Desktop) */}
+      <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-3 pt-2 border-t border-slate-800/60 w-full">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">↑ ↓ ← →</kbd> / <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">WASD</kbd>
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / P</kbd> Pause
+        </span>
+      </div>
+
+      {/* D-Pad On-Screen Controls (Mobile Only) */}
+      <div className="sm:hidden w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={() => changeDirection({ x: 0, y: -1 })}

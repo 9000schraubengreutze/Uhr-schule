@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { playSound } from './audio';
 import { saveGameResult, getGameStats } from './storage';
 import { RotateCcw, Volume2, VolumeX, Sparkles, Clock, Hash } from 'lucide-react';
@@ -43,6 +43,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
   const [hasWon, setHasWon] = useState(false);
   const [highScore, setHighScore] = useState(() => getGameStats('memory').highScore);
   const [isMuted, setIsMuted] = useState(!soundEnabled);
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   const lockRef = useRef(false);
   const timerIntervalRef = useRef<number | null>(null);
@@ -121,7 +122,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
     }
   };
 
-  const resetGame = () => {
+  const resetGame = useCallback(() => {
     setCards(generateDeck());
     setFlippedIndices([]);
     setMoves(0);
@@ -131,7 +132,40 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
     setHasWon(false);
     lockRef.current = false;
     onRestart?.();
-  };
+  }, [onRestart]);
+
+  // Keyboard controls for laptop/desktop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (hasWon) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+          resetGame();
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        setSelectedIdx((prev) => (prev - 4 >= 0 ? prev - 4 : prev));
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        setSelectedIdx((prev) => (prev + 4 < 16 ? prev + 4 : prev));
+      } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        setSelectedIdx((prev) => (prev % 4 > 0 ? prev - 1 : prev));
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        setSelectedIdx((prev) => (prev % 4 < 3 ? prev + 1 : prev));
+      } else if (e.key === ' ' || e.key === 'Enter') {
+        handleCardClick(selectedIdx);
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetGame();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasWon, resetGame, selectedIdx, cards, flippedIndices, isMuted, isStarted]);
 
   return (
     <div className="flex flex-col items-center justify-between w-full max-w-md mx-auto h-full p-2 select-none">
@@ -181,17 +215,24 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
       </div>
 
       {/* Main Memory Cards Grid */}
-      <div className="relative bg-slate-900/90 border-2 border-slate-800/90 p-3 rounded-3xl shadow-2xl w-full max-w-[340px] aspect-square flex items-center justify-center">
-        <div className="grid grid-cols-4 gap-2.5 w-full h-full">
+      <div className="relative bg-slate-900/90 border-2 border-slate-800/90 p-3 rounded-3xl shadow-2xl w-full max-w-[min(340px,46vh)] aspect-square flex items-center justify-center">
+        <div className="grid grid-cols-4 gap-2 sm:gap-2.5 w-full h-full">
           {cards.map((card, idx) => {
             const isOpen = card.isFlipped || card.isMatched;
+            const isCursor = selectedIdx === idx;
             return (
               <button
                 key={card.id}
                 type="button"
-                onClick={() => handleCardClick(idx)}
+                onClick={() => {
+                  setSelectedIdx(idx);
+                  handleCardClick(idx);
+                }}
+                onMouseEnter={() => setSelectedIdx(idx)}
                 disabled={isOpen}
                 className={`relative flex items-center justify-center rounded-2xl text-2xl sm:text-3xl transition-all duration-300 transform perspective-1000 active:scale-95 cursor-pointer ${
+                  isCursor ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 z-10' : ''
+                } ${
                   card.isMatched
                     ? 'bg-emerald-500/20 border-2 border-emerald-500/50 scale-95 opacity-90'
                     : isOpen
@@ -202,7 +243,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
                 {isOpen ? (
                   <span>{card.symbol}</span>
                 ) : (
-                  <div className="w-4 h-4 rounded-full bg-slate-700/60" />
+                  <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-slate-700/60" />
                 )}
               </button>
             );
@@ -228,8 +269,23 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, soundEnabled = t
         )}
       </div>
 
+      {/* Laptop Keyboard Controls Helper */}
+      <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-3 pt-2 border-t border-slate-800/60 w-full">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">WASD / Pfeile</kbd> Karte wählen
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / Enter</kbd> Aufdecken
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">R</kbd> Neustart
+        </span>
+      </div>
+
       {/* Bottom Hint */}
-      <div className="w-full max-w-xs mt-3 pt-2 text-center text-xs text-slate-400 border-t border-slate-800/60">
+      <div className="sm:hidden w-full max-w-xs mt-3 pt-2 text-center text-xs text-slate-400 border-t border-slate-800/60">
         Tippe zwei Karten an, um Paare aufzudecken.
       </div>
     </div>

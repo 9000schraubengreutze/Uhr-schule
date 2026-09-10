@@ -245,6 +245,14 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault();
       }
+
+      if (isGameOver) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+          resetGame();
+          return;
+        }
+      }
+
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         movePiece(-1, 0);
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
@@ -262,7 +270,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [hardDrop, movePiece, rotatePiece]);
+  }, [hardDrop, movePiece, rotatePiece, isGameOver]);
 
   // Reset Game
   const resetGame = () => {
@@ -289,9 +297,9 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
   }, [board, checkCollision, currentPiece]);
 
   return (
-    <div className="flex flex-col items-center justify-between w-full max-w-md mx-auto h-full p-2 select-none">
+    <div className="flex flex-col items-center justify-between w-full max-w-md mx-auto h-full p-1 sm:p-2 select-none min-h-0 overflow-hidden">
       {/* Top Game Bar */}
-      <div className="w-full flex items-center justify-between bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 px-4 py-2.5 rounded-2xl mb-3 shadow-lg">
+      <div className="w-full flex items-center justify-between bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 px-3.5 py-1.5 sm:py-2 rounded-2xl mb-2 shadow-md shrink-0">
         <button
           type="button"
           onClick={onBack}
@@ -338,12 +346,12 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
       </div>
 
       {/* Main Game Stage + Next Piece Sidebar */}
-      <div className="flex items-start justify-center gap-3 w-full flex-1 max-h-[62vh] relative">
+      <div className="flex items-center justify-center gap-3 w-full flex-1 min-h-0 relative py-0.5">
         {/* Tetris Board */}
-        <div className="relative bg-slate-950/90 border-2 border-slate-800/90 rounded-2xl p-1.5 shadow-2xl overflow-hidden flex flex-col items-center">
+        <div className="relative bg-slate-950/90 border-2 border-slate-700/80 rounded-2xl p-1.5 shadow-2xl flex flex-col items-center shrink-0">
           <div
             className="grid grid-cols-10 gap-[1.5px] bg-slate-900/60 p-1 rounded-xl"
-            style={{ width: 'min(58vw, 240px)', height: 'min(116vw, 480px)' }}
+            style={{ width: 'min(210px, 21vh)', height: 'min(420px, 42vh)' }}
           >
             {board.map((row, r) =>
               row.map((cell, c) => {
@@ -409,6 +417,9 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
               >
                 Nochmal spielen
               </button>
+              <div className="text-[10px] text-slate-400 mt-2">
+                Oder <kbd className="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-200">Leertaste / R</kbd> drücken
+              </div>
             </div>
           )}
 
@@ -423,6 +434,9 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
               >
                 Fortsetzen
               </button>
+              <div className="text-[10px] text-slate-400 mt-2">
+                Drücke <kbd className="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-200">P</kbd> zum Fortsetzen
+              </div>
             </div>
           )}
         </div>
@@ -458,8 +472,23 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ onBack, soundEnabled = t
         </div>
       </div>
 
+      {/* Laptop Keyboard Controls Helper (Desktop) */}
+      <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-1.5 pt-1.5 border-t border-slate-800/60 w-full shrink-0">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">← → / AD</kbd> Bewegen
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">↑ / W</kbd> Drehen
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste</kbd> Hard Drop
+        </span>
+      </div>
+
       {/* On-Screen Mobile Controls */}
-      <div className="w-full max-w-sm mt-3 pt-2 border-t border-slate-800/60 flex items-center justify-between gap-2">
+      <div className="sm:hidden w-full max-w-sm mt-3 pt-2 border-t border-slate-800/60 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <button
             type="button"

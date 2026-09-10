@@ -195,9 +195,27 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true,
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault();
       }
+
+      if (isGameOver) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+          resetGame();
+          return;
+        }
+      }
+
+      if (hasWon && (e.key === ' ' || e.key === 'Enter')) {
+        setHasWon(false);
+        return;
+      }
+
+      if (e.key === 'z' || e.key === 'Z' || e.key === 'u' || e.key === 'U') {
+        handleUndo();
+        return;
+      }
+
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') move('left');
       else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') move('right');
       else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') move('up');
@@ -206,7 +224,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true,
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [move]);
+  }, [move, isGameOver, hasWon, history]);
 
   // Touch Swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -297,11 +315,11 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true,
 
       {/* Main 2048 Board */}
       <div
-        className="relative bg-slate-900/90 border-2 border-slate-800/90 p-3 rounded-3xl shadow-2xl w-full max-w-[340px] aspect-square flex flex-col justify-center items-center touch-none"
+        className="relative bg-slate-900/90 border-2 border-slate-800/90 p-3 rounded-3xl shadow-2xl w-full max-w-[min(340px,46vh)] aspect-square flex flex-col justify-center items-center touch-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="grid grid-cols-4 gap-2.5 w-full h-full">
+        <div className="grid grid-cols-4 gap-2 sm:gap-2.5 w-full h-full">
           {board.map((row, r) =>
             row.map((val, c) => {
               const colorClass = val ? TILE_COLORS[val] || 'bg-fuchsia-700 text-white' : 'bg-slate-950/60';
@@ -331,6 +349,9 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true,
             >
               Nochmal versuchen
             </button>
+            <div className="text-[11px] text-slate-400 mt-2.5">
+              Oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / R</kbd> drücken
+            </div>
           </div>
         )}
 
@@ -349,8 +370,19 @@ export const Game2048: React.FC<Game2048Props> = ({ onBack, soundEnabled = true,
         )}
       </div>
 
+      {/* Laptop Keyboard Controls Helper (Desktop) */}
+      <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-3 pt-2 border-t border-slate-800/60 w-full">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Pfeiltasten</kbd> / <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">WASD</kbd> Verschieben
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Z</kbd> Zurück
+        </span>
+      </div>
+
       {/* Touch Directional Controls for Mobile */}
-      <div className="w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex flex-col items-center gap-1.5">
+      <div className="sm:hidden w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={() => move('up')}

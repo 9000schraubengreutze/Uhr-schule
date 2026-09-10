@@ -52,7 +52,19 @@ export function saveGameResult(
 }
 
 export function getAllGamesStats(): Record<GameId, GameStats> {
-  const ids: GameId[] = ['tetris', '2048', 'snake', 'minesweeper', 'memory', 'flappy'];
+  const ids: GameId[] = [
+    'tetris',
+    '2048',
+    'snake',
+    'minesweeper',
+    'memory',
+    'flappy',
+    'breakout',
+    'connect4',
+    'simon',
+    'pong',
+    'tictactoe',
+  ];
   const res: Partial<Record<GameId, GameStats>> = {};
   ids.forEach((id) => {
     res[id] = getGameStats(id);
@@ -69,6 +81,13 @@ const DAILY_SCHEDULE: Omit<DailyChallenge, 'date' | 'isCompleted'>[] = [
     rewardText: 'Meister der Reflexe 🐍',
   },
   {
+    gameId: 'breakout',
+    title: 'Mauerbrecher',
+    targetDescription: 'Erziele mindestens 150 Punkte in Breakout',
+    targetScore: 150,
+    rewardText: 'Präzisions-Schläger 🏓',
+  },
+  {
     gameId: '2048',
     title: 'Zahlen-Kombinierer',
     targetDescription: 'Erreiche mindestens 512 Punkte in 2048',
@@ -76,11 +95,25 @@ const DAILY_SCHEDULE: Omit<DailyChallenge, 'date' | 'isCompleted'>[] = [
     rewardText: 'Mathe-Genie 🧠',
   },
   {
+    gameId: 'simon',
+    title: 'Farb-Virtuose',
+    targetDescription: 'Erreiche Level 5 in Simon Says',
+    targetScore: 5,
+    rewardText: 'Gedächtnis-Meister 🎵',
+  },
+  {
     gameId: 'tetris',
     title: 'Linien-Räumer',
     targetDescription: 'Erziele 300 Punkte im klassischen Tetris',
     targetScore: 300,
     rewardText: 'Bauklotz-Architekt 🧱',
+  },
+  {
+    gameId: 'connect4',
+    title: 'Vier in einer Reihe',
+    targetDescription: 'Gewinne ein Spiel 4 Gewinnt',
+    targetScore: 1,
+    rewardText: 'Taktik-Stratege 🔴',
   },
   {
     gameId: 'flappy',

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -17,34 +17,24 @@ import {
   Bomb,
   Layers,
   Award,
-  Activity,
-  Edit2,
-  Check,
-  User as UserIcon,
   Crown,
-  ShieldCheck,
-  History,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Radio,
+  User as UserIcon,
 } from 'lucide-react';
-import { GameId, GameCategory, GameMeta, GAME_CAT_LABELS, GameStartRecord } from './types';
+import { GameId, GameCategory, GameMeta, GAME_CAT_LABELS } from './types';
 import { getAllGamesStats, getDailyChallenge } from './storage';
-import { useAuth, APP_OWNER_EMAIL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/AuthModal';
-import {
-  recordGameStart,
-  subscribeRecentGameEvents,
-  getPlayerNickname,
-  setPlayerNickname,
-} from '../services/gameTracker';
 import { TetrisGame } from './TetrisGame';
 import { Game2048 } from './Game2048';
 import { SnakeGame } from './SnakeGame';
 import { MinesweeperGame } from './MinesweeperGame';
 import { MemoryGame } from './MemoryGame';
 import { FlappyBirdGame } from './FlappyBirdGame';
+import { BreakoutGame } from './BreakoutGame';
+import { Connect4Game } from './Connect4Game';
+import { SimonGame } from './SimonGame';
+import { PongGame } from './PongGame';
+import { TicTacToeGame } from './TicTacToeGame';
 
 export const GAMES_CATALOG: GameMeta[] = [
   {
@@ -57,6 +47,15 @@ export const GAMES_CATALOG: GameMeta[] = [
     controlsHint: 'Pfeiltasten / W,A,S,D / Touch-Buttons',
   },
   {
+    id: 'breakout',
+    title: 'Breakout',
+    shortDesc: 'Zerschlage Steinreihen mit Ball und Schläger. Sammle Punkte und halte deine Leben.',
+    category: 'klassiker',
+    accentColor: 'from-blue-500 to-indigo-600',
+    duration: '2-5 Min',
+    controlsHint: 'Pfeiltasten / A,D / Maus / Touch',
+  },
+  {
     id: '2048',
     title: '2048',
     shortDesc: 'Verschiebe und kombiniere Kacheln gleicher Zahl, bis du die magische 2048 erreichst.',
@@ -66,6 +65,15 @@ export const GAMES_CATALOG: GameMeta[] = [
     controlsHint: 'Wischen / Pfeiltasten / Touch',
   },
   {
+    id: 'connect4',
+    title: '4 Gewinnt',
+    shortDesc: 'Verbinde 4 Steine deiner Farbe waagerecht, senkrecht oder diagonal gegen KI oder zu zweit.',
+    category: 'denksport',
+    accentColor: 'from-rose-500 to-amber-500',
+    duration: '2-5 Min',
+    controlsHint: 'Klick / Spalte antippen',
+  },
+  {
     id: 'snake',
     title: 'Snake',
     shortDesc: 'Klassisches Schlangen-Spiel: Schnapp dir Äpfel, wachse und vermeide Kollisionen.',
@@ -73,6 +81,15 @@ export const GAMES_CATALOG: GameMeta[] = [
     accentColor: 'from-emerald-500 to-teal-600',
     duration: '1-3 Min',
     controlsHint: 'Pfeiltasten / D-Pad',
+  },
+  {
+    id: 'simon',
+    title: 'Farben-Gedächtnis',
+    shortDesc: 'Merke dir die wachsende Klang- und Farbsequenz und wiederhole sie fehlerfrei.',
+    category: 'kurze_pausen',
+    accentColor: 'from-emerald-500 to-amber-500',
+    duration: '1-3 Min',
+    controlsHint: '1-4 / Q,W,A,S / Touch',
   },
   {
     id: 'minesweeper',
@@ -101,6 +118,24 @@ export const GAMES_CATALOG: GameMeta[] = [
     duration: '1-2 Min',
     controlsHint: 'Leertaste / Touch-Tap',
   },
+  {
+    id: 'pong',
+    title: 'Retro Pong',
+    shortDesc: 'Legendärer Tischtennis-Klassiker: Spiele im rasanten Ballwechsel gegen KI oder lokal zu zweit.',
+    category: 'klassiker',
+    accentColor: 'from-sky-500 to-rose-600',
+    duration: '1-3 Min',
+    controlsHint: 'W,S / Pfeile / Leertaste / R',
+  },
+  {
+    id: 'tictactoe',
+    title: 'Tic Tac Toe',
+    shortDesc: 'Setze 3 oder 4 Symbole in eine Reihe. Spiele gegen 3 KI-Stufen oder im 2-Spieler-Modus.',
+    category: 'denksport',
+    accentColor: 'from-cyan-500 to-amber-500',
+    duration: '1-2 Min',
+    controlsHint: '1-9 / WASD / Enter / Klick',
+  },
 ];
 
 interface GamesModalProps {
@@ -120,46 +155,12 @@ export const GamesModal: React.FC<GamesModalProps> = ({
   const [soundOn, setSoundOn] = useState(soundEnabled);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
 
-  // Authentication & Player identity
-  const { user, profile, isOwner, isAdmin } = useAuth();
+  // Authentication
+  const { user, isOwner } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [nickname, setNickname] = useState(() => getPlayerNickname());
-  const [tempNickname, setTempNickname] = useState(nickname);
-  const [isEditingNickname, setIsEditingNickname] = useState(false);
-
-  // Live tracking state
-  const [showActivityLog, setShowActivityLog] = useState(false);
-  const [eventsList, setEventsList] = useState<GameStartRecord[]>([]);
-  const [lastTrackedNotice, setLastTrackedNotice] = useState<string | null>(null);
-
-  // Subscribe to real-time game start events (Firestore & Local)
-  useEffect(() => {
-    const unsubscribe = subscribeRecentGameEvents((events) => {
-      setEventsList(events);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Format relative time helper
-  const formatRelativeTime = (isoString: string): string => {
-    try {
-      const diffMs = Date.now() - new Date(isoString).getTime();
-      const diffSec = Math.floor(diffMs / 1000);
-      if (diffSec < 10) return 'Gerade eben';
-      if (diffSec < 60) return `vor ${diffSec}s`;
-      const diffMin = Math.floor(diffSec / 60);
-      if (diffMin < 60) return `vor ${diffMin}m`;
-      const diffHours = Math.floor(diffMin / 60);
-      if (diffHours < 24) return `vor ${diffHours}h`;
-      return new Date(isoString).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-    } catch {
-      return 'Kürzlich';
-    }
-  };
 
   // Load all stats and daily challenge
   const allStats = useMemo(() => {
-    // Dependency on refreshKey to refresh after closing game
     void statsRefreshKey;
     return getAllGamesStats();
   }, [statsRefreshKey, isOpen]);
@@ -194,29 +195,12 @@ export const GamesModal: React.FC<GamesModalProps> = ({
     });
   }, [searchQuery, selectedCategory]);
 
-  const handleStartGame = async (id: GameId) => {
-    const meta = GAMES_CATALOG.find((g) => g.id === id);
-    const title = meta?.title || id;
-    const effectivePlayer = user ? (user.displayName || user.email?.split('@')[0] || 'Spieler') : (nickname || 'Gast');
-    setLastTrackedNotice(`Spielstart von ${effectivePlayer} protokolliert`);
-    try {
-      await recordGameStart(id, title, user, nickname);
-    } catch (e) {
-      console.error('Failed to log game start:', e);
-    }
+  const handleStartGame = (id: GameId) => {
     setActiveGameId(id);
   };
 
-  const handleRestartGame = async (id: GameId) => {
-    const meta = GAMES_CATALOG.find((g) => g.id === id);
-    const title = meta?.title || id;
-    const effectivePlayer = user ? (user.displayName || user.email?.split('@')[0] || 'Spieler') : (nickname || 'Gast');
-    setLastTrackedNotice(`Neustart von ${effectivePlayer} protokolliert`);
-    try {
-      await recordGameStart(id, title, user, nickname);
-    } catch (e) {
-      console.error('Failed to log game restart:', e);
-    }
+  const handleRestartGame = (_id: GameId) => {
+    // Game will reset in its component
   };
 
   const handleBackToOverview = () => {
@@ -235,7 +219,7 @@ export const GamesModal: React.FC<GamesModalProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-5 bg-slate-950/85 backdrop-blur-xl overflow-hidden"
       >
         {/* Modal Window Container */}
         <motion.div
@@ -244,37 +228,53 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-4xl h-[92vh] max-h-[820px] bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+          className="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] md:h-[calc(100vh-2.5rem)] max-h-[750px] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10"
         >
           {/* Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 sm:px-5 py-3.5 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md shrink-0">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                <Gamepad2 className="w-5 h-5" />
+          <div
+            className={`flex items-center justify-between gap-2.5 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md shrink-0 transition-all ${
+              activeGameId ? 'px-3 sm:px-4 py-2 sm:py-2.5' : 'px-4 sm:px-5 py-3.5'
+            }`}
+          >
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 shrink-0">
+                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-white tracking-wide">
-                    Pausen-Spiele
+                  <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                    {activeGameId ? (
+                      <span className="flex items-center gap-1.5">
+                        <span>{GAMES_CATALOG.find((g) => g.id === activeGameId)?.title || 'Spiel'}</span>
+                        <span className="text-slate-500 font-normal hidden sm:inline">|</span>
+                        <span className="text-xs text-slate-400 font-normal hidden sm:inline">Schuluhr Arcade</span>
+                      </span>
+                    ) : (
+                      'Pausen-Spiele'
+                    )}
                   </h2>
-                  <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25">
-                    Schuluhr Arcade
-                  </span>
+                  {!activeGameId && (
+                    <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                      Schuluhr Arcade
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-slate-400 hidden md:block">
-                  Minispiele für die Pause – Spielstarts werden in Echtzeit getrackt.
-                </p>
+                {!activeGameId && (
+                  <p className="text-[11px] text-slate-400 hidden sm:block">
+                    Klassiker und Denksportspiele für deine Pause – optimiert für Laptop & Desktop.
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Player Identity Pill */}
-              {user ? (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Optional User Pill */}
+              {user && (
                 <button
                   type="button"
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700/80 text-xs transition-colors cursor-pointer"
-                  title="Angemeldet als Spieler – Klicken zum Verwalten"
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700/80 text-xs transition-colors cursor-pointer"
+                  title="Angemeldet"
                 >
                   {isOwner ? (
                     <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -285,80 +285,13 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
                 </button>
-              ) : (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850/90 border border-slate-750 text-xs">
-                  <span className="text-[10px] text-slate-400">Spieler:</span>
-                  {isEditingNickname ? (
-                    <input
-                      type="text"
-                      value={tempNickname}
-                      onChange={(e) => setTempNickname(e.target.value)}
-                      onBlur={() => {
-                        setPlayerNickname(tempNickname);
-                        setNickname(tempNickname);
-                        setIsEditingNickname(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setPlayerNickname(tempNickname);
-                          setNickname(tempNickname);
-                          setIsEditingNickname(false);
-                        }
-                      }}
-                      autoFocus
-                      placeholder="Name..."
-                      className="w-16 sm:w-20 px-1 py-0.5 text-xs bg-slate-900 border border-blue-500 rounded text-white focus:outline-none"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTempNickname(nickname);
-                        setIsEditingNickname(true);
-                      }}
-                      className="font-semibold text-blue-300 hover:text-white flex items-center gap-1 cursor-pointer text-[11px]"
-                      title="Spieler-Namen anpassen"
-                    >
-                      <span className="max-w-[80px] truncate">{nickname || 'Gast'}</span>
-                      <Edit2 className="w-2.5 h-2.5 opacity-60 hover:opacity-100" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className="text-[10px] text-slate-400 hover:text-blue-300 underline ml-0.5 cursor-pointer"
-                    title="Optional anmelden für Inhaber-/Google-Account"
-                  >
-                    Login
-                  </button>
-                </div>
               )}
-
-              {/* Activity Tracker Toggle Button */}
-              <button
-                type="button"
-                onClick={() => setShowActivityLog((prev) => !prev)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  showActivityLog
-                    ? 'bg-blue-600/30 border-blue-500/60 text-blue-200 shadow-sm'
-                    : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700/80 text-slate-300 hover:text-white'
-                }`}
-                title="Live-Tracking: Wer hat welches Spiel gestartet?"
-              >
-                <Activity className={`w-3.5 h-3.5 ${showActivityLog ? 'text-blue-400 animate-pulse' : 'text-slate-400'}`} />
-                <span className="hidden sm:inline text-[11px]">Tracker</span>
-                {eventsList.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-blue-500/25 border border-blue-500/30 text-blue-300 font-mono text-[10px]">
-                    {eventsList.length}
-                  </span>
-                )}
-              </button>
 
               {/* Sound Toggle */}
               <button
                 type="button"
                 onClick={() => setSoundOn((s) => !s)}
-                className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
                 title={soundOn ? 'Spielton deaktivieren' : 'Spielton aktivieren'}
                 aria-label="Sound umschalten"
               >
@@ -380,245 +313,89 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           </div>
 
           {activeGameId ? (
-            /* Active Game View with Session Status Bar */
-            <div className="flex-1 w-full h-full overflow-hidden flex flex-col bg-slate-950/40">
-              {/* Session Tracking Bar */}
-              <div className="w-full bg-slate-900/90 border-b border-slate-800/80 px-3 sm:px-4 py-1.5 flex items-center justify-between text-xs shrink-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="text-slate-400 text-[11px] shrink-0">Aktiv von:</span>
-                  <span className="font-semibold text-white text-xs truncate">
-                    {user ? (user.displayName || user.email?.split('@')[0]) : (nickname || 'Gast')}
-                  </span>
-                  {user && isOwner && (
-                    <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-semibold flex items-center gap-1 shrink-0">
-                      <Crown className="w-2.5 h-2.5" /> Inhaber
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
-                  <Activity className="w-3 h-3" />
-                  <span>Start getrackt</span>
-                </div>
-              </div>
-
-              <div className="flex-1 w-full h-full overflow-hidden flex flex-col p-2 sm:p-4">
-                {activeGameId === 'tetris' && (
-                  <TetrisGame
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('tetris')}
-                  />
-                )}
-                {activeGameId === '2048' && (
-                  <Game2048
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('2048')}
-                  />
-                )}
-                {activeGameId === 'snake' && (
-                  <SnakeGame
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('snake')}
-                  />
-                )}
-                {activeGameId === 'minesweeper' && (
-                  <MinesweeperGame
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('minesweeper')}
-                  />
-                )}
-                {activeGameId === 'memory' && (
-                  <MemoryGame
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('memory')}
-                  />
-                )}
-                {activeGameId === 'flappy' && (
-                  <FlappyBirdGame
-                    onBack={handleBackToOverview}
-                    soundEnabled={soundOn}
-                    onRestart={() => handleRestartGame('flappy')}
-                  />
-                )}
-              </div>
-            </div>
-          ) : showActivityLog ? (
-            /* Dedicated Live Activity Tracking Protocol View */
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <h3 className="text-sm font-bold text-white tracking-wide">
-                      Live Spielstart-Protokoll
-                    </h3>
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Live Firestore
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Jedes Mal, wenn ein Spiel gestartet wird, wird der Klick mit Benutzer, Zeitstempel und Gerät synchronisiert.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowActivityLog(false)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-medium transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <span>← Zu den Spielen</span>
-                </button>
-              </div>
-
-              {/* Stat Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Erfasste Starts</div>
-                  <div className="text-xl font-bold font-mono text-cyan-400 mt-0.5">{eventsList.length}</div>
-                </div>
-                <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Aktueller Spieler</div>
-                  <div className="text-sm font-bold text-white truncate mt-1">
-                    {user ? (user.displayName || user.email?.split('@')[0]) : (nickname || 'Gast')}
-                  </div>
-                </div>
-                <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Cloud-Sync</div>
-                  <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mt-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Firestore aktiv
-                  </div>
-                </div>
-                <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Lokales Backup</div>
-                  <div className="text-xs font-semibold text-blue-300 mt-1.5">
-                    localStorage gesichert
-                  </div>
-                </div>
-              </div>
-
-              {/* Event List */}
-              <div className="space-y-2 pt-1">
-                <div className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                  <span>Protokoll-Einträge ({eventsList.length})</span>
-                  <span className="text-[11px] text-slate-500">Automatische Aktualisierung</span>
-                </div>
-
-                {eventsList.length === 0 ? (
-                  <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-slate-800/60">
-                    <History className="w-8 h-8 text-slate-500 mx-auto mb-2 opacity-60" />
-                    <div className="text-sm font-semibold text-slate-300">Noch keine Starts protokolliert</div>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                      Klicke auf ein beliebiges Spiel im Menü, um den ersten Spielstart live aufzuzeichnen.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {eventsList.map((event) => {
-                      const isUserOwner =
-                        event.userEmail === APP_OWNER_EMAIL ||
-                        event.userName.toLowerCase().includes('motti');
-                      return (
-                        <div
-                          key={event.id}
-                          className="bg-slate-900/90 border border-slate-800/90 hover:border-slate-700/90 rounded-2xl p-3 px-4 flex items-center justify-between gap-3 transition-colors shadow-xs"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
-                              <Gamepad2 className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-white truncate">
-                                  {event.userName}
-                                </span>
-                                {isUserOwner ? (
-                                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-semibold flex items-center gap-0.5">
-                                    <Crown className="w-2.5 h-2.5" />
-                                    Inhaber
-                                  </span>
-                                ) : !event.isGuest ? (
-                                  <span className="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.2 rounded font-semibold">
-                                    Angemeldet
-                                  </span>
-                                ) : (
-                                  <span className="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded">
-                                    Gast
-                                  </span>
-                                )}
-                                {event.userEmail && (
-                                  <span className="text-[10px] text-slate-400 hidden sm:inline truncate">
-                                    ({event.userEmail})
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                <span>hat gedrückt:</span>
-                                <span className="font-semibold text-cyan-300 px-2 py-0.2 rounded bg-cyan-950/60 border border-cyan-800/50 text-[11px]">
-                                  {event.gameTitle}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-end shrink-0 gap-1 text-right">
-                            <span className="text-xs font-medium text-slate-200" title={event.timestamp}>
-                              {formatRelativeTime(event.timestamp)}
-                            </span>
-                            <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                              {event.deviceInfo === 'Desktop' && <Monitor className="w-3 h-3" />}
-                              {event.deviceInfo === 'Mobile' && <Smartphone className="w-3 h-3" />}
-                              {event.deviceInfo === 'Tablet' && <Tablet className="w-3 h-3" />}
-                              <span>{event.deviceInfo}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+            /* Active Game View */
+            <div className="flex-1 w-full h-full overflow-hidden flex flex-col bg-slate-950/40 p-1.5 sm:p-2.5 md:p-3 min-h-0">
+              {activeGameId === 'tetris' && (
+                <TetrisGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('tetris')}
+                />
+              )}
+              {activeGameId === '2048' && (
+                <Game2048
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('2048')}
+                />
+              )}
+              {activeGameId === 'snake' && (
+                <SnakeGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('snake')}
+                />
+              )}
+              {activeGameId === 'minesweeper' && (
+                <MinesweeperGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('minesweeper')}
+                />
+              )}
+              {activeGameId === 'memory' && (
+                <MemoryGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('memory')}
+                />
+              )}
+              {activeGameId === 'flappy' && (
+                <FlappyBirdGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('flappy')}
+                />
+              )}
+              {activeGameId === 'breakout' && (
+                <BreakoutGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('breakout')}
+                />
+              )}
+              {activeGameId === 'connect4' && (
+                <Connect4Game
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('connect4')}
+                />
+              )}
+              {activeGameId === 'simon' && (
+                <SimonGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('simon')}
+                />
+              )}
+              {activeGameId === 'pong' && (
+                <PongGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('pong')}
+                />
+              )}
+              {activeGameId === 'tictactoe' && (
+                <TicTacToeGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('tictactoe')}
+                />
+              )}
             </div>
           ) : (
             /* Games Overview with Cards */
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
-              {/* Live Tracking Quick Banner */}
-              {eventsList.length > 0 && (
-                <div
-                  onClick={() => setShowActivityLog(true)}
-                  className="bg-blue-950/40 border border-blue-700/40 hover:border-blue-600/60 rounded-2xl p-3 px-4 flex items-center justify-between gap-3 transition-colors cursor-pointer shadow-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 shrink-0">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs text-slate-300 truncate">
-                      <span className="text-slate-400">Zuletzt gestartet: </span>
-                      <span className="font-bold text-white">{eventsList[0].userName}</span>
-                      <span className="text-slate-400"> hat </span>
-                      <span className="font-semibold text-cyan-300">{eventsList[0].gameTitle}</span>
-                      <span className="text-slate-400">
-                        {' '}
-                        gedrückt ({formatRelativeTime(eventsList[0].timestamp)})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-300 hover:text-white shrink-0">
-                    <span>Protokoll öffnen ({eventsList.length})</span>
-                    <span>→</span>
-                  </div>
-                </div>
-              )}
-
               {/* Daily Challenge & Summary Banner */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 {/* Daily Challenge Card */}
@@ -691,7 +468,7 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                     </div>
                     <div className="flex items-center justify-between text-slate-300">
                       <span className="text-slate-400">Verfügbare Spiele:</span>
-                      <span className="font-mono text-emerald-400 font-semibold">6 Spiele</span>
+                      <span className="font-mono text-emerald-400 font-semibold">{GAMES_CATALOG.length} Spiele</span>
                     </div>
                   </div>
                 </div>
@@ -764,6 +541,9 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                             {game.id === 'minesweeper' && <Bomb className="w-6 h-6" />}
                             {game.id === 'memory' && <Sparkles className="w-6 h-6" />}
                             {game.id === 'flappy' && <Award className="w-6 h-6" />}
+                            {game.id === 'breakout' && <Zap className="w-6 h-6" />}
+                            {game.id === 'connect4' && <Grid className="w-6 h-6" />}
+                            {game.id === 'simon' && <Sparkles className="w-6 h-6" />}
                           </div>
 
                           <div className="flex flex-col items-end gap-1">
@@ -785,24 +565,12 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                           {game.shortDesc}
                         </p>
 
-                        {/* Recent Player Tag if tracked */}
-                        {(() => {
-                          const lastEventForGame = eventsList.find((e) => e.gameId === game.id);
-                          if (!lastEventForGame) return null;
-                          return (
-                            <div className="mt-2.5 text-[10px] text-slate-400 bg-slate-950/60 border border-slate-800/80 px-2 py-1 rounded-lg flex items-center justify-between">
-                              <span className="truncate">
-                                Zuletzt:{' '}
-                                <strong className="text-slate-200 font-medium">
-                                  {lastEventForGame.userName}
-                                </strong>
-                              </span>
-                              <span className="text-slate-500 text-[9px] shrink-0 ml-1">
-                                {formatRelativeTime(lastEventForGame.timestamp)}
-                              </span>
-                            </div>
-                          );
-                        })()}
+                        <div className="mt-2.5 text-[10px] text-slate-400 bg-slate-950/50 border border-slate-800/80 px-2.5 py-1 rounded-lg flex items-center justify-between">
+                          <span className="truncate text-slate-400">Steuerung:</span>
+                          <span className="text-slate-300 font-medium truncate ml-1">
+                            {game.controlsHint}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Footer Info & Action */}

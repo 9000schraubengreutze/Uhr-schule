@@ -244,14 +244,23 @@ export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEna
   // Keyboard handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      if ([' ', 'ArrowUp'].includes(e.key)) {
         e.preventDefault();
-        jump();
+      }
+
+      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === 'Enter') {
+        if (gameState === 'gameover') {
+          resetGame();
+        } else {
+          jump();
+        }
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetGame();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [jump]);
+  }, [jump, gameState]);
 
   return (
     <div className="flex flex-col items-center justify-between w-full max-w-md mx-auto h-full p-2 select-none">
@@ -296,22 +305,21 @@ export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEna
 
       {/* Canvas Area */}
       <div
-        className="relative bg-slate-950 border-2 border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden cursor-pointer touch-none"
-        style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+        className="relative bg-slate-950 border-2 border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden cursor-pointer touch-none w-full max-w-[min(320px,46vh)] aspect-[320/440]"
         onClick={jump}
         onTouchStart={(e) => {
           e.preventDefault();
           jump();
         }}
       >
-        <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="block" />
+        <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="w-full h-full block" />
 
         {/* Ready Overlay */}
         {gameState === 'ready' && (
           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center">
             <div className="text-xl font-extrabold text-amber-400 mb-1">Flappy Bird</div>
             <div className="text-xs text-slate-200 mb-4">
-              Tippe auf den Bildschirm oder drücke die Leertaste zum Fliegen!
+              Klicke oder drücke die Leertaste zum Fliegen!
             </div>
             <div className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-lg flex items-center gap-2">
               <Play className="w-4 h-4 fill-white" />
@@ -338,13 +346,22 @@ export const FlappyBirdGame: React.FC<FlappyBirdGameProps> = ({ onBack, soundEna
             >
               Nochmal fliegen
             </button>
+            <div className="text-[10px] text-slate-400 mt-2">
+              Oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-200">Leertaste</kbd> drücken
+            </div>
           </div>
         )}
       </div>
 
       {/* Bottom Control Hint */}
-      <div className="w-full max-w-xs mt-3 pt-2 text-center text-xs text-slate-400 border-t border-slate-800/60">
-        Tippen / Leertaste zum Flattern
+      <div className="w-full max-w-sm mt-3 pt-2 text-center text-xs text-slate-400 border-t border-slate-800/60 flex items-center justify-center gap-2">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / ↑ / W / Klick</kbd> Flügelschlag
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">R</kbd> Neustart
+        </span>
       </div>
     </div>
   );

@@ -54,6 +54,7 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
   const [timer, setTimer] = useState(0);
   const [highScore, setHighScore] = useState(() => getGameStats('minesweeper').highScore);
   const [isMuted, setIsMuted] = useState(!soundEnabled);
+  const [cursorPos, setCursorPos] = useState<{ r: number; c: number }>({ r: 4, c: 4 });
 
   const timerIntervalRef = useRef<number | null>(null);
 
@@ -196,7 +197,7 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
   };
 
   // Right-click / Toggle Flag
-  const handleToggleFlag = (r: number, c: number, e?: React.MouseEvent) => {
+  const handleToggleFlag = useCallback((r: number, c: number, e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (isGameOver || hasWon) return;
 
@@ -207,16 +208,51 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
     newBoard[r][c].isFlagged = !cell.isFlagged;
     setBoard(newBoard);
     playSound('click', isMuted);
-  };
+  }, [board, hasWon, isGameOver, isMuted]);
 
-  const resetGame = () => {
+  const resetGame = useCallback(() => {
     setBoard(createEmptyBoard());
     setMinesPlaced(false);
     setIsGameOver(false);
     setHasWon(false);
     setTimer(0);
     onRestart?.();
-  };
+  }, [onRestart]);
+
+  // Keyboard navigation for laptop/desktop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (isGameOver || hasWon) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+          resetGame();
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        setCursorPos((p) => ({ ...p, r: Math.max(0, p.r - 1) }));
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        setCursorPos((p) => ({ ...p, r: Math.min(ROWS - 1, p.r + 1) }));
+      } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        setCursorPos((p) => ({ ...p, c: Math.max(0, p.c - 1) }));
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        setCursorPos((p) => ({ ...p, c: Math.min(COLS - 1, p.c + 1) }));
+      } else if (e.key === ' ' || e.key === 'Enter') {
+        handleCellClick(cursorPos.r, cursorPos.c);
+      } else if (e.key === 'f' || e.key === 'F') {
+        handleToggleFlag(cursorPos.r, cursorPos.c);
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetGame();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [cursorPos, handleCellClick, handleToggleFlag, hasWon, isGameOver, resetGame]);
 
   return (
     <div className="flex flex-col items-center justify-between w-full max-w-md mx-auto h-full p-2 select-none">
@@ -268,17 +304,24 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
       </div>
 
       {/* Minesweeper Grid Stage */}
-      <div className="relative bg-slate-900/90 border-2 border-slate-800/90 p-3 rounded-3xl shadow-2xl w-full max-w-[340px] aspect-square flex flex-col items-center justify-center">
+      <div className="relative bg-slate-900/90 border-2 border-slate-800/90 p-2.5 sm:p-3 rounded-3xl shadow-2xl w-full max-w-[min(340px,46vh)] aspect-square flex flex-col items-center justify-center">
         <div className="grid grid-cols-9 gap-1 w-full h-full">
           {board.map((row, r) =>
             row.map((cell, c) => {
+              const isCursor = cursorPos.r === r && cursorPos.c === c;
               return (
                 <button
                   key={`${r}-${c}`}
                   type="button"
-                  onClick={() => handleCellClick(r, c)}
+                  onClick={() => {
+                    setCursorPos({ r, c });
+                    handleCellClick(r, c);
+                  }}
+                  onMouseEnter={() => setCursorPos({ r, c })}
                   onContextMenu={(e) => handleToggleFlag(r, c, e)}
                   className={`flex items-center justify-center rounded-lg text-sm font-black font-mono transition-all select-none cursor-pointer ${
+                    isCursor ? 'ring-2 ring-cyan-400 ring-offset-1 ring-offset-slate-900 z-10' : ''
+                  } ${
                     cell.isRevealed
                       ? cell.isMine
                         ? 'bg-rose-600 text-white shadow-inner'
@@ -319,6 +362,9 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
             >
               Erneut versuchen
             </button>
+            <div className="text-[10px] text-slate-400 mt-2.5">
+              Oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-200">Leertaste / R</kbd> drücken
+            </div>
           </div>
         )}
 
@@ -339,8 +385,27 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, soundE
         )}
       </div>
 
+      {/* Laptop Keyboard Controls Helper */}
+      <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-3 pt-2 border-t border-slate-800/60 w-full">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">WASD / Pfeile</kbd> Zelle
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / Klick</kbd> Aufdecken
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">F / Rechtsklick</kbd> Flagge
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">R</kbd> Neustart
+        </span>
+      </div>
+
       {/* Mode Switcher for Mobile touch devices */}
-      <div className="w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex items-center justify-center gap-3">
+      <div className="sm:hidden w-full max-w-xs mt-3 pt-2 border-t border-slate-800/60 flex items-center justify-center gap-3">
         <button
           type="button"
           onClick={() => setFlagMode(false)}
