@@ -238,11 +238,11 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
 
             {/* Quick Presets */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {PARTICLE_COLOR_PRESETS.map((preset) => {
+              {PARTICLE_COLOR_PRESETS.map((preset, idx) => {
                 const isSelected = color.toLowerCase() === preset.value.toLowerCase();
                 return (
                   <button
-                    key={preset.value}
+                    key={`${preset.name}-${preset.value}-${idx}`}
                     type="button"
                     title={preset.name}
                     onClick={() => handleColorChange(preset.value)}

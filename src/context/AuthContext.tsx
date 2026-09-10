@@ -139,8 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = isOwner || profile?.role === 'admin';
 
-  // Games are unlocked for Admin/Owner OR if Owner explicitly enabled guest play
-  const canPlayGames = Boolean(user && (isAdmin || isOwner)) || gameSettings.allowGuestPlaying;
+  // Games are unlocked for all users without login restriction
+  const canPlayGames = true;
 
   const loginWithGoogle = async () => {
     await signInWithPopup(auth, googleProvider);

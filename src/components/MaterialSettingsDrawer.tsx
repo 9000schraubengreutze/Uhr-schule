@@ -288,7 +288,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
               <div className="space-y-1">
                 {searchMatches.map((m, idx) => (
                   <button
-                    key={idx}
+                    key={`${m.tab}-${m.title}-${idx}`}
                     type="button"
                     onClick={() => {
                       setActiveTab(m.tab);
