@@ -8,6 +8,23 @@
   --accent-color: #3b82f6;
   --accent-glow: rgba(59, 130, 246, 0.35);
   --surface-border: rgba(255, 255, 255, 0.12);
+  --ui-backdrop-blur: 16px;
+  transition: background-color 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global smooth transition for theme-aware color properties */
+#app-root,
+#digital-clock-centerpiece,
+#digital-time-display,
+#digital-date-display,
+#clock-ampm-badge,
+#clock-overlay-layer {
+  transition: color 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              filter 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {

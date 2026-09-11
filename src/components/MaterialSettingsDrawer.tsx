@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ClockSettings,
@@ -6,11 +6,13 @@ import {
   ColorScheme,
   ClockFont,
   ClockWeight,
+  DateFormat,
 } from '../types';
 import { CURATED_THEMES, GRADIENT_PRESETS, COLOR_PALETTES } from '../utils/presets';
 import { saveCustomDefaultView, resetAllSettings } from '../utils/storage';
 import { triggerHaptic } from '../utils/audio';
 import { AtomicTimeState, formatTimeOffset, formatTimeOffsetDetailed } from '../utils/atomicTime';
+import { exportClockSettingsToJson, importClockSettingsFromFile } from '../utils/themeExport';
 import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
 import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
@@ -41,12 +43,17 @@ import {
   RefreshCw,
   Globe,
   Gamepad2,
+  Calendar,
+  Timer,
+  FileDown,
+  FileUp,
 } from 'lucide-react';
 
 interface MaterialSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenGames?: () => void;
+  onOpenStopwatch?: () => void;
   settings: ClockSettings;
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
   onUploadImage?: (file: File) => void;
@@ -74,6 +81,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   isOpen,
   onClose,
   onOpenGames,
+  onOpenStopwatch,
   settings,
   onUpdateSettings,
   onUploadImage,
@@ -141,6 +149,37 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
     showFeedback('Aktuelle Ansicht als Standard gespeichert!');
   };
 
+  // Export current clock configuration to JSON file
+  const handleExportConfig = () => {
+    try {
+      exportClockSettingsToJson(settings, 'webclock-design');
+      showFeedback('Design erfolgreich als JSON exportiert!');
+    } catch (err) {
+      console.error('Export failed', err);
+      showFeedback('Fehler beim Exportieren der JSON-Datei');
+    }
+  };
+
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Import clock configuration from uploaded JSON file
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const newSettings = await importClockSettingsFromFile(file);
+      onUpdateSettings(newSettings);
+      showFeedback(`Design aus "${file.name}" erfolgreich importiert!`);
+    } catch (err: any) {
+      console.error('Import failed', err);
+      alert(err?.message || 'Fehler beim Laden der JSON-Konfigurationsdatei.');
+    } finally {
+      // Reset input value so same file can be uploaded again if needed
+      e.target.value = '';
+    }
+  };
+
   // Reset all settings
   const handleResetSettings = () => {
     if (window.confirm('Möchtest du wirklich alle Einstellungen auf die Werkseinstellungen zurücksetzen?')) {
@@ -168,6 +207,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       q: 'Wie lade ich ein eigenes Hintergrundbild hoch?',
       a: 'Unter "Darstellung" kannst du als Hintergrund "Eigenes Bild" wählen und eine Bilddatei von deinem Gerät auswählen. Das Bild wird sicher und lokal in deinem Browser gespeichert.',
     },
+    {
+      q: 'Kann ich meine Designs mit Freunden teilen oder sichern?',
+      a: 'Ja! Klicke im Menü unter "Darstellung" oder "Einstellungen" auf "JSON exportieren". Dadurch erhältst du eine .json-Datei mit all deinen Farben, Schriften, Effekten und Zeiteinstellungen. Diese Datei kann jederzeit über "JSON importieren" auf jedem Gerät wiederhergestellt werden.',
+    },
   ];
 
   // Search filter matches
@@ -186,14 +229,19 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
       { tab: 'darstellung' as SettingsTab, title: 'Themen-Presets', desc: 'Midnight Blue, Cyberpunk, OLED uvm.' },
+      { tab: 'darstellung' as SettingsTab, title: 'Design exportieren (JSON)', desc: 'Aktuelle Farben, Schriftarten und Einstellungen als JSON-Datei speichern & teilen' },
+      { tab: 'darstellung' as SettingsTab, title: 'Design importieren (JSON)', desc: 'Gespeichertes Design aus JSON-Datei laden' },
       { tab: 'uhr' as SettingsTab, title: 'Online-Atomuhr (NTP)', desc: 'Zeitsynchronisation mit Atomuhr-Servern' },
+      { tab: 'uhr' as SettingsTab, title: 'Stoppuhr', desc: 'Präzise Stoppuhr mit Rundenzeiten und Pausieren' },
       { tab: 'uhr' as SettingsTab, title: 'Zusätzliche Zeitzonen (Weltuhr)', desc: 'Weltzeit-Uhren (z. B. New York, Tokio, London) unter der Hauptuhr' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
+      { tab: 'uhr' as SettingsTab, title: 'Datumsformat', desc: 'Format zwischen DD.MM.YYYY, MM/DD/YYYY und YYYY-MM-DD wählen' },
       { tab: 'uhr' as SettingsTab, title: 'Wochentag anzeigen', desc: 'Wochentag im Datum einblenden' },
-      { tab: 'uhr' as SettingsTab, title: 'Blinkender Doppelpunkt', desc: 'Doppelpunkt pulsiert im Sekundentakt' },
+      { tab: 'uhr' as SettingsTab, title: 'Doppelpunkt-Pulsieren & Ticken (:)', desc: 'Subtile Animation und Intensität des Doppelpunkts im Sekundentakt (Pulsieren, Glühen, Sprung, Blinken)' },
       { tab: 'uhr' as SettingsTab, title: 'Rahmenkarte (Container)', desc: 'Gläserner Oberflächen-Hintergrund' },
+      { tab: 'uhr' as SettingsTab, title: 'Glas-Unschärfe (Backdrop Blur)', desc: 'Intensität des Unschärfe-Filters (0px bis 40px) für Uhrenelemente' },
       { tab: 'einstellungen' as SettingsTab, title: 'App-Sprache', desc: 'Deutsch oder Englisch' },
       { tab: 'einstellungen' as SettingsTab, title: 'Töne (Sekundenticken)', desc: 'Akustisches Ticken im Sekundentakt' },
       { tab: 'einstellungen' as SettingsTab, title: 'Haptisches Feedback', desc: 'Vibration auf Touchscreens' },
@@ -440,6 +488,53 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Design Teilen: Export / Import JSON */}
+                  <div className="mt-4 pt-3.5 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-200">
+                          Design teilen (JSON)
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          Konfiguration als Datei sichern oder Entwürfe von Freunden laden
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <button
+                        id="export-design-json-btn"
+                        type="button"
+                        onClick={handleExportConfig}
+                        className="py-2.5 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700/80 transition-all cursor-pointer shadow-sm"
+                        title="Aktuelle Farben, Schriftarten und Uhreneinstellungen als .json Datei herunterladen"
+                      >
+                        <FileDown className="w-4 h-4 text-sky-400" />
+                        <span>Exportieren</span>
+                      </button>
+
+                      <button
+                        id="import-design-json-btn"
+                        type="button"
+                        onClick={() => importFileInputRef.current?.click()}
+                        className="py-2.5 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700/80 transition-all cursor-pointer shadow-sm"
+                        title="Eine gespeicherte WebClock JSON-Designdatei importieren"
+                      >
+                        <FileUp className="w-4 h-4 text-emerald-400" />
+                        <span>Importieren</span>
+                      </button>
+                    </div>
+
+                    {/* Hidden file input for importing JSON configuration */}
+                    <input
+                      ref={importFileInputRef}
+                      type="file"
+                      accept=".json,application/json"
+                      className="hidden"
+                      onChange={handleImportFileChange}
+                    />
                   </div>
                 </div>
 
@@ -892,6 +987,33 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                 </div>
 
+                {/* Stoppuhr Quick-Launch Card */}
+                {onOpenStopwatch && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/50 to-slate-900/70 border border-blue-500/30 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        <Timer className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-200">Stoppuhr</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Präzise Rundenzeiten, Pausieren & Tastatursteuerung
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenStopwatch();
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
+                    >
+                      Öffnen
+                    </button>
+                  </div>
+                )}
+
                 {/* Zusätzliche Zeitzonen (Weltuhr unter Hauptuhr) */}
                 <TimeZonesSettingsSection
                   settings={settings}
@@ -923,6 +1045,51 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   />
 
                   {settings.showDate && (
+                    <div className="py-3 px-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Datumsformat</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {settings.dateFormat || 'DD.MM.YYYY'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'DD.MM.YYYY' as DateFormat, label: 'DD.MM.YYYY', region: 'DE / EU' },
+                          { id: 'MM/DD/YYYY' as DateFormat, label: 'MM/DD/YYYY', region: 'US' },
+                          { id: 'YYYY-MM-DD' as DateFormat, label: 'YYYY-MM-DD', region: 'ISO' },
+                        ].map((fmt) => {
+                          const isSelected = (settings.dateFormat || 'DD.MM.YYYY') === fmt.id;
+                          return (
+                            <button
+                              key={fmt.id}
+                              type="button"
+                              onClick={() => {
+                                onUpdateSettings((p) => ({ ...p, dateFormat: fmt.id }));
+                                triggerHaptic(settings.vibrationEnabled);
+                              }}
+                              className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                                isSelected
+                                  ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/25 shadow-sm'
+                                  : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                              }`}
+                            >
+                              <span className="font-mono text-xs font-bold tracking-tight">
+                                {fmt.label}
+                              </span>
+                              <span className="text-[10px] opacity-75 font-medium">
+                                {fmt.region}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {settings.showDate && (
                     <MaterialSwitch
                       label="Wochentag einblenden"
                       description="Name des Wochentags (z.B. Dienstag) vor das Datum setzen"
@@ -931,14 +1098,90 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     />
                   )}
 
-                  <MaterialSwitch
-                    label="Blinkender Doppelpunkt (:)"
-                    description="Doppelpunkt pulsiert im Sekundentakt für den klassischen Digitaluhr-Look"
-                    checked={settings.showBlinkingSeparator}
-                    onChange={(v) =>
-                      onUpdateSettings((p) => ({ ...p, showBlinkingSeparator: v }))
-                    }
-                  />
+                  {/* Colon Separator Animation & Pulse Customization */}
+                  <div className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-200">
+                          Doppelpunkt-Pulsieren & Ticken (:)
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          Subtile Animation zur optischen Untermalung des Sekundentakts
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-sky-400 px-2 py-0.5 rounded-lg bg-sky-500/10 border border-sky-500/20 uppercase">
+                        {settings.colonAnimation || (settings.showBlinkingSeparator ? 'blink' : 'pulse')}
+                      </span>
+                    </div>
+
+                    {/* Mode selection buttons */}
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 pt-1">
+                      {[
+                        { id: 'pulse', label: 'Pulsieren', hint: 'Weich' },
+                        { id: 'glow', label: 'Glühen', hint: 'Akzent' },
+                        { id: 'bounce', label: 'Sprung', hint: 'Mikro' },
+                        { id: 'blink', label: 'Blinken', hint: 'Klassisch' },
+                        { id: 'static', label: 'Statisch', hint: 'Aus' },
+                      ].map((mode) => {
+                        const currentMode =
+                          settings.colonAnimation || (settings.showBlinkingSeparator ? 'blink' : 'pulse');
+                        const isSelected = currentMode === mode.id;
+                        return (
+                          <button
+                            key={mode.id}
+                            type="button"
+                            onClick={() =>
+                              onUpdateSettings((p) => ({
+                                ...p,
+                                colonAnimation: mode.id as any,
+                                showBlinkingSeparator: mode.id === 'blink',
+                              }))
+                            }
+                            className={`flex flex-col items-center justify-center p-2 rounded-xl text-center border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-sky-500/20 border-sky-500/60 text-sky-200 font-semibold shadow-sm'
+                                : 'bg-slate-900/50 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <span className="text-xs">{mode.label}</span>
+                            <span className="text-[10px] text-slate-500 font-normal">{mode.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pulse & Ticking Intensity Slider (when not static) */}
+                    {(settings.colonAnimation || (settings.showBlinkingSeparator ? 'blink' : 'pulse')) !== 'static' && (
+                      <div className="pt-2 border-t border-slate-700/40 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 font-medium">Animations-Intensität</span>
+                          <span className="font-mono text-sky-400 font-semibold">
+                            {Math.round((settings.colonPulseIntensity ?? 0.6) * 100)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-mono text-slate-500">Subtil</span>
+                          <input
+                            id="colon-pulse-intensity-slider"
+                            type="range"
+                            min="0.1"
+                            max="1.0"
+                            step="0.05"
+                            value={settings.colonPulseIntensity ?? 0.6}
+                            onChange={(e) =>
+                              onUpdateSettings((p) => ({
+                                ...p,
+                                colonPulseIntensity: parseFloat(e.target.value),
+                              }))
+                            }
+                            className="flex-1 accent-sky-500 cursor-pointer"
+                            aria-label="Doppelpunkt Puls Intensität"
+                          />
+                          <span className="text-[10px] font-mono text-slate-500">Kräftig</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   <MaterialSwitch
                     label="Oberflächen-Rahmenkarte"
@@ -946,6 +1189,71 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     checked={settings.showCardContainer}
                     onChange={(v) => onUpdateSettings((p) => ({ ...p, showCardContainer: v }))}
                   />
+
+                  {/* Granular Backdrop-Filter Blur Intensity Slider */}
+                  <div className="pt-2 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-200">
+                          Glas-Unschärfe (Backdrop Blur)
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          Unschärfestärke für Rahmenkarte, Weltuhr-Chips & UI-Elemente
+                        </span>
+                      </div>
+                      <span className="font-mono text-slate-400 font-bold ml-2">
+                        {settings.backdropBlurIntensity ?? 16}px
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-[10px] font-mono text-slate-500">0px (Aus)</span>
+                      <input
+                        id="backdrop-blur-slider"
+                        type="range"
+                        min="0"
+                        max="40"
+                        step="1"
+                        value={settings.backdropBlurIntensity ?? 16}
+                        onChange={(e) =>
+                          onUpdateSettings((p) => ({
+                            ...p,
+                            backdropBlurIntensity: Number(e.target.value),
+                          }))
+                        }
+                        className="flex-1 accent-blue-500 cursor-pointer"
+                        aria-label="Glas-Unschärfe Backdrop Blur Intensität"
+                      />
+                      <span className="text-[10px] font-mono text-slate-500">40px</span>
+                    </div>
+                    {/* Quick preset buttons */}
+                    <div className="flex items-center gap-1.5 mt-2.5">
+                      {[
+                        { label: 'Aus (0px)', val: 0 },
+                        { label: 'Dezent (8px)', val: 8 },
+                        { label: 'Mittel (16px)', val: 16 },
+                        { label: 'Stark (28px)', val: 28 },
+                        { label: 'Ultra (40px)', val: 40 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.val}
+                          type="button"
+                          onClick={() =>
+                            onUpdateSettings((p) => ({
+                              ...p,
+                              backdropBlurIntensity: preset.val,
+                            }))
+                          }
+                          className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                            (settings.backdropBlurIntensity ?? 16) === preset.val
+                              ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                              : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-750'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1060,6 +1368,35 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     </button>
                   </div>
 
+                  {/* Design-Konfiguration als JSON exportieren / importieren */}
+                  <div className="pt-3 border-t border-slate-800/80">
+                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Design als Datei sichern & teilen
+                    </h4>
+                    <p className="text-xs text-slate-400 mb-3">
+                      Exportiere alle Farben, Schriften, Partikel & Optionen als JSON-Datei oder lade ein gespeichertes Design.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={handleExportConfig}
+                        className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700 transition-all active:scale-98 cursor-pointer"
+                      >
+                        <FileDown className="w-4 h-4 text-sky-400" />
+                        JSON exportieren
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => importFileInputRef.current?.click()}
+                        className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700 transition-all active:scale-98 cursor-pointer"
+                      >
+                        <FileUp className="w-4 h-4 text-emerald-400" />
+                        JSON importieren
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="pt-3 border-t border-slate-800/80">
                     <h4 className="text-xs font-bold text-rose-300 uppercase tracking-wider mb-1">
                       Einstellungen zurücksetzen
@@ -1144,10 +1481,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                   <div className="space-y-1.5 text-xs">
                     {[
+                      { key: 'W', desc: 'Stoppuhr öffnen / schließen' },
                       { key: 'G', desc: 'Pausen-Spiele (Games) öffnen' },
                       { key: 'F', desc: 'Vollbildmodus umschalten' },
                       { key: 'S', desc: 'Einstellungen / Menü öffnen oder schließen' },
-                      { key: 'Esc', desc: 'Menü oder Spiel schließen' },
+                      { key: 'Esc', desc: 'Menü, Stoppuhr oder Spiel schließen' },
                       { key: 'Doppelklick', desc: 'Vollbildmodus starten / beenden' },
                     ].map((hk) => (
                       <div

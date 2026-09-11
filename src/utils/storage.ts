@@ -16,6 +16,32 @@ export function loadSettings(): ClockSettings {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      dateFormat:
+        parsed.dateFormat === 'MM/DD/YYYY' || parsed.dateFormat === 'YYYY-MM-DD' || parsed.dateFormat === 'DD.MM.YYYY'
+          ? parsed.dateFormat
+          : DEFAULT_SETTINGS.dateFormat,
+      colonAnimation:
+        parsed.colonAnimation === 'pulse' ||
+        parsed.colonAnimation === 'blink' ||
+        parsed.colonAnimation === 'glow' ||
+        parsed.colonAnimation === 'bounce' ||
+        parsed.colonAnimation === 'static'
+          ? parsed.colonAnimation
+          : parsed.showBlinkingSeparator
+          ? 'blink'
+          : DEFAULT_SETTINGS.colonAnimation,
+      colonPulseIntensity:
+        typeof parsed.colonPulseIntensity === 'number'
+          ? Math.max(0.1, Math.min(1.0, parsed.colonPulseIntensity))
+          : DEFAULT_SETTINGS.colonPulseIntensity,
+      showCardContainer:
+        typeof parsed.showCardContainer === 'boolean'
+          ? parsed.showCardContainer
+          : DEFAULT_SETTINGS.showCardContainer,
+      backdropBlurIntensity:
+        typeof parsed.backdropBlurIntensity === 'number'
+          ? Math.max(0, Math.min(40, parsed.backdropBlurIntensity))
+          : DEFAULT_SETTINGS.backdropBlurIntensity,
       timeZone: parsed.timeZone || DEFAULT_SETTINGS.timeZone,
       showAdditionalTimeZones:
         typeof parsed.showAdditionalTimeZones === 'boolean'

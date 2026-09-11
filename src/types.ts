@@ -3,6 +3,8 @@ export type ClockWeight = '300' | '400' | '600' | '800';
 export type BgType = 'color' | 'gradient' | 'image';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
+export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
 
 export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
 
@@ -86,9 +88,13 @@ export interface ClockSettings {
   is24Hour: boolean; // 24-hour vs 12-hour AM/PM format
   showSeconds: boolean; // Toggle seconds display
   showDate: boolean; // Toggle date string
+  dateFormat: DateFormat; // 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'
   showDayOfWeek: boolean; // Toggle weekday name (e.g. Dienstag)
   showBlinkingSeparator: boolean; // Toggle blinking colons
+  colonAnimation: ColonAnimation; // 'pulse' | 'blink' | 'glow' | 'bounce' | 'static'
+  colonPulseIntensity: number; // 0.1 to 1.0 (subtlety to prominence of colon animation)
   showCardContainer: boolean; // Material 3 surface container around digits
+  backdropBlurIntensity: number; // 0 to 40 px: granular backdrop-filter blur for clock UI elements
   timeZone: string; // Target time zone (default 'Europe/Berlin' for Germany/Central Europe)
 
   // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sun, Moon, Globe } from 'lucide-react';
 import { AdditionalTimeZone, ClockSettings } from '../types';
+import { SpringDigit } from './SpringDigit';
 
 interface AdditionalTimeZonesBarProps {
   time: Date;
@@ -175,7 +176,11 @@ export const AdditionalTimeZonesBar: React.FC<AdditionalTimeZonesBarProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.92 }}
             transition={{ duration: 0.2 }}
-            className="group flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 backdrop-blur-xl border border-slate-700/60 hover:border-slate-500/80 transition-all shadow-md select-none"
+            className="group flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 border border-slate-700/60 hover:border-slate-500/80 transition-all shadow-md select-none"
+            style={{
+              backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+              WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+            }}
           >
             {/* Day / Night Indicator Icon */}
             <div
@@ -209,12 +214,23 @@ export const AdditionalTimeZonesBar: React.FC<AdditionalTimeZonesBarProps> = ({
             {/* Digital Time */}
             <div className="flex items-baseline gap-1 pl-1 border-l border-slate-700/50">
               <span
-                className={`text-sm sm:text-base font-bold tabular-numbers ${fontClass}`}
+                className={`text-sm sm:text-base font-bold tabular-numbers inline-flex items-baseline ${fontClass}`}
                 style={{
                   color: 'var(--clock-color, ' + settings.clockColor + ')',
                 }}
               >
-                {item.formattedTime}
+                {item.formattedTime.split('').map((char, charIdx) =>
+                  char === ':' ? (
+                    <span key={`colon-${charIdx}`} className="px-0.5 opacity-80">
+                      :
+                    </span>
+                  ) : (
+                    <SpringDigit
+                      key={`tz-digit-${charIdx}`}
+                      digit={char}
+                    />
+                  )
+                )}
               </span>
               {item.ampm && (
                 <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">

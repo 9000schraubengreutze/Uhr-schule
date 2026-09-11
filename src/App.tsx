@@ -15,11 +15,13 @@ import { SmoothBackground } from './components/SmoothBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { GamesModal } from './games/GamesModal';
+import { StopwatchModal } from './components/StopwatchModal';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGamesOpen, setIsGamesOpen] = useState(false);
+  const [isStopwatchOpen, setIsStopwatchOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -123,6 +125,7 @@ export default function App() {
       }
       if (e.key === 'Escape') {
         if (isGamesOpen) setIsGamesOpen(false);
+        else if (isStopwatchOpen) setIsStopwatchOpen(false);
         else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
@@ -130,11 +133,13 @@ export default function App() {
         setIsSettingsOpen((prev) => !prev);
       } else if (e.key === 'g' || e.key === 'G') {
         setIsGamesOpen((prev) => !prev);
+      } else if (e.key === 'w' || e.key === 'W') {
+        setIsStopwatchOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isSettingsOpen, toggleFullscreen]);
+  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, toggleFullscreen]);
 
   const handleUploadImage = async (file: File) => {
     try {
@@ -197,11 +202,15 @@ export default function App() {
     root.style.setProperty('--surface-border', surfaceBorder);
 
     root.style.setProperty('--bg-color', settings.bgColor);
+
+    const uiBlur = typeof settings.backdropBlurIntensity === 'number' ? settings.backdropBlurIntensity : 16;
+    root.style.setProperty('--ui-backdrop-blur', `${uiBlur}px`);
   }, [
     settings.clockColor,
     settings.themeId,
     settings.accentColor,
     settings.bgColor,
+    settings.backdropBlurIntensity,
   ]);
 
   // Resolve current background gradient string directly
@@ -292,6 +301,8 @@ export default function App() {
       <QuickControls
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenGames={() => setIsGamesOpen(true)}
+        onOpenStopwatch={() => setIsStopwatchOpen(true)}
+        backdropBlur={settings.backdropBlurIntensity}
       />
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
@@ -301,6 +312,13 @@ export default function App() {
           offsetMs={atomicState.offsetMs}
         />
       </main>
+
+      {/* Stopwatch Modal with Lap Tracking & Pause/Resume */}
+      <StopwatchModal
+        isOpen={isStopwatchOpen}
+        onClose={() => setIsStopwatchOpen(false)}
+        settings={settings}
+      />
 
       {/* Games Arcade Modal */}
       <GamesModal
@@ -314,6 +332,7 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onOpenGames={() => setIsGamesOpen(true)}
+        onOpenStopwatch={() => setIsStopwatchOpen(true)}
         settings={settings}
         onUpdateSettings={setSettings}
         onUploadImage={handleUploadImage}

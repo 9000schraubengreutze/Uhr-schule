@@ -3,6 +3,7 @@ import { motion, useAnimation } from 'motion/react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
+import { SpringDigit } from './SpringDigit';
 
 interface DigitalClockProps {
   settings: ClockSettings;
@@ -21,6 +22,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
 
   const clockControls = useAnimation();
   const secondsControls = useAnimation();
+  const colonControls = useAnimation();
 
   useEffect(() => {
     // High-frequency polling (50ms) guarantees exact alignment with online atomic clock
@@ -41,8 +43,14 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
     return () => clearInterval(interval);
   }, [settings.soundEnabled, settings.useAtomicSync, offsetMs]);
 
-  // Breathing pulse animation synchronized with device second tick
+  // Colon animation type and intensity
+  const colonAnimType = settings.colonAnimation || (settings.showBlinkingSeparator ? 'blink' : 'pulse');
+  const colonIntensity = typeof settings.colonPulseIntensity === 'number' ? settings.colonPulseIntensity : 0.6;
+
+  // Pulse & ticking animation synchronized with device second tick
   useEffect(() => {
+    const curSec = time.getSeconds();
+
     if (settings.enableBreathingAnimation) {
       clockControls.start({
         scale: [0.996, 1.008, 1],
@@ -65,7 +73,64 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
       clockControls.set({ scale: 1 });
       secondsControls.set({ scale: 1 });
     }
-  }, [time.getSeconds(), settings.enableBreathingAnimation, settings.showSeconds, clockControls, secondsControls]);
+
+    // Colon separator animation matching the ticking movement
+    if (colonAnimType === 'pulse') {
+      const scalePeak = 1 + 0.2 * colonIntensity;
+      const minOpacity = 1 - 0.5 * colonIntensity;
+      colonControls.start({
+        scale: [1, scalePeak, 1],
+        opacity: [minOpacity, 1, 1],
+        transition: {
+          duration: 0.6,
+          ease: [0.16, 1, 0.3, 1],
+        },
+      });
+    } else if (colonAnimType === 'glow') {
+      const peakScale = 1 + 0.12 * colonIntensity;
+      colonControls.start({
+        scale: [1, peakScale, 1],
+        filter: [
+          'drop-shadow(0 0 2px var(--accent-color, #38bdf8))',
+          `drop-shadow(0 0 ${20 * colonIntensity}px var(--accent-color, #38bdf8))`,
+          'drop-shadow(0 0 2px var(--accent-color, #38bdf8))',
+        ],
+        transition: {
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      });
+    } else if (colonAnimType === 'bounce') {
+      const yDelta = -5 * colonIntensity;
+      colonControls.start({
+        y: [0, yDelta, 0],
+        transition: {
+          duration: 0.4,
+          ease: [0.34, 1.56, 0.64, 1],
+        },
+      });
+    } else if (colonAnimType === 'blink') {
+      const isVisible = curSec % 2 === 0;
+      colonControls.set({
+        scale: 1,
+        opacity: isVisible ? 1 : Math.max(0.1, 1 - colonIntensity),
+        y: 0,
+        filter: 'none',
+      });
+    } else {
+      // static
+      colonControls.set({ scale: 1, opacity: 1, y: 0, filter: 'none' });
+    }
+  }, [
+    time.getSeconds(),
+    settings.enableBreathingAnimation,
+    settings.showSeconds,
+    colonAnimType,
+    colonIntensity,
+    clockControls,
+    secondsControls,
+    colonControls,
+  ]);
 
   // Resolve target timezone (default to 'Europe/Berlin' so devices with wrong Windows timezones still show exact German atomic time)
   const targetTimeZone =
@@ -94,15 +159,34 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
 
   const currentSecondsNum = parseInt(formattedSeconds, 10) || 0;
 
-  // Date formatting based on selected language and target timezone
+  // Date formatting based on selected dateFormat and target timezone
   const locale = settings.appLanguage === 'en' ? 'en-US' : 'de-DE';
-  const formattedDate = new Intl.DateTimeFormat(locale, {
+  const dateParts = new Intl.DateTimeFormat('en-GB', {
     timeZone: targetTimeZone,
-    weekday: settings.showDayOfWeek ? 'long' : undefined,
-    day: 'numeric',
-    month: 'long',
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-  }).format(time);
+  }).formatToParts(time);
+
+  const dayVal = dateParts.find((p) => p.type === 'day')?.value || '01';
+  const monthVal = dateParts.find((p) => p.type === 'month')?.value || '01';
+  const yearVal = dateParts.find((p) => p.type === 'year')?.value || '2026';
+
+  let dateCore = `${dayVal}.${monthVal}.${yearVal}`;
+  if (settings.dateFormat === 'MM/DD/YYYY') {
+    dateCore = `${monthVal}/${dayVal}/${yearVal}`;
+  } else if (settings.dateFormat === 'YYYY-MM-DD') {
+    dateCore = `${yearVal}-${monthVal}-${dayVal}`;
+  }
+
+  let formattedDate = dateCore;
+  if (settings.showDayOfWeek) {
+    const weekdayName = new Intl.DateTimeFormat(locale, {
+      timeZone: targetTimeZone,
+      weekday: 'long',
+    }).format(time);
+    formattedDate = `${weekdayName}, ${dateCore}`;
+  }
 
   // Font family resolution
   const fontClass =
@@ -147,9 +231,17 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
       <div
         className={`w-full flex flex-col items-center justify-center transition-all duration-300 ${
           settings.showCardContainer
-            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 backdrop-blur-2xl border border-slate-700/50 shadow-2xl'
+            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-700/50 shadow-2xl'
             : ''
         }`}
+        style={
+          settings.showCardContainer
+            ? {
+                backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+              }
+            : undefined
+        }
       >
         <motion.div
           animate={clockControls}
@@ -168,48 +260,64 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
             {/* Hours */}
             <span
               id="clock-hours"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-block select-none"
+              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none"
             >
-              {formattedHours}
+              {formattedHours.split('').map((char, index) => (
+                <SpringDigit
+                  key={`h-${index}`}
+                  digit={char}
+                  id={`clock-hour-digit-${index}`}
+                />
+              ))}
             </span>
 
             {/* Colon Separator 1 */}
-            <span
+            <motion.span
               id="clock-colon-1"
               aria-hidden="true"
-              className={`text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-200 select-none ${
-                isColonVisible ? 'opacity-100' : 'opacity-25'
-              }`}
+              animate={colonControls}
+              className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity]"
             >
               :
-            </span>
+            </motion.span>
 
             {/* Minutes */}
             <span
               id="clock-minutes"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-block select-none"
+              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none"
             >
-              {formattedMinutes}
+              {formattedMinutes.split('').map((char, index) => (
+                <SpringDigit
+                  key={`m-${index}`}
+                  digit={char}
+                  id={`clock-minute-digit-${index}`}
+                />
+              ))}
             </span>
 
             {/* Optional Seconds */}
             {settings.showSeconds && (
               <>
-                <span
+                <motion.span
                   id="clock-colon-2"
                   aria-hidden="true"
-                  className={`text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal transition-opacity duration-200 select-none ${
-                    isColonVisible ? 'opacity-100' : 'opacity-25'
-                  }`}
+                  animate={colonControls}
+                  className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity]"
                 >
                   :
-                </span>
+                </motion.span>
                 <motion.span
                   id="clock-seconds"
                   animate={secondsControls}
-                  className="text-[clamp(3.4rem,14.5vw,11rem)] inline-block opacity-90 select-none will-change-transform"
+                  className="text-[clamp(3.4rem,14.5vw,11rem)] inline-flex items-baseline opacity-90 select-none will-change-transform"
                 >
-                  {formattedSeconds}
+                  {formattedSeconds.split('').map((char, index) => (
+                    <SpringDigit
+                      key={`s-${index}`}
+                      digit={char}
+                      id={`clock-second-digit-${index}`}
+                    />
+                  ))}
                 </motion.span>
               </>
             )}
@@ -218,7 +326,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
             {!settings.is24Hour && ampm && (
               <span
                 id="clock-ampm-badge"
-                className="ml-3 sm:ml-5 text-[clamp(1rem,3vw,2rem)] tracking-wider font-bold uppercase self-center py-1.5 px-3 sm:px-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-md transition-all select-none"
+                className="ml-3 sm:ml-5 text-[clamp(1rem,3vw,2rem)] tracking-wider font-bold uppercase self-center py-1.5 px-3 sm:px-4 rounded-2xl border border-white/20 bg-white/10 shadow-md transition-all select-none"
+                style={{
+                  backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                  WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                }}
               >
                 {ampm}
               </span>

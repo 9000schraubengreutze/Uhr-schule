@@ -36,9 +36,13 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   is24Hour: true,
   showSeconds: true,
   showDate: true,
+  dateFormat: 'DD.MM.YYYY',
   showDayOfWeek: true,
   showBlinkingSeparator: false,
+  colonAnimation: 'pulse', // Default to smooth subtle pulse
+  colonPulseIntensity: 0.6, // 60% intensity (subtle and elegant)
   showCardContainer: false,
+  backdropBlurIntensity: 16, // Default 16px (matches backdrop-blur-xl/2xl)
   timeZone: 'Europe/Berlin',
 
   // Zusätzliche Zeitzonen (Weltuhr)
