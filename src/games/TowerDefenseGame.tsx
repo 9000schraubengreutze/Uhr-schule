@@ -21,6 +21,9 @@ import {
   Shield,
   Droplets,
   FastForward,
+  Swords,
+  Heart,
+  Coins,
 } from 'lucide-react';
 import { playSound } from './audio';
 import { saveGameResult, getGameStats } from './storage';
@@ -93,7 +96,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Arrow Tower',
     subTitle: 'Bogenschütze',
     role: 'Präzisions-Schütze',
-    cost: 100,
+    cost: 300,
     baseRange: 155,
     baseDamage: 1.5,
     baseFireRate: 1.0,
@@ -111,7 +114,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Cannon Tower',
     subTitle: 'Feld-Kanone',
     role: 'Flächenschaden',
-    cost: 150,
+    cost: 560,
     baseRange: 120,
     baseDamage: 2.2,
     baseFireRate: 1.2,
@@ -129,7 +132,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Magic Tower',
     subTitle: 'Arkan-Monolith',
     role: 'Arkaner Strahl',
-    cost: 200,
+    cost: 900,
     baseRange: 140,
     baseDamage: 2.8,
     baseFireRate: 1.5,
@@ -147,7 +150,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Tesla Tower',
     subTitle: 'Blitzspule',
     role: 'Kettenblitz',
-    cost: 250,
+    cost: 1200,
     baseRange: 130,
     baseDamage: 2.0,
     baseFireRate: 2.2,
@@ -165,7 +168,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Mortar Tower',
     subTitle: 'Belagerungs-Mörser',
     role: 'Explosiv-Bombe',
-    cost: 250,
+    cost: 1500,
     baseRange: 175,
     baseDamage: 4.0,
     baseFireRate: 0.5,
@@ -183,7 +186,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Ice Tower',
     subTitle: 'Frost-Kristall',
     role: 'Verlangsamung',
-    cost: 180,
+    cost: 1000,
     baseRange: 130,
     baseDamage: 1.4,
     baseFireRate: 1.8,
@@ -201,7 +204,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Ballista Tower',
     subTitle: 'Repetier-Armbrust',
     role: 'Schnellfeuer',
-    cost: 150,
+    cost: 1200,
     baseRange: 115,
     baseDamage: 1.1,
     baseFireRate: 2.6,
@@ -219,7 +222,7 @@ export const TOWER_CONFIGS: Record<TowerType, TowerConfig> = {
     name: 'Bombard Tower',
     subTitle: 'Königliche Bastion',
     role: 'Super-Artillerie',
-    cost: 320,
+    cost: 1500,
     baseRange: 180,
     baseDamage: 5.5,
     baseFireRate: 0.45,
@@ -449,6 +452,7 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
   const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<EnemyKind>('orc_warrior');
   const [selectedTowerForInfo, setSelectedTowerForInfo] = useState<PlacedTower | null>(null);
   const [shopTab, setShopTab] = useState<'towers' | 'upgrades' | 'items' | 'gems'>('towers');
+  const [purchasedGems, setPurchasedGems] = useState<Record<string, boolean>>({});
 
   // Wave Composition State
   const [waveName, setWaveName] = useState<string>('Orc Swarm');
@@ -1967,72 +1971,121 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
           SHOP MODAL (Matching prompt reference Shop GUI)
           Towers / Upgrades / Items / Gems with Gold balance & Buy buttons
          ───────────────────────────────────────────────────────────── */}
+      {/* ─────────────────────────────────────────────────────────────
+          SHOP MODAL (Bild 3: Fantasy Tower Defense Shop Screen)
+          Top resource bar, 'Shop' plaque, Tabs (Towers, Upgrades, Items, Gems),
+          Grid with 8 tower portraits, €costs, Buy button, Gold display, Close button
+         ───────────────────────────────────────────────────────────── */}
       {showShopModal && (
-        <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-3 animate-in fade-in">
-          <div className="w-full max-w-2xl bg-stone-900 border-2 border-amber-500/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Header with Shop Title */}
-            <div className="px-5 py-3.5 bg-gradient-to-r from-stone-950 via-amber-950/40 to-stone-950 border-b border-amber-600/40 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  <ShoppingBag className="w-5 h-5" />
-                </span>
-                <h2 className="text-lg font-black text-amber-300 tracking-wider font-serif uppercase">
+        <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in">
+          <div className="w-full max-w-3xl bg-gradient-to-b from-stone-900 via-stone-925 to-stone-950 border-4 border-amber-600/90 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.9),0_0_20px_rgba(217,119,6,0.3)] overflow-hidden flex flex-col max-h-[92vh] relative">
+            
+            {/* Top Resource Bar (Identical to reference: Level: 14 | Wave: 38/50 | Lives: 18/20 | Gold: 3,450 | Mana: 120) */}
+            <div className="px-4 py-2.5 bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 border-b-2 border-amber-700/60 flex flex-wrap items-center justify-between gap-2 shadow-inner">
+              <div className="flex items-center gap-3 text-xs font-bold text-amber-200">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800/90 border border-amber-500/40 shadow-sm">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Level: 14</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800/90 border border-amber-500/40 shadow-sm">
+                  <Swords className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Wave: {currentWave}/50</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800/90 border border-rose-500/40 text-rose-300 shadow-sm">
+                  <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                  <span>Lives: {lives}/20</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs font-bold">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800/90 border border-amber-500/50 text-amber-300 shadow-sm">
+                  <Coins className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="font-mono">Gold: {gold.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800/90 border border-sky-500/50 text-sky-300 shadow-sm">
+                  <Zap className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="font-mono">Mana: {mana}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowShopModal(false)}
+                  className="p-1.5 rounded-lg bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white border border-stone-700 transition-colors cursor-pointer"
+                  title="Schließen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Title Plaque: Ornate crimson/ruby cartouche with gold filigree */}
+            <div className="pt-3 pb-1 flex justify-center">
+              <div className="px-10 py-1.5 bg-gradient-to-r from-red-950 via-rose-900 to-red-950 border-2 border-amber-400/90 rounded-xl shadow-[0_4px_14px_rgba(0,0,0,0.8),inset_0_1px_3px_rgba(255,255,255,0.2)] flex items-center justify-center">
+                <h2 className="text-xl sm:text-2xl font-black text-amber-200 tracking-wider font-serif uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                   Shop
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowShopModal(false)}
-                className="p-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            {/* Shop Tabs: Towers / Upgrades / Items / Gems */}
-            <div className="flex border-b border-stone-800 bg-stone-950/80 px-5 pt-2 gap-2 text-xs font-bold">
+            {/* Shop Tabs: Towers, Upgrades, Items, Gems */}
+            <div className="flex border-b-2 border-amber-900/60 bg-stone-950/90 px-4 sm:px-6 pt-2 gap-2 text-xs sm:text-sm font-bold">
               <button
                 type="button"
                 onClick={() => setShopTab('towers')}
-                className={`pb-2 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`pb-2.5 px-4 rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-t border-x ${
                   shopTab === 'towers'
-                    ? 'border-amber-400 text-amber-400'
-                    : 'border-transparent text-stone-400 hover:text-stone-200'
+                    ? 'bg-gradient-to-t from-stone-900 to-amber-950/60 border-amber-500 text-amber-300 shadow-[0_-2px_10px_rgba(245,158,11,0.2)]'
+                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900/40'
                 }`}
               >
-                <Award className="w-3.5 h-3.5" />
+                <Award className={`w-4 h-4 ${shopTab === 'towers' ? 'text-amber-400' : 'text-stone-400'}`} />
                 <span>Towers</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setShopTab('upgrades')}
-                className={`pb-2 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`pb-2.5 px-4 rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-t border-x ${
                   shopTab === 'upgrades'
-                    ? 'border-amber-400 text-amber-400'
-                    : 'border-transparent text-stone-400 hover:text-stone-200'
+                    ? 'bg-gradient-to-t from-stone-900 to-amber-950/60 border-amber-500 text-amber-300 shadow-[0_-2px_10px_rgba(245,158,11,0.2)]'
+                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900/40'
                 }`}
               >
-                <Sliders className="w-3.5 h-3.5" />
+                <Sliders className={`w-4 h-4 ${shopTab === 'upgrades' ? 'text-amber-400' : 'text-stone-400'}`} />
                 <span>Upgrades</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setShopTab('items')}
-                className={`pb-2 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`pb-2.5 px-4 rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-t border-x ${
                   shopTab === 'items'
-                    ? 'border-amber-400 text-amber-400'
-                    : 'border-transparent text-stone-400 hover:text-stone-200'
+                    ? 'bg-gradient-to-t from-stone-900 to-amber-950/60 border-amber-500 text-amber-300 shadow-[0_-2px_10px_rgba(245,158,11,0.2)]'
+                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900/40'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className={`w-4 h-4 ${shopTab === 'items' ? 'text-amber-400' : 'text-stone-400'}`} />
                 <span>Items</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShopTab('gems')}
+                className={`pb-2.5 px-4 rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-t border-x ${
+                  shopTab === 'gems'
+                    ? 'bg-gradient-to-t from-stone-900 to-amber-950/60 border-amber-500 text-amber-300 shadow-[0_-2px_10px_rgba(245,158,11,0.2)]'
+                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900/40'
+                }`}
+              >
+                <span className="text-sm">💎</span>
+                <span>Gems</span>
               </button>
             </div>
 
-            {/* Tab 1: Towers (Arrow Tower, Cannon Tower, Magic, Tesla, Mortar, Ice, Ballista, Bombard) */}
-            <div className="p-5 overflow-y-auto space-y-3 flex-1">
+            {/* Shop Content Area */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-stone-950/40">
+              {/* ── TAB 1: TOWERS (Bild 3: Grid of 8 Towers with Portrait, €Cost, and Buy button) ── */}
               {shopTab === 'towers' && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
                   {(
                     [
                       'arrow',
@@ -2050,28 +2103,38 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
                     return (
                       <div
                         key={tType}
-                        className="bg-stone-950/80 border border-stone-800 hover:border-amber-500/50 rounded-2xl p-3 flex flex-col items-center text-center justify-between transition-all"
+                        className="bg-gradient-to-b from-stone-900/95 via-stone-900 to-stone-950 border-2 border-amber-900/50 hover:border-amber-500/70 rounded-2xl p-2.5 flex flex-col items-center justify-between text-center transition-all shadow-[0_4px_12px_rgba(0,0,0,0.5)] group"
                       >
-                        <div className="rounded-xl overflow-hidden border border-stone-700/80 mb-2 shadow-inner">
-                          <TowerPortrait type={tType} size={60} />
+                        {/* Tower Name */}
+                        <h4 className="font-serif font-bold text-stone-100 text-xs sm:text-sm tracking-wide mb-1.5 drop-shadow">
+                          {cfg.name}
+                        </h4>
+
+                        {/* Portrait Frame */}
+                        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 border-amber-700/60 group-hover:border-amber-400/80 bg-stone-950 shadow-[inset_0_2px_8px_rgba(0,0,0,0.9)] flex items-center justify-center relative mb-1.5 transition-colors">
+                          <TowerPortrait type={tType} size={74} />
                         </div>
-                        <h4 className="font-bold text-white text-xs">{cfg.name}</h4>
-                        <span className="text-[10px] text-amber-400 font-mono font-bold mt-1">
-                          🪙 {cfg.cost}
-                        </span>
+
+                        {/* Price Badge in € currency as shown in Bild 3 */}
+                        <div className="flex items-center gap-1 my-1 px-2.5 py-0.5 rounded-full bg-stone-950/80 border border-amber-500/40 shadow-inner">
+                          <span className="text-amber-400 text-xs">🪙</span>
+                          <span className="text-amber-300 font-mono font-bold text-xs">€{cfg.cost}</span>
+                        </div>
+
+                        {/* Buy Button (Moss-green textured gradient with gold border) */}
                         <button
                           type="button"
                           disabled={!canAfford}
                           onClick={() => {
                             setSelectedBuildType(tType);
                             setShowShopModal(false);
-                            showFeedback(`${cfg.name} zum Platzieren gewählt!`);
+                            showFeedback(`${cfg.name} für €${cfg.cost} ausgewählt! Klicke auf das Feld zum Bauen.`);
                             playSound('click', isMuted);
                           }}
-                          className={`mt-2 w-full py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          className={`mt-1.5 w-full py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                             canAfford
-                              ? 'bg-emerald-700 hover:bg-emerald-600 text-white shadow active:scale-95'
-                              : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                              ? 'bg-gradient-to-b from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 active:scale-95 border border-emerald-400/60 text-white shadow-[0_2px_10px_rgba(5,150,105,0.4)]'
+                              : 'bg-stone-800/80 border border-stone-700/50 text-stone-500 cursor-not-allowed'
                           }`}
                         >
                           Buy
@@ -2082,34 +2145,58 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
                 </div>
               )}
 
-              {/* Tab 2: Upgrades */}
+              {/* ── TAB 2: UPGRADES ── */}
               {shopTab === 'upgrades' && (
-                <div className="space-y-3">
-                  {(['arrow', 'cannon', 'magic', 'mortar'] as TowerType[]).map((tType) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(
+                    [
+                      'arrow',
+                      'cannon',
+                      'magic',
+                      'tesla',
+                      'mortar',
+                      'ice',
+                      'ballista',
+                      'bombard',
+                    ] as TowerType[]
+                  ).map((tType) => {
                     const cfg = TOWER_CONFIGS[tType];
-                    const curUp = upgrades[tType];
+                    const curUp = upgrades[tType] || { damage: 1, fireRate: 1, range: 1 };
                     return (
                       <div
                         key={tType}
-                        className="bg-stone-950/80 border border-stone-800 rounded-2xl p-3 flex items-center justify-between"
+                        className="bg-stone-900/90 border border-amber-900/60 hover:border-amber-500/50 rounded-2xl p-3 flex items-center justify-between gap-3 shadow"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl">{cfg.iconSymbol}</span>
+                          <div className="w-12 h-12 rounded-xl overflow-hidden border border-amber-700/60 bg-stone-950 flex items-center justify-center shrink-0">
+                            <TowerPortrait type={tType} size={46} />
+                          </div>
                           <div>
-                            <h4 className="font-bold text-white text-sm">{cfg.name} Upgrade</h4>
-                            <p className="text-[11px] text-stone-400">
-                              Damage Lv. {curUp.damage}/3 • Kadenz Lv. {curUp.fireRate}/3
-                            </p>
+                            <h4 className="font-bold text-white text-xs sm:text-sm font-serif">{cfg.name}</h4>
+                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-amber-300/80">
+                              <span>⚔️ Dmg Lv. {curUp.damage}/3</span>
+                              <span>•</span>
+                              <span>⚡ Rate Lv. {curUp.fireRate}/3</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        <div className="flex flex-col gap-1.5 shrink-0">
                           <button
                             type="button"
                             disabled={curUp.damage >= 3 || gold < 250}
                             onClick={() => handleBuyUpgrade(tType, 'damage')}
-                            className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-stone-800 text-white font-bold text-xs cursor-pointer shadow"
+                            className="px-2.5 py-1 rounded-lg bg-amber-700 hover:bg-amber-600 disabled:bg-stone-800 disabled:text-stone-500 text-white font-bold text-[11px] cursor-pointer shadow active:scale-95"
                           >
                             +Dmg (250 G)
+                          </button>
+                          <button
+                            type="button"
+                            disabled={curUp.fireRate >= 3 || gold < 250}
+                            onClick={() => handleBuyUpgrade(tType, 'fireRate')}
+                            className="px-2.5 py-1 rounded-lg bg-sky-700 hover:bg-sky-600 disabled:bg-stone-800 disabled:text-stone-500 text-white font-bold text-[11px] cursor-pointer shadow active:scale-95"
+                          >
+                            +Rate (250 G)
                           </button>
                         </div>
                       </div>
@@ -2118,53 +2205,223 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
                 </div>
               )}
 
-              {/* Tab 3: Items / Potions */}
+              {/* ── TAB 3: ITEMS ── */}
               {shopTab === 'items' && (
-                <div className="space-y-3">
-                  <div className="bg-stone-950/80 border border-stone-800 rounded-2xl p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">🧪</span>
-                      <div>
-                        <h4 className="font-bold text-white text-sm">Mana Elixier</h4>
-                        <p className="text-[11px] text-stone-400">
-                          Stellt sofort <strong className="text-sky-400">+50 Mana</strong> wieder her.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={gold < 150}
-                      onClick={() => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    {
+                      id: 'mana_potion',
+                      name: 'Mana Elixier',
+                      icon: '🧪',
+                      cost: 150,
+                      desc: 'Stellt sofort +50 Mana wieder her.',
+                      action: () => {
                         if (gold >= 150) {
                           setGold((g) => g - 150);
                           setMana((m) => Math.min(200, m + 50));
                           playSound('win', isMuted);
                           showFeedback('+50 Mana regeneriert!');
                         }
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs cursor-pointer"
+                      },
+                    },
+                    {
+                      id: 'health_elixir',
+                      name: 'Lebens-Trank',
+                      icon: '❤️',
+                      cost: 400,
+                      desc: 'Stellt +5 Lebenspunkte für die Festung her.',
+                      action: () => {
+                        if (gold >= 400) {
+                          setGold((g) => g - 400);
+                          setLives((l) => Math.min(20, l + 5));
+                          playSound('win', isMuted);
+                          showFeedback('+5 Festungs-Leben erhalten!');
+                        }
+                      },
+                    },
+                    {
+                      id: 'bomb_scroll',
+                      name: 'Belagerungs-Sprengsatz',
+                      icon: '💣',
+                      cost: 350,
+                      desc: 'Verursacht sofort 350 Flächenschaden an Monstern.',
+                      action: () => {
+                        if (gold >= 350) {
+                          setGold((g) => g - 350);
+                          enemiesRef.current.forEach((e) => {
+                            e.hp = Math.max(0, e.hp - 350);
+                          });
+                          playSound('bomb', isMuted);
+                          showFeedback('Sprengsatz detoniert! Alle Feinde getroffen.');
+                        }
+                      },
+                    },
+                    {
+                      id: 'frost_hourglass',
+                      name: 'Arktische Sanduhr',
+                      icon: '❄️',
+                      cost: 500,
+                      desc: 'Friert alle anstürmenden Monster für 6 Sekunden ein.',
+                      action: () => {
+                        if (gold >= 500) {
+                          setGold((g) => g - 500);
+                          enemiesRef.current.forEach((e) => {
+                            e.slowDuration = 6;
+                          });
+                          playSound('win', isMuted);
+                          showFeedback('Froststurm aktiv! Feinde für 6s eingefroren.');
+                        }
+                      },
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-stone-900/90 border border-stone-800 hover:border-amber-500/50 rounded-2xl p-3 flex items-center justify-between gap-3 shadow"
                     >
-                      Buy (150 G)
-                    </button>
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl p-2 rounded-xl bg-stone-950 border border-stone-800">
+                          {item.icon}
+                        </span>
+                        <div>
+                          <h4 className="font-bold text-white text-sm font-serif">{item.name}</h4>
+                          <p className="text-[11px] text-stone-400 mt-0.5">{item.desc}</p>
+                          <span className="text-xs text-amber-400 font-mono font-bold">€{item.cost}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={gold < item.cost}
+                        onClick={item.action}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:bg-stone-800 disabled:text-stone-500 text-white font-bold text-xs cursor-pointer shadow active:scale-95 shrink-0"
+                      >
+                        Buy
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── TAB 4: GEMS (Sockelbare Macht-Edelsteine) ── */}
+              {shopTab === 'gems' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    {
+                      id: 'ruby',
+                      name: 'Rubin der Macht',
+                      icon: '♦️',
+                      color: 'text-red-400',
+                      cost: 600,
+                      buff: '+15% Gesamter Turmschaden',
+                      effect: () => {
+                        setPurchasedGems((g) => ({ ...g, ruby: true }));
+                        setGold((goldVal) => goldVal - 600);
+                        showFeedback('Rubin gesockelt: +15% Turmschaden!');
+                        playSound('win', isMuted);
+                      },
+                    },
+                    {
+                      id: 'sapphire',
+                      name: 'Saphir des Frostes',
+                      icon: '🔷',
+                      color: 'text-sky-400',
+                      cost: 500,
+                      buff: '+25% Eis-Verlangsamungseffekt',
+                      effect: () => {
+                        setPurchasedGems((g) => ({ ...g, sapphire: true }));
+                        setGold((goldVal) => goldVal - 500);
+                        showFeedback('Saphir gesockelt: +25% Frostverlangsamung!');
+                        playSound('win', isMuted);
+                      },
+                    },
+                    {
+                      id: 'topaz',
+                      name: 'Topas des Reichtums',
+                      icon: '🔶',
+                      color: 'text-amber-400',
+                      cost: 700,
+                      buff: '+20% Extra-Gold bei Monster-Kills',
+                      effect: () => {
+                        setPurchasedGems((g) => ({ ...g, topaz: true }));
+                        setGold((goldVal) => goldVal - 700);
+                        showFeedback('Topas gesockelt: +20% Gold pro Kill!');
+                        playSound('win', isMuted);
+                      },
+                    },
+                    {
+                      id: 'emerald',
+                      name: 'Smaragd der Eile',
+                      icon: '❇️',
+                      color: 'text-emerald-400',
+                      cost: 550,
+                      buff: '+15% Höhere Angriffsgeschwindigkeit',
+                      effect: () => {
+                        setPurchasedGems((g) => ({ ...g, emerald: true }));
+                        setGold((goldVal) => goldVal - 550);
+                        showFeedback('Smaragd gesockelt: +15% Turm-Angriffstempo!');
+                        playSound('win', isMuted);
+                      },
+                    },
+                  ].map((gem) => {
+                    const isBought = Boolean(purchasedGems[gem.id]);
+                    return (
+                      <div
+                        key={gem.id}
+                        className="bg-stone-900/90 border border-stone-800 hover:border-amber-500/50 rounded-2xl p-3 flex items-center justify-between gap-3 shadow"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`text-2xl p-2 rounded-xl bg-stone-950 border border-stone-800 ${gem.color}`}>
+                            {gem.icon}
+                          </span>
+                          <div>
+                            <h4 className="font-bold text-white text-sm font-serif">{gem.name}</h4>
+                            <p className="text-[11px] text-amber-200/80 mt-0.5">{gem.buff}</p>
+                            <span className="text-xs text-amber-400 font-mono font-bold">€{gem.cost}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isBought || gold < gem.cost}
+                          onClick={gem.effect}
+                          className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer shadow shrink-0 active:scale-95 ${
+                            isBought
+                              ? 'bg-stone-800 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-emerald-700 hover:bg-emerald-600 disabled:bg-stone-800 disabled:text-stone-500 text-white'
+                          }`}
+                        >
+                          {isBought ? 'Aktiv ✓' : 'Buy'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Shop Footer with Gold status and Close button */}
-            <div className="px-5 py-3 bg-stone-950 border-t border-stone-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-400 font-bold">🪙 Gold:</span>
-                <span className="font-mono font-bold text-white text-sm">{gold.toLocaleString()}</span>
+            {/* Shop Footer with Gold status and prominent Close button (as shown in Bild 3) */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 border-t-2 border-amber-900/70 flex items-center justify-between shadow-2xl">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 border border-amber-300 flex items-center justify-center shadow-md">
+                  <span className="text-sm">🪙</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-amber-500/90 tracking-wider">
+                    Current Gold
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-amber-300 font-mono tracking-wide">
+                    Gold: {gold.toLocaleString()}
+                  </span>
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => setShowShopModal(false)}
-                className="px-5 py-1.5 bg-sky-900 hover:bg-sky-800 text-white font-bold rounded-xl cursor-pointer"
+                className="px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm tracking-wider uppercase bg-gradient-to-b from-sky-800 via-sky-900 to-slate-900 hover:from-sky-700 hover:to-slate-800 active:scale-95 border-2 border-sky-500/80 text-white shadow-[0_4px_14px_rgba(14,116,144,0.4)] transition-all cursor-pointer"
               >
                 Close
               </button>
             </div>
+
           </div>
         </div>
       )}
