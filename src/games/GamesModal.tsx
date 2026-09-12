@@ -139,12 +139,12 @@ export const GAMES_CATALOG: GameMeta[] = [
   },
   {
     id: 'towerdefense',
-    title: 'Tower Defense',
-    shortDesc: 'Taktisches Tower Defense: Kommandiere Scharfschützen, Heavy Gunner und schwere Feldartillerie. Wehre 15 Wellen ab!',
+    title: 'Tower Defense (Valorian)',
+    shortDesc: 'Mittelalterliches Tower Defense mit detailreichen Texturen, Scharfschützen-Wehrtürmen, Repetier-Ballisten, Belagerungskatapulten & interaktivem Festungs-Shop!',
     category: 'denksport',
-    accentColor: 'from-emerald-500 to-amber-500',
+    accentColor: 'from-amber-600 to-stone-700',
     duration: '5-15 Min',
-    controlsHint: 'Klick (Bauen/Wählen) / Q (Mauszeiger leer) / Rechtsklick (Stats) / SPACE (Pause)',
+    controlsHint: 'Klick (Bauen) / B (Shop) / U (Schmiede) / Q (Mauszeiger leer) / SPACE (Pause)',
   },
 ];
 
