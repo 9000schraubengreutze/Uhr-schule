@@ -64,6 +64,7 @@ export function getAllGamesStats(): Record<GameId, GameStats> {
     'simon',
     'pong',
     'tictactoe',
+    'towerdefense',
   ];
   const res: Partial<Record<GameId, GameStats>> = {};
   ids.forEach((id) => {
@@ -135,6 +136,13 @@ const DAILY_SCHEDULE: Omit<DailyChallenge, 'date' | 'isCompleted'>[] = [
     targetDescription: 'Entschärfe das Minenfeld ohne Explosion',
     targetScore: 100,
     rewardText: 'Minen-Experte 💣',
+  },
+  {
+    gameId: 'towerdefense',
+    title: 'Festungs-Kommandant',
+    targetDescription: 'Besiege mindestens Welle 5 in Tower Defense',
+    targetScore: 500,
+    rewardText: 'Turm-Stratege 🏰',
   },
 ];
 

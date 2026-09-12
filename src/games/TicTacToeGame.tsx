@@ -8,6 +8,9 @@ import {
   Users,
   Bot,
   Sparkles,
+  Flame,
+  ShieldAlert,
+  Zap,
 } from 'lucide-react';
 import { playSound } from './audio';
 import { saveGameResult, getGameStats } from './storage';
@@ -18,8 +21,9 @@ interface TicTacToeGameProps {
   onRestart?: () => void;
 }
 
-type Player = 'X' | 'O';
-type BoardCell = Player | null;
+export type Player = 'X' | 'O';
+export type BoardCell = Player | null;
+export type AIDifficulty = 'easy' | 'medium' | 'hard' | 'unbeatable';
 
 export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
   onBack,
@@ -28,7 +32,7 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
 }) => {
   const [boardSize, setBoardSize] = useState<3 | 4>(3);
   const [mode, setMode] = useState<'ai' | '2p'>('ai');
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('hard');
+  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('unbeatable');
   const [board, setBoard] = useState<BoardCell[]>(() => Array(9).fill(null));
   const [turn, setTurn] = useState<Player>('X');
   const [winner, setWinner] = useState<Player | 'draw' | null>(null);
@@ -86,7 +90,72 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
     []
   );
 
-  // Minimax / Smart AI move
+  // Full Mathematical Minimax algorithm for perfect, mathematically unbeatable play
+  const minimax = useCallback(
+    (
+      currentBoard: BoardCell[],
+      depth: number,
+      isMaximizing: boolean,
+      alpha: number,
+      beta: number,
+      maxDepth = 6
+    ): { score: number; bestMove?: number } => {
+      const res = checkWinner(currentBoard, 3);
+      if (res) {
+        if (res.winner === 'O') return { score: 10 - depth };
+        if (res.winner === 'X') return { score: depth - 10 };
+        return { score: 0 };
+      }
+
+      if (depth >= maxDepth) {
+        return { score: 0 };
+      }
+
+      const availableMoves: number[] = [];
+      for (let i = 0; i < currentBoard.length; i++) {
+        if (!currentBoard[i]) availableMoves.push(i);
+      }
+
+      if (isMaximizing) {
+        let maxEval = -Infinity;
+        let bestMove = availableMoves[0];
+
+        for (const move of availableMoves) {
+          currentBoard[move] = 'O';
+          const evaluation = minimax(currentBoard, depth + 1, false, alpha, beta, maxDepth).score;
+          currentBoard[move] = null;
+
+          if (evaluation > maxEval) {
+            maxEval = evaluation;
+            bestMove = move;
+          }
+          alpha = Math.max(alpha, evaluation);
+          if (beta <= alpha) break;
+        }
+        return { score: maxEval, bestMove };
+      } else {
+        let minEval = Infinity;
+        let bestMove = availableMoves[0];
+
+        for (const move of availableMoves) {
+          currentBoard[move] = 'X';
+          const evaluation = minimax(currentBoard, depth + 1, true, alpha, beta, maxDepth).score;
+          currentBoard[move] = null;
+
+          if (evaluation < minEval) {
+            minEval = evaluation;
+            bestMove = move;
+          }
+          beta = Math.min(beta, evaluation);
+          if (beta <= alpha) break;
+        }
+        return { score: minEval, bestMove };
+      }
+    },
+    [checkWinner]
+  );
+
+  // Minimax / Smart AI move solver
   const getBestMove = useCallback(
     (currentBoard: BoardCell[], size: number): number => {
       const available: number[] = [];
@@ -99,7 +168,7 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
         return available[Math.floor(Math.random() * available.length)];
       }
 
-      // 1. Can AI win in one move?
+      // 1. Can AI win immediately in one move?
       for (const idx of available) {
         const copy = [...currentBoard];
         copy[idx] = 'O';
@@ -107,7 +176,7 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
         if (res?.winner === 'O') return idx;
       }
 
-      // 2. Can player win in one move? Block!
+      // 2. Can player win in one move? Must Block!
       for (const idx of available) {
         const copy = [...currentBoard];
         copy[idx] = 'X';
@@ -116,23 +185,60 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
       }
 
       if (aiDifficulty === 'medium') {
-        // Take center if free
         const center = size === 3 ? 4 : 5;
         if (available.includes(center)) return center;
         return available[Math.floor(Math.random() * available.length)];
       }
 
-      // Hard AI for 3x3: prefer center, corners, edges
+      // UNBEATABLE / MASTER AI
       if (size === 3) {
+        if (aiDifficulty === 'unbeatable') {
+          // Pure minimax solution
+          const boardCopy = [...currentBoard];
+          const result = minimax(boardCopy, 0, true, -Infinity, Infinity, 9);
+          if (result.bestMove !== undefined && available.includes(result.bestMove)) {
+            return result.bestMove;
+          }
+        }
+
+        // Hard AI: Center priority, then corners, fork traps
         const center = 4;
         if (available.includes(center)) return center;
+
+        // Opposite corners defense against fork
         const corners = [0, 2, 6, 8].filter((c) => available.includes(c));
+        if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
+      }
+
+      // For 4x4: Strategic positional evaluation (Center quadrant > inner edges > corners)
+      if (size === 4) {
+        const innerQuadrant = [5, 6, 9, 10].filter((idx) => available.includes(idx));
+        if (innerQuadrant.length > 0) {
+          return innerQuadrant[Math.floor(Math.random() * innerQuadrant.length)];
+        }
+
+        // Block two-in-a-row threats
+        for (const idx of available) {
+          const copy = [...currentBoard];
+          copy[idx] = 'X';
+          // Count how many lines player progresses
+          let playerThreats = 0;
+          for (let r = 0; r < 4; r++) {
+            const rowCells = [copy[r * 4], copy[r * 4 + 1], copy[r * 4 + 2], copy[r * 4 + 3]];
+            if (rowCells.filter((c) => c === 'X').length >= 3 && rowCells.includes(null)) {
+              playerThreats++;
+            }
+          }
+          if (playerThreats > 0) return idx;
+        }
+
+        const corners = [0, 3, 12, 15].filter((c) => available.includes(c));
         if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
       }
 
       return available[Math.floor(Math.random() * available.length)];
     },
-    [aiDifficulty, checkWinner]
+    [aiDifficulty, checkWinner, minimax]
   );
 
   // Reset current round
@@ -164,7 +270,14 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
           setWinningIndices(winResult.line);
           setScore((s) => ({ ...s, x: s.x + 1 }));
           const timeSpent = (Date.now() - startTimeRef.current) / 1000;
-          const pts = mode === 'ai' ? 100 : 50;
+          const pts =
+            mode === 'ai'
+              ? aiDifficulty === 'unbeatable'
+                ? 250
+                : aiDifficulty === 'hard'
+                ? 150
+                : 100
+              : 50;
           const res = saveGameResult('tictactoe', pts, timeSpent);
           if (res.isNewHighscore) setHighScore(res.stats.highScore);
         } else if (winResult.winner === 'O') {
@@ -181,7 +294,7 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
       // Next turn
       setTurn((t) => (t === 'X' ? 'O' : 'X'));
     },
-    [board, boardSize, checkWinner, isMuted, mode, turn, winner]
+    [board, boardSize, checkWinner, isMuted, mode, turn, winner, aiDifficulty]
   );
 
   // Trigger AI move if it's O's turn in AI mode
@@ -190,7 +303,7 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
       const timer = setTimeout(() => {
         const move = getBestMove(board, boardSize);
         makeMove(move);
-      }, 350);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [board, boardSize, getBestMove, makeMove, mode, turn, winner]);
@@ -224,10 +337,9 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
         return;
       }
 
-      // Numpad 1-9 direct placement for 3x3 (maps standard phone/numpad)
+      // Numpad direct placement for 3x3
       if (boardSize === 3 && e.key >= '1' && e.key <= '9') {
         const keyNum = parseInt(e.key, 10);
-        // Standard Numpad mapping (7 8 9 / 4 5 6 / 1 2 3) or top-row (1 2 3 / 4 5 6 / 7 8 9)
         const cellIdx = keyNum - 1;
         if (!mode || turn === 'X') makeMove(cellIdx);
         return;
@@ -252,14 +364,14 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
   }, [boardSize, cursorIdx, makeMove, mode, resetRound, turn, winner]);
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col items-center justify-between text-slate-100 select-none">
+    <div className="flex-1 w-full h-full flex flex-col items-center justify-between text-slate-100 select-none overflow-y-auto p-1">
       {/* Top Header */}
-      <div className="w-full max-w-md flex items-center justify-between px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-2xl shrink-0 gap-2 mb-2">
+      <div className="w-full max-w-md flex items-center justify-between px-3 py-2 bg-slate-900/90 border border-slate-800 rounded-2xl shrink-0 gap-2 mb-2 shadow-lg">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onBack}
-            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-700"
             title="Zurück zum Menü"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -269,11 +381,11 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
           </span>
         </div>
 
-        {/* Score Display */}
+        {/* Score Matrix */}
         <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 px-3 py-1 rounded-xl text-xs font-mono">
           <span className="text-cyan-400 font-bold">X: {score.x}</span>
           <span className="text-slate-600">|</span>
-          <span className="text-slate-400">Unentschieden: {score.draws}</span>
+          <span className="text-slate-400">Remis: {score.draws}</span>
           <span className="text-slate-600">|</span>
           <span className="text-amber-400 font-bold">O: {score.o}</span>
         </div>
@@ -283,15 +395,15 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
           <button
             type="button"
             onClick={() => setIsMuted((m) => !m)}
-            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-700"
             title={isMuted ? 'Ton an' : 'Stumm'}
           >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
           </button>
           <button
             type="button"
             onClick={resetRound}
-            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-700"
             title="Neustart"
           >
             <RotateCcw className="w-4 h-4" />
@@ -300,8 +412,8 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
       </div>
 
       {/* Mode & Grid Size Bar */}
-      <div className="w-full max-w-md flex items-center justify-between px-2 mb-2 text-xs">
-        <div className="flex items-center gap-1 bg-slate-900/70 p-1 rounded-xl border border-slate-800">
+      <div className="w-full max-w-md flex items-center justify-between px-1 mb-2 text-xs gap-2 shrink-0">
+        <div className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => {
@@ -309,10 +421,10 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
               resetRound();
             }}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
-              mode === 'ai' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'
+              mode === 'ai' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Bot className="w-3 h-3" />
+            <Bot className="w-3.5 h-3.5" />
             <span>Gegen KI</span>
           </button>
           <button
@@ -322,21 +434,21 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
               resetRound();
             }}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
-              mode === '2p' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+              mode === '2p' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Users className="w-3 h-3" />
+            <Users className="w-3.5 h-3.5" />
             <span>2 Spieler</span>
           </button>
         </div>
 
         {/* Grid Switcher 3x3 or 4x4 */}
-        <div className="flex items-center gap-1 bg-slate-900/70 p-1 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => handleChangeSize(3)}
-            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
-              boardSize === 3 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+              boardSize === 3 ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
             3×3
@@ -344,14 +456,55 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
           <button
             type="button"
             onClick={() => handleChangeSize(4)}
-            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
-              boardSize === 4 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+              boardSize === 4 ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
             4×4
           </button>
         </div>
       </div>
+
+      {/* AI Difficulty Selector (Schwer & Unbesiegbar / Minimax) */}
+      {mode === 'ai' && (
+        <div className="w-full max-w-md flex items-center justify-between px-1 mb-2 shrink-0">
+          <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+            <Zap className="w-3 h-3 text-amber-400" />
+            <span>KI-Stufe:</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            {(
+              [
+                { id: 'medium', label: 'Mittel' },
+                { id: 'hard', label: 'Schwer' },
+                { id: 'unbeatable', label: 'Unbesiegbar (Minimax)' },
+              ] as { id: AIDifficulty; label: string }[]
+            ).map((item) => {
+              const isSelected = aiDifficulty === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setAiDifficulty(item.id);
+                    resetRound();
+                  }}
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    isSelected
+                      ? item.id === 'unbeatable'
+                        ? 'bg-rose-600 text-white shadow-md'
+                        : 'bg-amber-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {item.id === 'unbeatable' && <Flame className="w-3 h-3 text-amber-300" />}
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Main Board Arena */}
       <div className="flex-1 flex flex-col items-center justify-center w-full min-h-0 relative">
@@ -410,17 +563,17 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
 
           {/* Winner / Draw Overlay */}
           {winner && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xs rounded-3xl flex flex-col items-center justify-center p-4 text-center z-10 animate-in fade-in">
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xs rounded-3xl flex flex-col items-center justify-center p-4 text-center z-10 animate-in fade-in">
               <div className="text-2xl font-black mb-1">
                 {winner === 'draw' ? (
                   <span className="text-slate-300">Unentschieden! 🤝</span>
                 ) : winner === 'X' ? (
                   <span className="text-cyan-400">
-                    {mode === 'ai' ? '🎉 Gewonnen!' : '🎉 Spieler X gewinnt!'}
+                    {mode === 'ai' ? '🎉 Sieg über die KI!' : '🎉 Spieler X gewinnt!'}
                   </span>
                 ) : (
-                  <span className="text-amber-400">
-                    {mode === 'ai' ? 'KI gewinnt!' : '🎉 Spieler O gewinnt!'}
+                  <span className="text-rose-400">
+                    {mode === 'ai' ? 'KI triumphiert! 🤖' : '🎉 Spieler O gewinnt!'}
                   </span>
                 )}
               </div>
@@ -448,7 +601,9 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
           <span>Am Zug:</span>
           <span
             className={`px-2 py-0.5 rounded-md font-bold font-mono ${
-              turn === 'X' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+              turn === 'X'
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
             }`}
           >
             {turn === 'X' ? 'Spieler X' : mode === 'ai' ? 'KI (O)...' : 'Spieler O'}
@@ -459,15 +614,27 @@ export const TicTacToeGame: React.FC<TicTacToeGameProps> = ({
       {/* Desktop Keyboard Helper */}
       <div className="hidden sm:flex items-center justify-center gap-3 text-xs text-slate-400 mt-2 pt-2 border-t border-slate-800/60 w-full max-w-md shrink-0">
         <span className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">1-9</kbd> oder <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">WASD / Pfeile</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">
+            1-9
+          </kbd>{' '}
+          oder{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">
+            WASD / Pfeile
+          </kbd>
         </span>
         <span className="text-slate-600">•</span>
         <span className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">Leertaste / Enter</kbd> Setzen
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">
+            Leertaste / Enter
+          </kbd>{' '}
+          Setzen
         </span>
         <span className="text-slate-600">•</span>
         <span className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">R</kbd> Neustart
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-200">
+            R
+          </kbd>{' '}
+          Neustart
         </span>
       </div>
 

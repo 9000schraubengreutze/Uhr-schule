@@ -9,7 +9,8 @@ export type GameId =
   | 'connect4'
   | 'simon'
   | 'pong'
-  | 'tictactoe';
+  | 'tictactoe'
+  | 'towerdefense';
 
 export type GameCategory = 'all' | 'kurze_pausen' | 'klassiker' | 'denksport';
 

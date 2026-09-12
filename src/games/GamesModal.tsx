@@ -35,6 +35,7 @@ import { Connect4Game } from './Connect4Game';
 import { SimonGame } from './SimonGame';
 import { PongGame } from './PongGame';
 import { TicTacToeGame } from './TicTacToeGame';
+import { TowerDefenseGame } from './TowerDefenseGame';
 
 export const GAMES_CATALOG: GameMeta[] = [
   {
@@ -103,11 +104,11 @@ export const GAMES_CATALOG: GameMeta[] = [
   {
     id: 'memory',
     title: 'Memory Match',
-    shortDesc: 'Finde zusammengehörige Paare in möglichst wenigen Zügen und Sekunden.',
+    shortDesc: 'Finde Paare unter Zeitdruck! Wähle zwischen Normal, Schwer (5×4), Experte (6×4) und Chaos-Modus mit Kartenmischung.',
     category: 'denksport',
     accentColor: 'from-purple-500 to-indigo-600',
     duration: '1-3 Min',
-    controlsHint: 'Karten antippen',
+    controlsHint: 'Karten antippen / WASD / Enter',
   },
   {
     id: 'flappy',
@@ -130,11 +131,20 @@ export const GAMES_CATALOG: GameMeta[] = [
   {
     id: 'tictactoe',
     title: 'Tic Tac Toe',
-    shortDesc: 'Setze 3 oder 4 Symbole in eine Reihe. Spiele gegen 3 KI-Stufen oder im 2-Spieler-Modus.',
+    shortDesc: 'Setze 3 oder 4 Symbole in eine Reihe. Tritt gegen die unbesiegbare Minimax-KI oder lokal im 2-Spieler-Modus an!',
     category: 'denksport',
     accentColor: 'from-cyan-500 to-amber-500',
     duration: '1-2 Min',
     controlsHint: '1-9 / WASD / Enter / Klick',
+  },
+  {
+    id: 'towerdefense',
+    title: 'Tower Defense',
+    shortDesc: 'Taktisches Tower Defense: Kommandiere Scharfschützen, Heavy Gunner und schwere Feldartillerie. Wehre 15 Wellen ab!',
+    category: 'denksport',
+    accentColor: 'from-emerald-500 to-amber-500',
+    duration: '5-15 Min',
+    controlsHint: 'Klick (Bauen/Wählen) / Q (Mauszeiger leer) / Rechtsklick (Stats) / SPACE (Pause)',
   },
 ];
 
@@ -228,7 +238,9 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] md:h-[calc(100vh-2.5rem)] max-h-[750px] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10"
+          className={`relative w-full ${
+            activeGameId === 'towerdefense' ? 'max-w-6xl' : 'max-w-4xl'
+          } h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] md:h-[calc(100vh-2.5rem)] max-h-[780px] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10`}
         >
           {/* Header Bar */}
           <div
@@ -390,6 +402,13 @@ export const GamesModal: React.FC<GamesModalProps> = ({
                   onBack={handleBackToOverview}
                   soundEnabled={soundOn}
                   onRestart={() => handleRestartGame('tictactoe')}
+                />
+              )}
+              {activeGameId === 'towerdefense' && (
+                <TowerDefenseGame
+                  onBack={handleBackToOverview}
+                  soundEnabled={soundOn}
+                  onRestart={() => handleRestartGame('towerdefense')}
                 />
               )}
             </div>
