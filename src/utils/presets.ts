@@ -59,6 +59,13 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   vibrationEnabled: true,
   useAtomicSync: true,
   showSyncBadge: true,
+
+  // SCHUL-STUNDENPLAN & PAUSEN-SPERRE
+  schoolBreakGameLockEnabled: true,
+  schoolBreakLockMode: 'school_breaks_only',
+  schoolSimulationMode: 'live',
+  showSchoolBadge: true,
+  teacherOverrideActive: false,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [

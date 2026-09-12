@@ -107,4 +107,11 @@ export interface ClockSettings {
   vibrationEnabled: boolean; // Haptic feedback on mobile
   useAtomicSync: boolean; // Use online atomic clock (NTP) instead of device clock
   showSyncBadge: boolean; // Display sync indicator on the main screen
+
+  // === SCHUL-STUNDENPLAN & PAUSEN-SPERRE (HO 2) ===
+  schoolBreakGameLockEnabled: boolean; // Games only in breaks
+  schoolBreakLockMode: 'school_breaks_only' | 'strict_breaks_only' | 'always_allowed';
+  schoolSimulationMode: 'live' | 'lesson' | 'break_1' | 'break_2';
+  showSchoolBadge: boolean; // Display school timetable / break status in quick controls & clock
+  teacherOverrideActive: boolean; // Temporary teacher unlock
 }

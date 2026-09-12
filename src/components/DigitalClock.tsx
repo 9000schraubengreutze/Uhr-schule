@@ -1,16 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation } from 'motion/react';
+import { Coffee, GraduationCap, Lock } from 'lucide-react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
 import { SpringDigit } from './SpringDigit';
+import { SchoolStatusResult } from '../utils/timetable';
 
 interface DigitalClockProps {
   settings: ClockSettings;
   offsetMs?: number;
+  statusResult?: SchoolStatusResult;
+  onOpenTimetable?: () => void;
 }
 
-export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs = 0 }) => {
+export const DigitalClock: React.FC<DigitalClockProps> = ({
+  settings,
+  offsetMs = 0,
+  statusResult,
+  onOpenTimetable,
+}) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
     const nowMs = Date.now();
@@ -358,6 +367,51 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({ settings, offsetMs =
               settings={settings}
               mainTimeZone={targetTimeZone}
             />
+          )}
+
+          {/* School Status / Timetable Badge */}
+          {settings.showSchoolBadge && statusResult && (
+            <div className="mt-3.5 sm:mt-4.5 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={onOpenTimetable}
+                title="Stundenplan HO 2 (Frau Schmitz) öffnen"
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-sm transition-all cursor-pointer select-none active:scale-95 ${
+                  statusResult.status === 'break'
+                    ? 'bg-emerald-950/60 hover:bg-emerald-900/70 border-emerald-600/70 text-emerald-200'
+                    : !statusResult.isGameAllowed
+                    ? 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-700/80 text-slate-300'
+                    : 'bg-slate-900/50 hover:bg-slate-800/60 border-slate-800 text-slate-400'
+                }`}
+                style={{
+                  backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                  WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                }}
+              >
+                {statusResult.status === 'break' ? (
+                  <>
+                    <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    <span className="font-semibold text-emerald-300">
+                      {statusResult.currentBreak?.name} (noch {statusResult.currentBreak?.remainingMinutes} Min.) • Games frei!
+                    </span>
+                  </>
+                ) : !statusResult.isGameAllowed ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-rose-400" />
+                    <span>
+                      HO 2: {statusResult.currentPeriod}. Std. {statusResult.currentLesson?.subject} ({statusResult.currentLesson?.teacher}) • Pause {statusResult.nextBreak?.start || '10:30'} Uhr
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>
+                      HO 2 • {statusResult.status === 'weekend' ? 'Wochenende' : 'Freizeit'} • Stundenplan
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </motion.div>
       </div>

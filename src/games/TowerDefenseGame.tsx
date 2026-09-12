@@ -29,6 +29,7 @@ import { playSound } from './audio';
 import { saveGameResult, getGameStats } from './storage';
 import { EnemyPortrait } from './EnemyPortrait';
 import { TowerPortrait } from './TowerPortrait';
+import { drawMedievalTower, drawFantasyEnemy } from './medievalRenderers';
 
 // ─────────────────────────────────────────────────────────────
 // PROPORTIONS & CONSTANTS (Strict spec adherence)
@@ -1445,98 +1446,11 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
         ctx.restore();
       }
 
-      // E. Render Fantasy Towers (Archers, Magic Monoliths, Cannons, Ballistae)
+      // E. Render Fantasy Towers with Realistic Medieval Textures (Archers, Magic Monoliths, Cannons, Ballistae)
       for (const tower of towersRef.current) {
         const cfg = TOWER_CONFIGS[tower.type];
-        const rad = cfg.size / 2;
-
-        ctx.save();
-        ctx.translate(tower.x, tower.y);
-
-        // Tower Base (Stone Plinth with Iron Rivets)
-        ctx.fillStyle = '#334155';
-        ctx.beginPath();
-        ctx.arc(0, 0, rad + 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Inner platform
-        ctx.fillStyle = cfg.color;
-        ctx.beginPath();
-        ctx.arc(0, 0, rad, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#022c22';
-        ctx.stroke();
-
-        ctx.rotate(tower.angle);
-        const recoil = tower.recoilOffset || 0;
-
-        if (tower.type === 'arrow') {
-          // Archer Tower with wood bow & archer
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(0 - recoil, -3, 18, 6);
-          // Bow Arc
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(14 - recoil, 0, 10, -Math.PI / 2.2, Math.PI / 2.2);
-          ctx.stroke();
-        } else if (tower.type === 'magic' || tower.type === 'tesla') {
-          // Arcane Magic / Tesla Monolith with glowing floating orb
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(-6, -6, 12, 12);
-          // Glowing Orb
-          ctx.fillStyle = cfg.accentColor;
-          ctx.shadowColor = cfg.accentColor;
-          ctx.shadowBlur = 10;
-          ctx.beginPath();
-          ctx.arc(0, 0, 8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          // Lightning arcs
-          ctx.strokeStyle = '#e0f2fe';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(8, 0);
-          ctx.lineTo(24 - recoil, 0);
-          ctx.stroke();
-        } else if (tower.type === 'cannon' || tower.type === 'mortar' || tower.type === 'bombard') {
-          // Cannon / Heavy Artillery Barrel
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(0 - recoil, -5, 24, 10);
-          ctx.fillStyle = '#b45309';
-          ctx.fillRect(18 - recoil, -6.5, 6, 13);
-        } else if (tower.type === 'ice') {
-          // Ice Crystal Pillar
-          ctx.fillStyle = '#06b6d4';
-          ctx.shadowColor = '#67e8f9';
-          ctx.shadowBlur = 8;
-          ctx.beginPath();
-          ctx.moveTo(18 - recoil, 0);
-          ctx.lineTo(-4, -8);
-          ctx.lineTo(-4, 8);
-          ctx.closePath();
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        } else {
-          // Ballista
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(-4, -6, 10, 12);
-          ctx.fillStyle = '#1c1917';
-          ctx.fillRect(4 - recoil, -3, 16, 6);
-        }
-
-        // Muzzle Flash
-        if (tower.muzzleFlashTime > 0) {
-          ctx.fillStyle = '#fef08a';
-          ctx.beginPath();
-          ctx.arc(26 - recoil, 0, 7, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.restore();
+        const isHovered = hoveredTowerRef.current?.id === tower.id || selectedTowerForInfo?.id === tower.id;
+        drawMedievalTower(ctx, tower, cfg, isHovered, now / 1000);
       }
 
       // F. Render Projectiles (Arrows, Fireballs, Lightning, Magic Beams)
@@ -1557,85 +1471,25 @@ export const TowerDefenseGame: React.FC<TowerDefenseGameProps> = ({
         }
       }
 
-      // G. Render Fantasy Horde: Orc Warriors, Archers, Brutes, Spiders, Wolf Riders & Cannons
+      // G. Render Fantasy Horde with Detailed Illustrated Textures: Orc Warriors, Archers, Brutes, Spiders, Wolf Riders & Cannons
       for (const e of enemiesRef.current) {
-        ctx.save();
-        ctx.translate(e.x, e.y);
-        ctx.rotate(e.headingAngle);
-
-        if (e.kind === 'spiderling') {
-          // Multi-legged Giant Spider
-          ctx.fillStyle = '#0f172a';
-          ctx.beginPath();
-          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
-          ctx.fill();
-          // Spider Eyes (Red dots)
-          ctx.fillStyle = '#ef4444';
-          ctx.fillRect(e.radius * 0.4, -3, 2.5, 2.5);
-          ctx.fillRect(e.radius * 0.4, 1, 2.5, 2.5);
-          // Legs
-          ctx.strokeStyle = '#1e1b4b';
-          ctx.lineWidth = 2;
-          for (let l = -3; l <= 3; l += 2) {
-            ctx.beginPath();
-            ctx.moveTo(0, l * 3);
-            ctx.lineTo(Math.sin(l) * 4, l * 8);
-            ctx.stroke();
-          }
-        } else if (e.kind === 'siege_cannon') {
-          // Orcish Siege Cannon
-          ctx.fillStyle = '#450a0a';
-          ctx.fillRect(-e.radius, -e.radius + 3, e.radius * 2, e.radius * 2 - 6);
-          ctx.fillStyle = '#1c1917';
-          ctx.fillRect(0, -5, e.radius + 6, 10);
-        } else if (e.kind === 'wolf_rider') {
-          // Wolf Mount + Orc
-          ctx.fillStyle = '#475569';
-          ctx.beginPath();
-          ctx.ellipse(0, 0, e.radius + 3, e.radius * 0.7, 0, 0, Math.PI * 2);
-          ctx.fill();
-          // Rider
-          ctx.fillStyle = '#15803d';
-          ctx.beginPath();
-          ctx.arc(-2, 0, e.radius * 0.6, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (e.kind === 'orc_brute') {
-          // Heavy Hulking Orc with Spikes
-          ctx.fillStyle = '#854d0e';
-          ctx.beginPath();
-          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#b45309';
-          ctx.fillRect(-e.radius * 0.3, -e.radius, 6, e.radius * 2);
-        } else {
-          // Orc Warrior / Archer
-          ctx.fillStyle = e.color;
-          ctx.beginPath();
-          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#052e16';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          // Horns / Helmet
-          ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(e.radius * 0.2, -e.radius * 0.5, 3, 2);
-          ctx.fillRect(e.radius * 0.2, e.radius * 0.3, 3, 2);
-        }
-
-        ctx.restore();
-
-        // Health Bar
-        const barW = Math.max(24, e.radius * 2.2);
-        const barH = 4;
-        const barX = e.x - barW / 2;
-        const barY = e.y - e.radius - 8;
-
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-        ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
-
-        const hpRatio = Math.max(0, e.hp / e.maxHp);
-        ctx.fillStyle = hpRatio > 0.5 ? '#22c55e' : hpRatio > 0.25 ? '#eab308' : '#ef4444';
-        ctx.fillRect(barX, barY, barW * hpRatio, barH);
+        drawFantasyEnemy(
+          ctx,
+          {
+            id: e.id,
+            kind: e.kind,
+            x: e.x,
+            y: e.y,
+            headingAngle: e.headingAngle,
+            hp: e.hp,
+            maxHp: e.maxHp,
+            radius: e.radius,
+            color: e.color,
+            speed: e.speed,
+            isSlowed: e.isSlowed,
+          },
+          now / 1000
+        );
       }
 
       // H. Render Particles

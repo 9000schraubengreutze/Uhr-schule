@@ -47,13 +47,23 @@ import {
   Timer,
   FileDown,
   FileUp,
+  GraduationCap,
+  Coffee,
+  Lock,
+  Unlock,
 } from 'lucide-react';
+import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 
 interface MaterialSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenGames?: () => void;
   onOpenStopwatch?: () => void;
+  onOpenTimetable?: () => void;
+  statusResult?: SchoolStatusResult;
+  onSetSimulationMode?: (mode: SchoolSimulationMode) => void;
+  teacherOverride?: boolean;
+  onToggleTeacherOverride?: () => void;
   settings: ClockSettings;
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
   onUploadImage?: (file: File) => void;
@@ -82,6 +92,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onClose,
   onOpenGames,
   onOpenStopwatch,
+  onOpenTimetable,
+  statusResult,
+  onSetSimulationMode,
+  teacherOverride = false,
+  onToggleTeacherOverride,
   settings,
   onUpdateSettings,
   onUploadImage,
@@ -1318,6 +1333,157 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     checked={settings.vibrationEnabled}
                     onChange={(v) => onUpdateSettings((p) => ({ ...p, vibrationEnabled: v }))}
                   />
+                </div>
+
+                {/* Schul-Stundenplan & Pausen-Sperre Card */}
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <GraduationCap className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-200">
+                          Schul-Stundenplan & Pausen-Sperre
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Klasse HO 2 • Klassenlehrerin Frau Schmitz (2026/27)
+                        </p>
+                      </div>
+                    </div>
+                    {onOpenTimetable && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenTimetable();
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Stundenplan</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="divide-y divide-slate-800/80 pt-1">
+                    <MaterialSwitch
+                      label="Pausen-Sperre für Games aktivieren"
+                      description="Games dürfen nur während der offiziellen Schulpausen (10:30-11:00 & 13:15-14:10 Uhr) gespielt werden"
+                      checked={settings.schoolBreakGameLockEnabled}
+                      onChange={(v) => onUpdateSettings((p) => ({ ...p, schoolBreakGameLockEnabled: v }))}
+                    />
+
+                    <MaterialSwitch
+                      label="Schulstatus auf der Startseite"
+                      description="Aktuelle Stunde, Pause & Countdown unter der Uhr anzeigen"
+                      checked={settings.showSchoolBadge}
+                      onChange={(v) => onUpdateSettings((p) => ({ ...p, showSchoolBadge: v }))}
+                    />
+
+                    {/* Sperrmodus Auswahl */}
+                    <div className="py-3 space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">
+                        Sperr-Verhalten
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'school_breaks_only', label: 'Schultag-Modus', desc: 'Nur im Unterricht gesperrt' },
+                          { id: 'strict_breaks_only', label: 'Strikter Modus', desc: 'Nur in Pausen erlaubt' },
+                          { id: 'always_allowed', label: 'Deaktiviert', desc: 'Games jederzeit spielbar' },
+                        ].map((mode) => {
+                          const isSelected = (settings.schoolBreakLockMode || 'school_breaks_only') === mode.id;
+                          return (
+                            <button
+                              key={mode.id}
+                              type="button"
+                              onClick={() =>
+                                onUpdateSettings((p) => ({ ...p, schoolBreakLockMode: mode.id as any }))
+                              }
+                              className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                                isSelected
+                                  ? 'bg-blue-600/30 border-blue-500 text-blue-100 ring-1 ring-blue-500/30'
+                                  : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200'
+                              }`}
+                            >
+                              <span className="text-xs font-bold text-white">{mode.label}</span>
+                              <span className="text-[10px] opacity-80 mt-0.5">{mode.desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Simulation / Test Modus Buttons */}
+                    <div className="py-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Simulation & Testen</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          Zum Ausprobieren der Pausensperre
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {[
+                          { id: 'live', label: 'Live (Echtzeit)' },
+                          { id: 'lesson', label: '🔒 Unterricht (09:25)' },
+                          { id: 'break_1', label: '🟢 1. Pause (10:45)' },
+                          { id: 'break_2', label: '🟢 Mittag (13:35)' },
+                        ].map((sim) => {
+                          const isSelected = (settings.schoolSimulationMode || 'live') === sim.id;
+                          return (
+                            <button
+                              key={sim.id}
+                              type="button"
+                              onClick={() => {
+                                onUpdateSettings((p) => ({ ...p, schoolSimulationMode: sim.id as any }));
+                                onSetSimulationMode?.(sim.id as any);
+                              }}
+                              className={`py-1.5 px-2 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-sky-600 border-sky-400 text-white shadow-sm ring-1 ring-sky-300/30'
+                                  : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800'
+                              }`}
+                            >
+                              {sim.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Lehrer-Freischaltung Toggle */}
+                    <div className="pt-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Unlock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Lehrer-Freigabe (Sofort entsperren)</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Ermöglicht Lehrkräften das Spielen außerhalb der Pausen freizuschalten
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onToggleTeacherOverride?.();
+                          onUpdateSettings((p) => ({
+                            ...p,
+                            teacherOverrideActive: !p.teacherOverrideActive,
+                          }));
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer ${
+                          teacherOverride || settings.teacherOverrideActive
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                        }`}
+                      >
+                        {teacherOverride || settings.teacherOverrideActive ? 'Aktiviert' : 'Deaktiviert'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Pausen-Spiele Schnellzugriff */}
