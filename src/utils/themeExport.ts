@@ -61,7 +61,7 @@ export function sanitizeClockSettings(input: any): ClockSettings {
         : DEFAULT_SETTINGS.particleColor,
     particleSpeed:
       typeof raw.particleSpeed === 'number'
-        ? Math.max(1, Math.min(5, raw.particleSpeed))
+        ? Math.max(0.2, Math.min(3.0, Number(raw.particleSpeed.toFixed(2))))
         : DEFAULT_SETTINGS.particleSpeed,
 
     clockColor:
@@ -79,6 +79,17 @@ export function sanitizeClockSettings(input: any): ClockSettings {
         ? raw.enableBreathingAnimation
         : DEFAULT_SETTINGS.enableBreathingAnimation,
     enableGlow: typeof raw.enableGlow === 'boolean' ? raw.enableGlow : DEFAULT_SETTINGS.enableGlow,
+    digitTransition:
+      raw.digitTransition === 'crossfade' ||
+      raw.digitTransition === 'slide-fade' ||
+      raw.digitTransition === 'none' ||
+      raw.digitTransition === 'fade'
+        ? raw.digitTransition
+        : DEFAULT_SETTINGS.digitTransition,
+    digitFadeDuration:
+      typeof raw.digitFadeDuration === 'number'
+        ? Math.max(150, Math.min(800, raw.digitFadeDuration))
+        : DEFAULT_SETTINGS.digitFadeDuration,
     hasCustomImage: Boolean(raw.hasCustomImage),
 
     is24Hour: typeof raw.is24Hour === 'boolean' ? raw.is24Hour : DEFAULT_SETTINGS.is24Hour,
@@ -115,6 +126,7 @@ export function sanitizeClockSettings(input: any): ClockSettings {
           name: typeof z?.name === 'string' && z.name.trim() ? z.name : 'Zeitzone',
           timeZone: typeof z?.timeZone === 'string' && z.timeZone.trim() ? z.timeZone : 'UTC',
           customLabel: typeof z?.customLabel === 'string' ? z.customLabel : undefined,
+          flag: typeof z?.flag === 'string' ? z.flag : undefined,
         }))
       : DEFAULT_SETTINGS.additionalTimeZones,
 
@@ -124,6 +136,8 @@ export function sanitizeClockSettings(input: any): ClockSettings {
       typeof raw.vibrationEnabled === 'boolean' ? raw.vibrationEnabled : DEFAULT_SETTINGS.vibrationEnabled,
     useAtomicSync: typeof raw.useAtomicSync === 'boolean' ? raw.useAtomicSync : DEFAULT_SETTINGS.useAtomicSync,
     showSyncBadge: typeof raw.showSyncBadge === 'boolean' ? raw.showSyncBadge : DEFAULT_SETTINGS.showSyncBadge,
+    showWeather: typeof raw.showWeather === 'boolean' ? raw.showWeather : DEFAULT_SETTINGS.showWeather,
+    weatherUnit: raw.weatherUnit === 'fahrenheit' ? 'fahrenheit' : DEFAULT_SETTINGS.weatherUnit,
   };
 
   return sanitized;

@@ -17,6 +17,8 @@ import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
 import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
 import { ParticleSettingsCard } from './ParticleSettingsCard';
+import { BackdropBlurControl } from './BackdropBlurControl';
+import { DigitTransitionControl } from './DigitTransitionControl';
 import {
   X,
   Search,
@@ -243,6 +245,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
+      { tab: 'darstellung' as SettingsTab, title: 'Ziffern-Fading & Übergang', desc: 'Fließende Ein- und Ausblend-Animation beim Sekundentakt der Uhrzeit (Subtil, Crossfade, Gleiten)' },
+      { tab: 'darstellung' as SettingsTab, title: 'Fließende Ziffern-Animation', desc: 'Subtiles Fading, sanftes Überblenden und Animationsgeschwindigkeit beim Zahlenwechsel' },
+      { tab: 'darstellung' as SettingsTab, title: 'Hintergrund-Blur (Glassmorphism)', desc: 'Schieberegler für Intensität des Weichzeichnungs-Effekts (0px bis 40px) für alle Glaskarten, Modale und UI-Elemente' },
       { tab: 'darstellung' as SettingsTab, title: 'Themen-Presets', desc: 'Midnight Blue, Cyberpunk, OLED uvm.' },
       { tab: 'darstellung' as SettingsTab, title: 'Design exportieren (JSON)', desc: 'Aktuelle Farben, Schriftarten und Einstellungen als JSON-Datei speichern & teilen' },
       { tab: 'darstellung' as SettingsTab, title: 'Design importieren (JSON)', desc: 'Gespeichertes Design aus JSON-Datei laden' },
@@ -290,7 +295,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         id="settings-panel"
-        className="relative w-full max-w-xl h-full bg-slate-950/95 text-slate-100 border-l border-slate-800/80 shadow-2xl flex flex-col select-none overflow-hidden backdrop-blur-2xl"
+        className="relative w-full max-w-xl h-full bg-slate-950/90 text-slate-100 border-l border-slate-800/80 shadow-2xl flex flex-col select-none overflow-hidden"
+        style={{
+          backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+          WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+        }}
       >
         {/* Top Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 shrink-0">
@@ -830,6 +839,39 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     }
                   />
                 </div>
+
+                {/* Fließendes Ziffern-Fading (Sekundentakt) */}
+                <DigitTransitionControl
+                  transitionType={settings.digitTransition ?? 'fade'}
+                  durationMs={settings.digitFadeDuration ?? 360}
+                  onChangeTransition={(type) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      digitTransition: type,
+                    }))
+                  }
+                  onChangeDuration={(dur) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      digitFadeDuration: dur,
+                    }))
+                  }
+                  showFeedback={showFeedback}
+                  vibrationEnabled={settings.vibrationEnabled}
+                />
+
+                {/* Hintergrund-Blur (Glassmorphism) Schieberegler */}
+                <BackdropBlurControl
+                  value={settings.backdropBlurIntensity ?? 16}
+                  onChange={(val) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      backdropBlurIntensity: val,
+                    }))
+                  }
+                  showFeedback={showFeedback}
+                  vibrationEnabled={settings.vibrationEnabled}
+                />
               </motion.div>
             )}
 
@@ -1113,6 +1155,69 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     />
                   )}
 
+                  {/* Weltuhren auf Hauptbildschirm anzeigen */}
+                  <MaterialSwitch
+                    label="Weltuhren auf Hauptbildschirm anzeigen"
+                    description="Ausgewählte Weltzeitzonen mit Live-Uhrzeiten direkt unter der großen Digitaluhr ein- oder ausblenden"
+                    checked={settings.showAdditionalTimeZones}
+                    onChange={(v) => {
+                      onUpdateSettings((p) => ({ ...p, showAdditionalTimeZones: v }));
+                      showFeedback(v ? 'Weltuhren eingeblendet' : 'Weltuhren ausgeblendet');
+                    }}
+                  />
+
+                  {/* Weather Display on Main Screen */}
+                  <MaterialSwitch
+                    label="Wetter auf Hauptbildschirm anzeigen"
+                    description="Lokale Temperatur & Wetterbedingungen basierend auf deinem Standort anzeigen"
+                    checked={settings.showWeather}
+                    onChange={(v) => onUpdateSettings((p) => ({ ...p, showWeather: v }))}
+                  />
+
+                  {settings.showWeather && (
+                    <div className="py-3 px-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Sun className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Temperatur-Einheit</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {settings.weatherUnit === 'fahrenheit' ? 'Fahrenheit (°F)' : 'Celsius (°C)'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUpdateSettings((p) => ({ ...p, weatherUnit: 'celsius' }));
+                            triggerHaptic(settings.vibrationEnabled);
+                          }}
+                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                            settings.weatherUnit === 'celsius'
+                              ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/25 shadow-sm'
+                              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                          }`}
+                        >
+                          <span className="font-bold text-xs">Celsius (°C)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUpdateSettings((p) => ({ ...p, weatherUnit: 'fahrenheit' }));
+                            triggerHaptic(settings.vibrationEnabled);
+                          }}
+                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                            settings.weatherUnit === 'fahrenheit'
+                              ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/25 shadow-sm'
+                              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                          }`}
+                        >
+                          <span className="font-bold text-xs">Fahrenheit (°F)</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Colon Separator Animation & Pulse Customization */}
                   <div className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-3.5">
                     <div className="flex items-center justify-between">
@@ -1205,70 +1310,19 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     onChange={(v) => onUpdateSettings((p) => ({ ...p, showCardContainer: v }))}
                   />
 
-                  {/* Granular Backdrop-Filter Blur Intensity Slider */}
-                  <div className="pt-2 border-t border-slate-800/80">
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">
-                          Glas-Unschärfe (Backdrop Blur)
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          Unschärfestärke für Rahmenkarte, Weltuhr-Chips & UI-Elemente
-                        </span>
-                      </div>
-                      <span className="font-mono text-slate-400 font-bold ml-2">
-                        {settings.backdropBlurIntensity ?? 16}px
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[10px] font-mono text-slate-500">0px (Aus)</span>
-                      <input
-                        id="backdrop-blur-slider"
-                        type="range"
-                        min="0"
-                        max="40"
-                        step="1"
-                        value={settings.backdropBlurIntensity ?? 16}
-                        onChange={(e) =>
-                          onUpdateSettings((p) => ({
-                            ...p,
-                            backdropBlurIntensity: Number(e.target.value),
-                          }))
-                        }
-                        className="flex-1 accent-blue-500 cursor-pointer"
-                        aria-label="Glas-Unschärfe Backdrop Blur Intensität"
-                      />
-                      <span className="text-[10px] font-mono text-slate-500">40px</span>
-                    </div>
-                    {/* Quick preset buttons */}
-                    <div className="flex items-center gap-1.5 mt-2.5">
-                      {[
-                        { label: 'Aus (0px)', val: 0 },
-                        { label: 'Dezent (8px)', val: 8 },
-                        { label: 'Mittel (16px)', val: 16 },
-                        { label: 'Stark (28px)', val: 28 },
-                        { label: 'Ultra (40px)', val: 40 },
-                      ].map((preset) => (
-                        <button
-                          key={preset.val}
-                          type="button"
-                          onClick={() =>
-                            onUpdateSettings((p) => ({
-                              ...p,
-                              backdropBlurIntensity: preset.val,
-                            }))
-                          }
-                          className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                            (settings.backdropBlurIntensity ?? 16) === preset.val
-                              ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                              : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-750'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Hintergrund-Blur & Glassmorphism Regler */}
+                  <BackdropBlurControl
+                    value={settings.backdropBlurIntensity ?? 16}
+                    onChange={(val) =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        backdropBlurIntensity: val,
+                      }))
+                    }
+                    showFeedback={showFeedback}
+                    vibrationEnabled={settings.vibrationEnabled}
+                    className="mt-3"
+                  />
                 </div>
               </motion.div>
             )}

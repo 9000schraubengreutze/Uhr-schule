@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   particleEffect: 'none',
   particleIntensity: 50,
   particleColor: '#ffffff',
-  particleSpeed: 2,
+  particleSpeed: 1.0,
 
   // Typography & Scaling
   clockColor: '#38bdf8',
@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   clockScale: 100,
   enableBreathingAnimation: true,
   enableGlow: true,
+  digitTransition: 'fade', // Default subtle fluid fading animation
+  digitFadeDuration: 360, // 360ms fluid duration
   hasCustomImage: false,
 
   // UHR (Digitale Uhr-Funktionen)
@@ -46,12 +48,16 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   timeZone: 'Europe/Berlin',
 
   // Zusätzliche Zeitzonen (Weltuhr)
-  showAdditionalTimeZones: false,
+  showAdditionalTimeZones: true,
   additionalTimeZones: [
-    { id: 'tz-london', name: 'London', timeZone: 'Europe/London' },
-    { id: 'tz-ny', name: 'New York', timeZone: 'America/New_York' },
-    { id: 'tz-tokyo', name: 'Tokio', timeZone: 'Asia/Tokyo' },
+    { id: 'tz-london', name: 'London', timeZone: 'Europe/London', flag: '🇬🇧' },
+    { id: 'tz-ny', name: 'New York', timeZone: 'America/New_York', flag: '🇺🇸' },
+    { id: 'tz-tokyo', name: 'Tokio', timeZone: 'Asia/Tokyo', flag: '🇯🇵' },
   ],
+
+  // Wetter-Anzeige
+  showWeather: true,
+  weatherUnit: 'celsius',
 
   // EINSTELLUNGEN
   appLanguage: 'de',
@@ -266,47 +272,91 @@ export interface WorldTimeZoneOption {
 }
 
 export const PRESET_WORLD_TIMEZONES: WorldTimeZoneOption[] = [
+  // Europa
   { name: 'London', timeZone: 'Europe/London', region: 'Europa', flag: '🇬🇧' },
   { name: 'Paris', timeZone: 'Europe/Paris', region: 'Europa', flag: '🇫🇷' },
+  { name: 'Berlin', timeZone: 'Europe/Berlin', region: 'Europa', flag: '🇩🇪' },
   { name: 'Zürich', timeZone: 'Europe/Zurich', region: 'Europa', flag: '🇨🇭' },
   { name: 'Wien', timeZone: 'Europe/Vienna', region: 'Europa', flag: '🇦🇹' },
-  { name: 'Berlin', timeZone: 'Europe/Berlin', region: 'Europa', flag: '🇩🇪' },
   { name: 'Rom', timeZone: 'Europe/Rome', region: 'Europa', flag: '🇮🇹' },
   { name: 'Madrid', timeZone: 'Europe/Madrid', region: 'Europa', flag: '🇪🇸' },
+  { name: 'Amsterdam', timeZone: 'Europe/Amsterdam', region: 'Europa', flag: '🇳🇱' },
+  { name: 'Brüssel', timeZone: 'Europe/Brussels', region: 'Europa', flag: '🇧🇪' },
+  { name: 'Stockholm', timeZone: 'Europe/Stockholm', region: 'Europa', flag: '🇸🇪' },
+  { name: 'Oslo', timeZone: 'Europe/Oslo', region: 'Europa', flag: '🇳🇴' },
+  { name: 'Kopenhagen', timeZone: 'Europe/Copenhagen', region: 'Europa', flag: '🇩🇰' },
+  { name: 'Helsinki', timeZone: 'Europe/Helsinki', region: 'Europa', flag: '🇫🇮' },
+  { name: 'Warschau', timeZone: 'Europe/Warsaw', region: 'Europa', flag: '🇵🇱' },
+  { name: 'Prag', timeZone: 'Europe/Prague', region: 'Europa', flag: '🇨🇿' },
+  { name: 'Budapest', timeZone: 'Europe/Budapest', region: 'Europa', flag: '🇭🇺' },
   { name: 'Athen', timeZone: 'Europe/Athens', region: 'Europa', flag: '🇬🇷' },
-  { name: 'Reykjavík', timeZone: 'Atlantic/Reykjavik', region: 'Atlantik', flag: '🇮🇸' },
-  { name: 'UTC (Weltzeit)', timeZone: 'UTC', region: 'Global', flag: '🌐' },
+  { name: 'Dublin', timeZone: 'Europe/Dublin', region: 'Europa', flag: '🇮🇪' },
+  { name: 'Lissabon', timeZone: 'Europe/Lisbon', region: 'Europa', flag: '🇵🇹' },
+  { name: 'Reykjavík', timeZone: 'Atlantic/Reykjavik', region: 'Europa', flag: '🇮🇸' },
+  { name: 'Istanbul', timeZone: 'Europe/Istanbul', region: 'Europa', flag: '🇹🇷' },
 
+  // Nordamerika
   { name: 'New York', timeZone: 'America/New_York', region: 'Nordamerika', flag: '🇺🇸' },
-  { name: 'Chicago', timeZone: 'America/Chicago', region: 'Nordamerika', flag: '🇺🇸' },
-  { name: 'Denver', timeZone: 'America/Denver', region: 'Nordamerika', flag: '🇺🇸' },
   { name: 'Los Angeles / San Francisco', timeZone: 'America/Los_Angeles', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Chicago', timeZone: 'America/Chicago', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Houston / Dallas', timeZone: 'America/Chicago', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Denver', timeZone: 'America/Denver', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Phoenix (Arizona)', timeZone: 'America/Phoenix', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Miami', timeZone: 'America/New_York', region: 'Nordamerika', flag: '🇺🇸' },
+  { name: 'Seattle', timeZone: 'America/Los_Angeles', region: 'Nordamerika', flag: '🇺🇸' },
   { name: 'Toronto', timeZone: 'America/Toronto', region: 'Nordamerika', flag: '🇨🇦' },
   { name: 'Vancouver', timeZone: 'America/Vancouver', region: 'Nordamerika', flag: '🇨🇦' },
-  { name: 'Honolulu (Hawaii)', timeZone: 'Pacific/Honolulu', region: 'Pazifik', flag: '🌺' },
+  { name: 'Montreal', timeZone: 'America/Toronto', region: 'Nordamerika', flag: '🇨🇦' },
+  { name: 'Mexiko-Stadt', timeZone: 'America/Mexico_City', region: 'Nordamerika', flag: '🇲🇽' },
+  { name: 'Honolulu (Hawaii)', timeZone: 'Pacific/Honolulu', region: 'Nordamerika', flag: '🌺' },
+  { name: 'Anchorage (Alaska)', timeZone: 'America/Anchorage', region: 'Nordamerika', flag: '🇺🇸' },
 
+  // Südamerika
   { name: 'São Paulo', timeZone: 'America/Sao_Paulo', region: 'Südamerika', flag: '🇧🇷' },
+  { name: 'Rio de Janeiro', timeZone: 'America/Sao_Paulo', region: 'Südamerika', flag: '🇧🇷' },
   { name: 'Buenos Aires', timeZone: 'America/Argentina/Buenos_Aires', region: 'Südamerika', flag: '🇦🇷' },
-  { name: 'Mexiko-Stadt', timeZone: 'America/Mexico_City', region: 'Mittelamerika', flag: '🇲🇽' },
+  { name: 'Santiago de Chile', timeZone: 'America/Santiago', region: 'Südamerika', flag: '🇨🇱' },
+  { name: 'Bogotá', timeZone: 'America/Bogota', region: 'Südamerika', flag: '🇨🇴' },
+  { name: 'Lima', timeZone: 'America/Lima', region: 'Südamerika', flag: '🇵🇪' },
 
+  // Asien
   { name: 'Tokio', timeZone: 'Asia/Tokyo', region: 'Asien', flag: '🇯🇵' },
-  { name: 'Hongkong', timeZone: 'Asia/Hong_Kong', region: 'Asien', flag: '🇭🇰' },
   { name: 'Singapur', timeZone: 'Asia/Singapore', region: 'Asien', flag: '🇸🇬' },
+  { name: 'Hongkong', timeZone: 'Asia/Hong_Kong', region: 'Asien', flag: '🇭🇰' },
   { name: 'Peking / Shanghai', timeZone: 'Asia/Shanghai', region: 'Asien', flag: '🇨🇳' },
   { name: 'Seoul', timeZone: 'Asia/Seoul', region: 'Asien', flag: '🇰🇷' },
-  { name: 'Neu-Delhi (Mumbai)', timeZone: 'Asia/Kolkata', region: 'Asien', flag: '🇮🇳' },
+  { name: 'Neu-Delhi / Mumbai', timeZone: 'Asia/Kolkata', region: 'Asien', flag: '🇮🇳' },
   { name: 'Bangkok', timeZone: 'Asia/Bangkok', region: 'Asien', flag: '🇹🇭' },
+  { name: 'Taipeh', timeZone: 'Asia/Taipei', region: 'Asien', flag: '🇹🇼' },
+  { name: 'Kuala Lumpur', timeZone: 'Asia/Kuala_Lumpur', region: 'Asien', flag: '🇲🇾' },
+  { name: 'Jakarta', timeZone: 'Asia/Jakarta', region: 'Asien', flag: '🇮🇩' },
+  { name: 'Manila', timeZone: 'Asia/Manila', region: 'Asien', flag: '🇵🇭' },
+  { name: 'Hanoi', timeZone: 'Asia/Bangkok', region: 'Asien', flag: '🇻🇳' },
+
+  // Naher Osten
   { name: 'Dubai', timeZone: 'Asia/Dubai', region: 'Naher Osten', flag: '🇦🇪' },
+  { name: 'Abu Dhabi', timeZone: 'Asia/Dubai', region: 'Naher Osten', flag: '🇦🇪' },
+  { name: 'Riad', timeZone: 'Asia/Riyadh', region: 'Naher Osten', flag: '🇸🇦' },
   { name: 'Katar (Doha)', timeZone: 'Asia/Qatar', region: 'Naher Osten', flag: '🇶🇦' },
   { name: 'Tel Aviv', timeZone: 'Asia/Jerusalem', region: 'Naher Osten', flag: '🇮🇱' },
 
+  // Australien & Ozeanien
   { name: 'Sydney', timeZone: 'Australia/Sydney', region: 'Australien & Ozeanien', flag: '🇦🇺' },
   { name: 'Melbourne', timeZone: 'Australia/Melbourne', region: 'Australien & Ozeanien', flag: '🇦🇺' },
+  { name: 'Brisbane', timeZone: 'Australia/Brisbane', region: 'Australien & Ozeanien', flag: '🇦🇺' },
+  { name: 'Perth', timeZone: 'Australia/Perth', region: 'Australien & Ozeanien', flag: '🇦🇺' },
   { name: 'Auckland', timeZone: 'Pacific/Auckland', region: 'Australien & Ozeanien', flag: '🇳🇿' },
+  { name: 'Fidschi (Suva)', timeZone: 'Pacific/Fiji', region: 'Australien & Ozeanien', flag: '🇫🇯' },
 
+  // Afrika
   { name: 'Kairo', timeZone: 'Africa/Cairo', region: 'Afrika', flag: '🇪🇬' },
   { name: 'Kapstadt / Johannesburg', timeZone: 'Africa/Johannesburg', region: 'Afrika', flag: '🇿🇦' },
   { name: 'Nairobi', timeZone: 'Africa/Nairobi', region: 'Afrika', flag: '🇰🇪' },
+  { name: 'Lagos', timeZone: 'Africa/Lagos', region: 'Afrika', flag: '🇳🇬' },
+  { name: 'Casablanca', timeZone: 'Africa/Casablanca', region: 'Afrika', flag: '🇲🇦' },
+
+  // Global
+  { name: 'UTC / GMT (Weltzeit)', timeZone: 'UTC', region: 'Global', flag: '🌐' },
 ];
 
 export interface ParticleEffectOption {

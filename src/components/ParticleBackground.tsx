@@ -5,25 +5,25 @@ interface ParticleBackgroundProps {
   effect: ParticleEffect;
   intensity: number; // 10 to 100
   color: string; // Hex color string
-  speed?: number; // 1 to 5 (default 2)
+  speed?: number; // 0.25 to 3.0 (speed multiplier, default 1.0)
 }
 
 interface Particle {
   x: number;
   y: number;
-  vx: number;
-  vy: number;
+  baseVx: number;
+  baseVy: number;
   radius: number;
   baseAlpha: number;
   alpha: number;
   rotation: number;
-  rotationSpeed: number;
+  baseRotationSpeed: number;
   swayAngle: number;
-  swaySpeed: number;
+  baseSwaySpeed: number;
   driftAngleX: number;
   driftAngleY: number;
   pulsePhase: number;
-  pulseSpeed: number;
+  basePulseSpeed: number;
   // Unique characteristics for specific particle types
   particleSubtype: 'crystal' | 'fluffy' | 'speck' | 'mote' | 'fiber' | 'star' | 'bubble';
   length?: number;
@@ -50,9 +50,14 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
   effect,
   intensity,
   color,
-  speed = 2,
+  speed = 1.0,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
+
+  const colorRef = useRef(color);
+  colorRef.current = color;
 
   useEffect(() => {
     if (effect === 'none') return;
@@ -66,9 +71,6 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     let animationFrameId: number;
     let isRunning = true;
 
-    // Parse color
-    const rgb = hexToRgb(color);
-    const speedFactor = Math.max(0.35, Math.min(3.0, (speed || 2) * 0.5));
     const intensityClamped = Math.max(10, Math.min(100, intensity || 50));
 
     // Handle high DPI
@@ -98,16 +100,19 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     );
     const particleCount = Math.max(16, Math.min(240, computedCount));
 
-    // Initialize particles
+    // Initialize particles with base velocities
     const particles: Particle[] = [];
 
     for (let i = 0; i < particleCount; i++) {
-      let vx = 0;
-      let vy = 0;
+      let baseVx = 0;
+      let baseVy = 0;
       let radius = 2;
       let baseAlpha = 0.5;
       let subtype: Particle['particleSubtype'] = 'speck';
       let length = 10;
+      let baseRotationSpeed = (Math.random() - 0.5) * 0.03;
+      let baseSwaySpeed = 0.008 + Math.random() * 0.02;
+      let basePulseSpeed = 0.015 + Math.random() * 0.03;
 
       if (effect === 'snow') {
         // Snow has 3 subtypes: 6-arm ice crystals, fluffy flakes, and round pellets
@@ -126,9 +131,9 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
           baseAlpha = 0.4 + Math.random() * 0.5;
         }
 
-        // Snow MUST fall clearly downwards with gravity
-        vy = (0.75 + Math.random() * 1.5) * speedFactor;
-        vx = (Math.random() - 0.5) * 0.3;
+        // Snow falls clearly downwards with gravity
+        baseVy = 0.75 + Math.random() * 1.5;
+        baseVx = (Math.random() - 0.5) * 0.3;
       } else if (effect === 'dust') {
         // DUST does NOT fall! It stays suspended and floats in all directions (Brownian motion)
         const rand = Math.random();
@@ -143,45 +148,45 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
         }
 
         // Random hovering drift: NO downward bias!
-        vx = (Math.random() - 0.5) * 0.3 * speedFactor;
-        vy = (Math.random() - 0.5) * 0.25 * speedFactor;
+        baseVx = (Math.random() - 0.5) * 0.3;
+        baseVy = (Math.random() - 0.5) * 0.25;
       } else if (effect === 'stars') {
         subtype = 'star';
         radius = 0.8 + Math.random() * 2.2;
-        vx = (Math.random() - 0.5) * 0.04 * speedFactor;
-        vy = (Math.random() - 0.5) * 0.04 * speedFactor;
+        baseVx = (Math.random() - 0.5) * 0.04;
+        baseVy = (Math.random() - 0.5) * 0.04;
         baseAlpha = 0.3 + Math.random() * 0.6;
       } else if (effect === 'rain') {
         subtype = 'speck';
         radius = 1.0;
-        vy = (9 + Math.random() * 7) * speedFactor;
-        vx = -1.5 * speedFactor;
+        baseVy = 9 + Math.random() * 7;
+        baseVx = -1.5;
         length = 12 + Math.random() * 18;
         baseAlpha = 0.25 + Math.random() * 0.45;
       } else if (effect === 'bubbles') {
         subtype = 'bubble';
         radius = 2.5 + Math.random() * 4.5;
-        vy = -(0.5 + Math.random() * 1.2) * speedFactor;
-        vx = (Math.random() - 0.5) * 0.35;
+        baseVy = -(0.5 + Math.random() * 1.2);
+        baseVx = (Math.random() - 0.5) * 0.35;
         baseAlpha = 0.25 + Math.random() * 0.4;
       }
 
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx,
-        vy,
+        baseVx,
+        baseVy,
         radius,
         baseAlpha,
         alpha: baseAlpha,
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.03 * speedFactor,
+        baseRotationSpeed,
         swayAngle: Math.random() * Math.PI * 2,
-        swaySpeed: 0.008 + Math.random() * 0.02,
+        baseSwaySpeed,
         driftAngleX: Math.random() * Math.PI * 2,
         driftAngleY: Math.random() * Math.PI * 2,
         pulsePhase: Math.random() * Math.PI * 2,
-        pulseSpeed: 0.015 + Math.random() * 0.03,
+        basePulseSpeed,
         particleSubtype: subtype,
         length,
       });
@@ -196,11 +201,17 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
       const dt = Math.min((time - lastTime) / 16.67, 2.5);
       lastTime = time;
-      globalWindTime += 0.006 * dt;
+
+      // Real-time speed multiplier from ref (smoothly reacts without restarting particles)
+      const currentSpeed = speedRef.current ?? 1.0;
+      const speedFactor = Math.max(0.15, Math.min(3.5, currentSpeed === 2 ? 1.0 : currentSpeed));
+      globalWindTime += 0.006 * dt * speedFactor;
+
+      // Real-time color from ref
+      const rgb = hexToRgb(colorRef.current || '#ffffff');
+      const colorPrefix = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b},`;
 
       ctx.clearRect(0, 0, width, height);
-
-      const colorPrefix = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b},`;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -208,12 +219,12 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
         if (effect === 'snow') {
           // ==================== SNOW PHYSICS & RENDERING ====================
           // Natural wind drift with oscillating horizontal flutter
-          p.swayAngle += p.swaySpeed * dt * speedFactor;
-          p.rotation += p.rotationSpeed * dt;
+          p.swayAngle += p.baseSwaySpeed * dt * speedFactor;
+          p.rotation += p.baseRotationSpeed * dt * speedFactor;
 
           const windGust = Math.sin(globalWindTime) * 0.6;
-          p.x += (p.vx + Math.sin(p.swayAngle) * 1.1 + windGust) * dt;
-          p.y += p.vy * dt;
+          p.x += (p.baseVx * speedFactor + Math.sin(p.swayAngle) * 1.1 + windGust) * dt;
+          p.y += p.baseVy * speedFactor * dt;
 
           // Wrap around edges
           if (p.y > height + 15) {
@@ -292,13 +303,13 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
           // Dust floats weightlessly with Brownian air currents (curling 2D motion, NOT falling)
           p.driftAngleX += 0.012 * dt * speedFactor;
           p.driftAngleY += 0.009 * dt * speedFactor;
-          p.rotation += p.rotationSpeed * 0.6 * dt;
+          p.rotation += p.baseRotationSpeed * 0.6 * dt * speedFactor;
 
           // Wandering sinusoidal drift
-          const wanderX = Math.sin(p.driftAngleX) * 0.45;
-          const wanderY = Math.cos(p.driftAngleY) * 0.35;
-          p.x += (p.vx + wanderX) * dt;
-          p.y += (p.vy + wanderY) * dt;
+          const wanderX = Math.sin(p.driftAngleX) * 0.45 * speedFactor;
+          const wanderY = Math.cos(p.driftAngleY) * 0.35 * speedFactor;
+          p.x += (p.baseVx * speedFactor + wanderX) * dt;
+          p.y += (p.baseVy * speedFactor + wanderY) * dt;
 
           // Wrap edges smoothly
           if (p.x < -10) p.x = width + 10;
@@ -307,7 +318,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
           else if (p.y > height + 10) p.y = -10;
 
           // Sunbeam / room light reflection pulse: dust catches the light then fades
-          p.pulsePhase += p.pulseSpeed * 0.8 * dt;
+          p.pulsePhase += p.basePulseSpeed * 0.8 * dt * speedFactor;
           const lightGlimmer = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 1.8);
           const currentAlpha = p.baseAlpha * (0.2 + 0.8 * lightGlimmer);
 
@@ -357,9 +368,9 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
           }
         } else if (effect === 'stars') {
           // ==================== STARS ====================
-          p.pulsePhase += p.pulseSpeed * 1.4 * dt;
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
+          p.pulsePhase += p.basePulseSpeed * 1.4 * dt * speedFactor;
+          p.x += p.baseVx * speedFactor * dt;
+          p.y += p.baseVy * speedFactor * dt;
 
           const twinkle = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 2.2);
           const starAlpha = p.baseAlpha * (0.2 + 0.8 * twinkle);
@@ -376,15 +387,15 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
             ctx.moveTo(p.x - sparkleLen, p.y);
             ctx.lineTo(p.x + sparkleLen, p.y);
             ctx.moveTo(p.x, p.y - sparkleLen);
-            ctx.lineTo(p.x, p.y + sparkleLen);
+            ctx.lineTo(p.x + sparkleLen, p.y);
             ctx.strokeStyle = `${colorPrefix} ${starAlpha * 0.7})`;
             ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         } else if (effect === 'rain') {
           // ==================== RAIN ====================
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
+          p.x += p.baseVx * speedFactor * dt;
+          p.y += p.baseVy * speedFactor * dt;
 
           const len = p.length || 15;
           if (p.y > height + len) {
@@ -395,16 +406,16 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x + (p.vx / p.vy) * len, p.y + len);
+          ctx.lineTo(p.x + (p.baseVx / p.baseVy) * len, p.y + len);
           ctx.strokeStyle = `${colorPrefix} ${p.alpha})`;
           ctx.lineWidth = 1.1;
           ctx.lineCap = 'round';
           ctx.stroke();
         } else if (effect === 'bubbles') {
           // ==================== BUBBLES ====================
-          p.swayAngle += p.swaySpeed * dt;
-          p.x += (p.vx + Math.sin(p.swayAngle) * 0.45) * dt;
-          p.y += p.vy * dt;
+          p.swayAngle += p.baseSwaySpeed * dt * speedFactor;
+          p.x += (p.baseVx * speedFactor + Math.sin(p.swayAngle) * 0.45) * dt;
+          p.y += p.baseVy * speedFactor * dt;
 
           if (p.y < -p.radius * 2) {
             p.y = height + p.radius * 2;
@@ -462,7 +473,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [effect, intensity, color, speed]);
+  }, [effect, intensity]);
 
   if (effect === 'none') {
     return null;

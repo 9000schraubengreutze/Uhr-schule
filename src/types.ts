@@ -5,6 +5,7 @@ export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
+export type DigitTransition = 'fade' | 'crossfade' | 'slide-fade' | 'none';
 
 export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
 
@@ -33,6 +34,7 @@ export interface AdditionalTimeZone {
   name: string;
   timeZone: string;
   customLabel?: string;
+  flag?: string;
 }
 
 export interface CuratedTheme {
@@ -72,7 +74,7 @@ export interface ClockSettings {
   particleEffect: ParticleEffect; // 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles'
   particleIntensity: number; // 10 to 100 percent
   particleColor: string; // Particle color (hex, e.g. '#ffffff')
-  particleSpeed: number; // 1 to 5 (speed multiplier)
+  particleSpeed: number; // 0.25 to 3.0 (speed multiplier, default 1.0)
 
   // Digital Clock Typography & Appearance
   clockColor: string; // Digit text color
@@ -82,6 +84,8 @@ export interface ClockSettings {
   clockScale: number; // 70 to 140 percent
   enableBreathingAnimation: boolean;
   enableGlow: boolean; // Ambient neon / soft backlight glow
+  digitTransition: DigitTransition; // 'fade' | 'crossfade' | 'slide-fade' | 'none'
+  digitFadeDuration: number; // 150 to 800 ms (default 360ms)
   hasCustomImage: boolean;
 
   // === UHR (Digitale Uhr-Funktionen) ===
@@ -100,6 +104,10 @@ export interface ClockSettings {
   // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)
   showAdditionalTimeZones: boolean;
   additionalTimeZones: AdditionalTimeZone[];
+
+  // Wetter-Anzeige auf dem Hauptbildschirm
+  showWeather: boolean;
+  weatherUnit: 'celsius' | 'fahrenheit';
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';

@@ -6,12 +6,15 @@ import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
 import { SpringDigit } from './SpringDigit';
 import { SchoolStatusResult } from '../utils/timetable';
+import { WeatherWidget } from './WeatherWidget';
 
 interface DigitalClockProps {
   settings: ClockSettings;
   offsetMs?: number;
   statusResult?: SchoolStatusResult;
   onOpenTimetable?: () => void;
+  onUpdateWeatherUnit?: (unit: 'celsius' | 'fahrenheit') => void;
+  onUpdateSettings?: (updater: (prev: ClockSettings) => ClockSettings) => void;
 }
 
 export const DigitalClock: React.FC<DigitalClockProps> = ({
@@ -19,6 +22,8 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   offsetMs = 0,
   statusResult,
   onOpenTimetable,
+  onUpdateWeatherUnit,
+  onUpdateSettings,
 }) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
@@ -276,6 +281,8 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   key={`h-${index}`}
                   digit={char}
                   id={`clock-hour-digit-${index}`}
+                  transitionType={settings.digitTransition}
+                  durationMs={settings.digitFadeDuration}
                 />
               ))}
             </span>
@@ -300,6 +307,8 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   key={`m-${index}`}
                   digit={char}
                   id={`clock-minute-digit-${index}`}
+                  transitionType={settings.digitTransition}
+                  durationMs={settings.digitFadeDuration}
                 />
               ))}
             </span>
@@ -325,6 +334,8 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                       key={`s-${index}`}
                       digit={char}
                       id={`clock-second-digit-${index}`}
+                      transitionType={settings.digitTransition}
+                      durationMs={settings.digitFadeDuration}
                     />
                   ))}
                 </motion.span>
@@ -360,12 +371,23 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             </div>
           )}
 
+          {/* Weather Display Component on Main Screen */}
+          {settings.showWeather && (
+            <WeatherWidget
+              unit={settings.weatherUnit}
+              onUnitChange={onUpdateWeatherUnit}
+              backdropBlur={settings.backdropBlurIntensity}
+              accentColor={settings.accentColor}
+            />
+          )}
+
           {/* Additional Time Zones (World Clock directly below main clock) */}
           {settings.showAdditionalTimeZones && (
             <AdditionalTimeZonesBar
               time={time}
               settings={settings}
               mainTimeZone={targetTimeZone}
+              onUpdateSettings={onUpdateSettings}
             />
           )}
 

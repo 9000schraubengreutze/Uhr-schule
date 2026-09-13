@@ -177,6 +177,8 @@ export const StopwatchModal: React.FC<StopwatchModalProps> = ({
           }`}
           style={{
             boxShadow: '0 25px 60px -15px rgba(0,0,0,0.7), 0 0 30px rgba(56,189,248,0.1)',
+            backdropFilter: `blur(${settings?.backdropBlurIntensity ?? 16}px)`,
+            WebkitBackdropFilter: `blur(${settings?.backdropBlurIntensity ?? 16}px)`,
           }}
         >
           {/* Header */}

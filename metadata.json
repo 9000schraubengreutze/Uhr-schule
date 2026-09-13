@@ -1,6 +1,8 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Vollbild-Uhr mit Online-Atomuhr-Synchronisation (NTP/UTC), zusätzlichen Weltzeitzonen, animierten Partikeleffekten (Schnee, Staub, Sterne), Pausen-Spielen und anpassbaren Themes.",
-  "requestFramePermissions": [],
+  "description": "Moderne digitale Vollbild-Uhr mit Online-Atomuhr-Synchronisation (NTP/UTC), an- und abschaltbaren Weltzeitzonen, animierten Partikeleffekten (Schnee, Staub, Sterne) und anpassbaren Themes.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

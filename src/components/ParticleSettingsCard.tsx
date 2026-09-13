@@ -10,6 +10,9 @@ import {
   Palette,
   Sliders,
   Check,
+  RotateCcw,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { ClockSettings, ParticleEffect } from '../types';
 import { PARTICLE_COLOR_PRESETS } from '../utils/presets';
@@ -37,6 +40,14 @@ const EFFECTS: EffectItem[] = [
   { id: 'bubbles', label: 'Lichtpunkte', desc: 'Aufsteigende Blasen', icon: CircleDot },
 ];
 
+const SPEED_PRESETS = [
+  { val: 0.35, label: '0.35x', name: 'Zen' },
+  { val: 0.70, label: '0.70x', name: 'Sanft' },
+  { val: 1.00, label: '1.00x', name: 'Normal' },
+  { val: 1.60, label: '1.60x', name: 'Flott' },
+  { val: 2.50, label: '2.50x', name: 'Sturm' },
+];
+
 export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
   settings,
   onUpdateSettings,
@@ -45,7 +56,10 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
   const currentEffect = settings.particleEffect || 'none';
   const intensity = settings.particleIntensity ?? 50;
   const color = settings.particleColor || '#ffffff';
-  const speed = settings.particleSpeed ?? 2;
+  
+  // Normalise legacy speed values (e.g. 2 -> 1.0)
+  const rawSpeed = settings.particleSpeed;
+  const speed = typeof rawSpeed === 'number' ? (rawSpeed === 2 ? 1.0 : rawSpeed) : 1.0;
 
   const handleSelectEffect = (eff: ParticleEffect, label: string) => {
     onUpdateSettings((prev) => ({
@@ -64,11 +78,28 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
   };
 
   const handleSpeedChange = (val: number) => {
+    const clamped = Math.max(0.25, Math.min(3.0, Number(val.toFixed(2))));
     onUpdateSettings((prev) => ({
       ...prev,
-      particleSpeed: val,
+      particleSpeed: clamped,
     }));
     if (settings.vibrationEnabled) triggerHaptic(10);
+  };
+
+  const handleStepSpeed = (delta: number) => {
+    const next = Math.max(0.25, Math.min(3.0, Number((speed + delta).toFixed(2))));
+    handleSpeedChange(next);
+    showFeedback(`Geschwindigkeit: ${next.toFixed(2)}x`);
+  };
+
+  const handleResetSpeed = () => {
+    handleSpeedChange(1.0);
+    showFeedback('Geschwindigkeit auf Standard (1.00x) zurückgesetzt');
+  };
+
+  const handleSelectSpeedPreset = (val: number, name: string) => {
+    handleSpeedChange(val);
+    showFeedback(`Tempo: ${name} (${val.toFixed(2)}x)`);
   };
 
   const handleColorChange = (newColor: string) => {
@@ -85,6 +116,17 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
     if (val <= 75) return 'Lebendig';
     return 'Intensiv';
   };
+
+  const getSpeedLabel = (val: number): { label: string; desc: string } => {
+    if (val <= 0.4) return { label: 'Zeitlupe', desc: 'Extrem ruhiges, meditatives Schweben' };
+    if (val <= 0.75) return { label: 'Sanft & Ruhig', desc: 'Gemächliche, unaufdringliche Bewegung' };
+    if (val <= 1.25) return { label: 'Natürlich', desc: 'Ausgewogene Standardgeschwindigkeit' };
+    if (val <= 1.85) return { label: 'Lebendig', desc: 'Frische, flotte Bewegung' };
+    if (val <= 2.5) return { label: 'Dynamisch', desc: 'Schnelles, energiereiches Treiben' };
+    return { label: 'Stürmisch', desc: 'Maximale Animationsgeschwindigkeit' };
+  };
+
+  const speedInfo = getSpeedLabel(speed);
 
   return (
     <div
@@ -185,36 +227,104 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
             </div>
           </div>
 
-          {/* Speed Selection */}
-          <div className="space-y-1.5">
+          {/* Präzise Animationsgeschwindigkeits-Steuerung */}
+          <div className="space-y-2.5 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            {/* Header mit Live-Metrik und Reset-Button */}
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-                <Gauge className="w-3.5 h-3.5 text-slate-400" />
-                <span>Geschwindigkeit</span>
+                <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                <span>Animationsgeschwindigkeit</span>
               </div>
-              <span className="text-[11px] text-slate-400">
-                {speed === 1 ? 'Langsam (Träge)' : speed === 2 ? 'Normal' : 'Dynamisch (Schnell)'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                  {speed.toFixed(2)}x
+                </span>
+                {Math.abs(speed - 1.0) > 0.01 && (
+                  <button
+                    type="button"
+                    onClick={handleResetSpeed}
+                    title="Auf Standard (1.00x) zurücksetzen"
+                    className="p-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { val: 1, label: 'Träge / Langsam' },
-                { val: 2, label: 'Normal' },
-                { val: 3, label: 'Schneller' },
-              ].map((sp) => (
-                <button
-                  key={sp.val}
-                  type="button"
-                  onClick={() => handleSpeedChange(sp.val)}
-                  className={`py-1.5 px-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                    speed === sp.val
-                      ? 'bg-amber-500/25 border-amber-500 text-amber-200'
-                      : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {sp.label}
-                </button>
-              ))}
+
+            {/* Beschreibung & Charakteristik des aktuellen Tempos */}
+            <div className="flex items-center justify-between text-[11px] text-slate-400 px-0.5">
+              <span className="text-amber-400/95 font-medium">{speedInfo.label}</span>
+              <span className="text-slate-500 text-[10px] truncate max-w-[200px]">{speedInfo.desc}</span>
+            </div>
+
+            {/* Schieberegler mit präzisen +/- Stepper-Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleStepSpeed(-0.05)}
+                disabled={speed <= 0.25}
+                title="Langsamer (-0.05x)"
+                className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex-1 relative py-1">
+                <input
+                  type="range"
+                  min="0.25"
+                  max="3.00"
+                  step="0.05"
+                  value={speed}
+                  onChange={(e) => handleSpeedChange(Number(e.target.value))}
+                  className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg appearance-none"
+                  aria-label="Animationsgeschwindigkeit der Partikel"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleStepSpeed(0.05)}
+                disabled={speed >= 3.0}
+                title="Schneller (+0.05x)"
+                className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Skalen-Hilfsbeschriftung */}
+            <div className="flex justify-between text-[10px] text-slate-500 px-1 font-mono">
+              <span>0.25x (Zen)</span>
+              <span className={Math.abs(speed - 1.0) < 0.04 ? 'text-amber-400 font-bold' : ''}>1.00x (Standard)</span>
+              <span>2.00x</span>
+              <span>3.00x (Max)</span>
+            </div>
+
+            {/* Quick-Tempo Presets */}
+            <div className="pt-1">
+              <div className="text-[10px] text-slate-400 mb-1.5 font-medium">Tempo-Schnellwahl:</div>
+              <div className="grid grid-cols-5 gap-1.5">
+                {SPEED_PRESETS.map((preset) => {
+                  const isActive = Math.abs(speed - preset.val) < 0.04;
+                  return (
+                    <button
+                      key={preset.val}
+                      type="button"
+                      onClick={() => handleSelectSpeedPreset(preset.val, preset.name)}
+                      className={`py-1.5 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-amber-500/25 border-amber-500 text-amber-200 ring-1 ring-amber-500/40 font-bold shadow-sm'
+                          : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 font-medium'
+                      }`}
+                    >
+                      <div className="text-[11px] font-mono">{preset.label}</div>
+                      <div className="text-[9px] opacity-75 truncate">{preset.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

@@ -14,8 +14,9 @@ googleProvider.setCustomParameters({
 });
 
 // Initialize Firestore
-export const db = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+const firestoreDbId = (firebaseConfig as Record<string, any>).firestoreDatabaseId;
+export const db = firestoreDbId
+  ? getFirestore(app, firestoreDbId)
   : getFirestore(app);
 
 // Test Firestore connection on boot

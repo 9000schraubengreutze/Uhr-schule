@@ -53,6 +53,7 @@ export function loadSettings(): ClockSettings {
             name: typeof z?.name === 'string' ? z.name : 'Zeitzone',
             timeZone: typeof z?.timeZone === 'string' ? z.timeZone : 'UTC',
             customLabel: typeof z?.customLabel === 'string' ? z.customLabel : undefined,
+            flag: typeof z?.flag === 'string' ? z.flag : undefined,
           }))
         : DEFAULT_SETTINGS.additionalTimeZones,
       particleEffect: parsed.particleEffect || DEFAULT_SETTINGS.particleEffect,
@@ -63,8 +64,31 @@ export function loadSettings(): ClockSettings {
       particleColor: parsed.particleColor || DEFAULT_SETTINGS.particleColor,
       particleSpeed:
         typeof parsed.particleSpeed === 'number'
-          ? parsed.particleSpeed
+          ? parsed.particleSpeed === 2
+            ? 1.0
+            : parsed.particleSpeed === 1
+            ? 0.5
+            : parsed.particleSpeed === 3
+            ? 1.5
+            : Math.max(0.2, Math.min(3.0, Number(parsed.particleSpeed.toFixed(2))))
           : DEFAULT_SETTINGS.particleSpeed,
+      showWeather:
+        typeof parsed.showWeather === 'boolean'
+          ? parsed.showWeather
+          : DEFAULT_SETTINGS.showWeather,
+      weatherUnit:
+        parsed.weatherUnit === 'fahrenheit' ? 'fahrenheit' : DEFAULT_SETTINGS.weatherUnit,
+      digitTransition:
+        parsed.digitTransition === 'crossfade' ||
+        parsed.digitTransition === 'slide-fade' ||
+        parsed.digitTransition === 'none' ||
+        parsed.digitTransition === 'fade'
+          ? parsed.digitTransition
+          : DEFAULT_SETTINGS.digitTransition,
+      digitFadeDuration:
+        typeof parsed.digitFadeDuration === 'number'
+          ? Math.max(150, Math.min(800, parsed.digitFadeDuration))
+          : DEFAULT_SETTINGS.digitFadeDuration,
       customGradient: {
         ...DEFAULT_SETTINGS.customGradient,
         ...(parsed.customGradient || {}),

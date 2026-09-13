@@ -101,6 +101,7 @@ export const TimeZonesSettingsSection: React.FC<TimeZonesSettingsSectionProps> =
       id: `tz-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       name: tzOption.name,
       timeZone: tzOption.timeZone,
+      flag: tzOption.flag,
     };
 
     onUpdateSettings((prev) => ({
