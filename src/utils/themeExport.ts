@@ -22,7 +22,7 @@ export function sanitizeClockSettings(input: any): ClockSettings {
   const raw = input.settings && typeof input.settings === 'object' ? input.settings : input;
 
   const validBgTypes = ['gradient', 'solid', 'image'];
-  const validFontFamilies = ['outfit', 'inter', 'mono', 'digital', 'scholastic', 'serif'];
+  const validFontFamilies = ['outfit', 'inter', 'mono', 'digital', 'scholastic', 'school', 'serif', 'sans'];
   const validFontWeights = ['light', 'normal', 'semibold', 'bold', 'extrabold'];
   const validColorSchemes = ['light', 'dark', 'system'];
   const validThemeModes = ['light', 'dark'];
@@ -136,8 +136,6 @@ export function sanitizeClockSettings(input: any): ClockSettings {
       typeof raw.vibrationEnabled === 'boolean' ? raw.vibrationEnabled : DEFAULT_SETTINGS.vibrationEnabled,
     useAtomicSync: typeof raw.useAtomicSync === 'boolean' ? raw.useAtomicSync : DEFAULT_SETTINGS.useAtomicSync,
     showSyncBadge: typeof raw.showSyncBadge === 'boolean' ? raw.showSyncBadge : DEFAULT_SETTINGS.showSyncBadge,
-    showWeather: typeof raw.showWeather === 'boolean' ? raw.showWeather : DEFAULT_SETTINGS.showWeather,
-    weatherUnit: raw.weatherUnit === 'fahrenheit' ? 'fahrenheit' : DEFAULT_SETTINGS.weatherUnit,
   };
 
   return sanitized;

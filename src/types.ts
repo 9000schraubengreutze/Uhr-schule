@@ -1,4 +1,4 @@
-export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school';
+export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school' | 'serif' | 'sans';
 export type ClockWeight = '300' | '400' | '600' | '800';
 export type BgType = 'color' | 'gradient' | 'image';
 export type ThemeMode = 'dark' | 'light';
@@ -81,6 +81,7 @@ export interface ClockSettings {
   accentColor: string; // Glow / badge / button accent color
   clockFont: ClockFont;
   clockWeight: ClockWeight;
+  typographySet?: string; // Predefined typography set ID (e.g. 'mono', 'serif', 'sans')
   clockScale: number; // 70 to 140 percent
   enableBreathingAnimation: boolean;
   enableGlow: boolean; // Ambient neon / soft backlight glow
@@ -104,10 +105,6 @@ export interface ClockSettings {
   // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)
   showAdditionalTimeZones: boolean;
   additionalTimeZones: AdditionalTimeZone[];
-
-  // Wetter-Anzeige auf dem Hauptbildschirm
-  showWeather: boolean;
-  weatherUnit: 'celsius' | 'fahrenheit';
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';

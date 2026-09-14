@@ -72,12 +72,6 @@ export function loadSettings(): ClockSettings {
             ? 1.5
             : Math.max(0.2, Math.min(3.0, Number(parsed.particleSpeed.toFixed(2))))
           : DEFAULT_SETTINGS.particleSpeed,
-      showWeather:
-        typeof parsed.showWeather === 'boolean'
-          ? parsed.showWeather
-          : DEFAULT_SETTINGS.showWeather,
-      weatherUnit:
-        parsed.weatherUnit === 'fahrenheit' ? 'fahrenheit' : DEFAULT_SETTINGS.weatherUnit,
       digitTransition:
         parsed.digitTransition === 'crossfade' ||
         parsed.digitTransition === 'slide-fade' ||
@@ -89,6 +83,17 @@ export function loadSettings(): ClockSettings {
         typeof parsed.digitFadeDuration === 'number'
           ? Math.max(150, Math.min(800, parsed.digitFadeDuration))
           : DEFAULT_SETTINGS.digitFadeDuration,
+      clockFont:
+        parsed.clockFont === 'inter' ||
+        parsed.clockFont === 'mono' ||
+        parsed.clockFont === 'outfit' ||
+        parsed.clockFont === 'school' ||
+        parsed.clockFont === 'serif' ||
+        parsed.clockFont === 'sans'
+          ? parsed.clockFont
+          : DEFAULT_SETTINGS.clockFont,
+      typographySet:
+        typeof parsed.typographySet === 'string' ? parsed.typographySet : DEFAULT_SETTINGS.typographySet,
       customGradient: {
         ...DEFAULT_SETTINGS.customGradient,
         ...(parsed.customGradient || {}),

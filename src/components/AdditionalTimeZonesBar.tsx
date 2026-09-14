@@ -202,10 +202,14 @@ export const AdditionalTimeZonesBar: React.FC<AdditionalTimeZonesBarProps> = ({
   const fontClass =
     settings.clockFont === 'mono'
       ? 'font-mono-digital'
+      : settings.clockFont === 'serif'
+      ? 'font-serif-clock'
       : settings.clockFont === 'outfit'
       ? 'font-outfit'
       : settings.clockFont === 'school'
       ? 'font-school'
+      : settings.clockFont === 'sans'
+      ? 'font-sans-clock'
       : 'font-inter';
 
   return (

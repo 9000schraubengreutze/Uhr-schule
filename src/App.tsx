@@ -310,7 +310,6 @@ export default function App() {
         <DigitalClock
           settings={settings}
           offsetMs={atomicState.offsetMs}
-          onUpdateWeatherUnit={(unit) => setSettings((prev) => ({ ...prev, weatherUnit: unit }))}
           onUpdateSettings={setSettings}
         />
       </main>

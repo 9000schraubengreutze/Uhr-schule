@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   accentColor: '#38bdf8',
   clockFont: 'outfit',
   clockWeight: '600',
+  typographySet: 'geometric',
   clockScale: 100,
   enableBreathingAnimation: true,
   enableGlow: true,
@@ -54,10 +55,6 @@ export const DEFAULT_SETTINGS: ClockSettings = {
     { id: 'tz-ny', name: 'New York', timeZone: 'America/New_York', flag: '🇺🇸' },
     { id: 'tz-tokyo', name: 'Tokio', timeZone: 'Asia/Tokyo', flag: '🇯🇵' },
   ],
-
-  // Wetter-Anzeige
-  showWeather: true,
-  weatherUnit: 'celsius',
 
   // EINSTELLUNGEN
   appLanguage: 'de',

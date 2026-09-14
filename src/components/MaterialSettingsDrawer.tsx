@@ -19,6 +19,7 @@ import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
 import { ParticleSettingsCard } from './ParticleSettingsCard';
 import { BackdropBlurControl } from './BackdropBlurControl';
 import { DigitTransitionControl } from './DigitTransitionControl';
+import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
   Search,
@@ -38,6 +39,7 @@ import {
   ShieldCheck,
   Keyboard,
   Mail,
+  Type,
   FileText,
   Upload,
   Trash2,
@@ -240,8 +242,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Akzentfarbe', desc: 'Farbe für Glüheffekte und Badges' },
       { tab: 'darstellung' as SettingsTab, title: 'Hintergrund', desc: 'Farbe, Farbverlauf oder eigenes Bild' },
       { tab: 'darstellung' as SettingsTab, title: 'Animierte Partikeleffekte', desc: 'Schnee, Staub, funkelnde Sterne, Regen, Intensität und Partikelfarbe' },
-      { tab: 'darstellung' as SettingsTab, title: 'Schriftart', desc: 'Outfit, Inter, Monospace Digital, Schulbuch' },
-      { tab: 'darstellung' as SettingsTab, title: 'Schriftstärke', desc: 'Light, Normal, Semibold, Extrabold' },
+      { tab: 'darstellung' as SettingsTab, title: 'Typografie-Sets (Mono-space, Serif, Sans-Serif)', desc: 'Vordefinierte Typografie-Kombinationen für den visuellen Stil der Uhr' },
+      { tab: 'darstellung' as SettingsTab, title: 'Schriftart & Schriftstärke', desc: 'Outfit, Inter, Monospace Digital, Serif, Schulbuch' },
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
@@ -745,37 +747,134 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   showFeedback={showFeedback}
                 />
 
-                {/* Schriftart & Schriftstärke */}
+                {/* Schriftart & Typografie mit Vordefinierten Typography-Sets */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-4">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                    Schriftart & Typografie
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'outfit' as ClockFont, label: 'Outfit (Modern)', sample: '12:34' },
-                      { id: 'inter' as ClockFont, label: 'Inter (Klassisch)', sample: '12:34' },
-                      { id: 'mono' as ClockFont, label: 'Monospace (Digital)', sample: '12:34' },
-                      { id: 'school' as ClockFont, label: 'Schulbuch (Rund)', sample: '12:34' },
-                    ].map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => onUpdateSettings((p) => ({ ...p, clockFont: f.id }))}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                          settings.clockFont === f.id
-                            ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/30'
-                            : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div className="text-xs font-semibold">{f.label}</div>
-                        <div className="font-mono text-sm mt-1 opacity-85">{f.sample}</div>
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                        <Type className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
+                          Typografie & Schriftstil
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          Wähle ein vorkonfiguriertes Typografie-Set oder passe die Schrift an
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Dropdown für Vordefinierte Typografie-Sets */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="typography-set-select"
+                      className="text-xs font-semibold text-slate-300 flex items-center justify-between"
+                    >
+                      <span>Vordefiniertes Typografie-Set:</span>
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        {inferTypographySet(settings.clockFont, settings.clockWeight).badge}
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="typography-set-select"
+                        value={
+                          settings.typographySet ||
+                          inferTypographySet(settings.clockFont, settings.clockWeight).id
+                        }
+                        onChange={(e) => {
+                          const chosenSet = TYPOGRAPHY_SETS.find((t) => t.id === e.target.value);
+                          if (chosenSet) {
+                            onUpdateSettings((p) => ({
+                              ...p,
+                              clockFont: chosenSet.font,
+                              clockWeight: chosenSet.defaultWeight,
+                              typographySet: chosenSet.id,
+                            }));
+                            triggerHaptic(settings.vibrationEnabled);
+                            showFeedback(`${chosenSet.name} aktiviert`);
+                          }
+                        }}
+                        className="w-full appearance-none bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 font-medium transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-10"
+                      >
+                        <optgroup label="Typografie-Stile">
+                          {TYPOGRAPHY_SETS.map((t) => (
+                            <option key={t.id} value={t.id} className="bg-slate-900 text-slate-100">
+                              {t.category}: {t.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
+
+                    {/* Aktive Set-Vorschaukarte */}
+                    {(() => {
+                      const activeSet = inferTypographySet(settings.clockFont, settings.clockWeight);
+                      return (
+                        <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-medium text-slate-300 truncate">
+                              {activeSet.tagline}
+                            </div>
+                            <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
+                              {activeSet.description}
+                            </div>
+                          </div>
+                          <div
+                            className={`text-base font-semibold px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/60 text-slate-100 ${activeSet.fontClass} ${activeSet.trackingClass} tabular-numbers select-none`}
+                            title="Live-Schriftprobe"
+                          >
+                            12:34:56
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Individuelle Einzelschriftart-Auswahl */}
+                  <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                    <span className="text-xs font-semibold text-slate-300 block">
+                      Schriftart manuell wählen
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'mono' as ClockFont, label: 'Mono-space', desc: 'Terminal', fontCls: 'font-mono-digital' },
+                        { id: 'serif' as ClockFont, label: 'Serif', desc: 'Klassisch', fontCls: 'font-serif-clock' },
+                        { id: 'inter' as ClockFont, label: 'Sans-Serif', desc: 'Minimal', fontCls: 'font-inter' },
+                        { id: 'outfit' as ClockFont, label: 'Geometric', desc: 'Modern', fontCls: 'font-outfit' },
+                        { id: 'school' as ClockFont, label: 'Rund Display', desc: 'Comfortaa', fontCls: 'font-school' },
+                        { id: 'sans' as ClockFont, label: 'Clean Sans', desc: 'Neutral', fontCls: 'font-sans-clock' },
+                      ].map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => {
+                            onUpdateSettings((p) => ({ ...p, clockFont: f.id, typographySet: undefined }));
+                            triggerHaptic(settings.vibrationEnabled);
+                          }}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            settings.clockFont === f.id
+                              ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/30'
+                              : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="text-[11px] font-semibold truncate">{f.label}</div>
+                          <div className={`text-xs mt-1 ${f.fontCls} text-slate-200 opacity-90`}>
+                            12:34
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Schriftstärke */}
                   <div>
                     <span className="text-xs font-semibold text-slate-300 block mb-2">
-                      Schriftstärke
+                      Schriftstärke (Gewicht)
                     </span>
                     <div className="grid grid-cols-4 gap-1.5">
                       {[
@@ -787,7 +886,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                         <button
                           key={w.id}
                           type="button"
-                          onClick={() => onUpdateSettings((p) => ({ ...p, clockWeight: w.id }))}
+                          onClick={() => {
+                            onUpdateSettings((p) => ({ ...p, clockWeight: w.id }));
+                            triggerHaptic(settings.vibrationEnabled);
+                          }}
                           className={`py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                             settings.clockWeight === w.id
                               ? 'bg-blue-600 text-white border-blue-500'
@@ -1165,58 +1267,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       showFeedback(v ? 'Weltuhren eingeblendet' : 'Weltuhren ausgeblendet');
                     }}
                   />
-
-                  {/* Weather Display on Main Screen */}
-                  <MaterialSwitch
-                    label="Wetter auf Hauptbildschirm anzeigen"
-                    description="Lokale Temperatur & Wetterbedingungen basierend auf deinem Standort anzeigen"
-                    checked={settings.showWeather}
-                    onChange={(v) => onUpdateSettings((p) => ({ ...p, showWeather: v }))}
-                  />
-
-                  {settings.showWeather && (
-                    <div className="py-3 px-2 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                          <Sun className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Temperatur-Einheit</span>
-                        </label>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {settings.weatherUnit === 'fahrenheit' ? 'Fahrenheit (°F)' : 'Celsius (°C)'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onUpdateSettings((p) => ({ ...p, weatherUnit: 'celsius' }));
-                            triggerHaptic(settings.vibrationEnabled);
-                          }}
-                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                            settings.weatherUnit === 'celsius'
-                              ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/25 shadow-sm'
-                              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                          }`}
-                        >
-                          <span className="font-bold text-xs">Celsius (°C)</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onUpdateSettings((p) => ({ ...p, weatherUnit: 'fahrenheit' }));
-                            triggerHaptic(settings.vibrationEnabled);
-                          }}
-                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                            settings.weatherUnit === 'fahrenheit'
-                              ? 'bg-blue-600/30 border-blue-500 text-blue-200 ring-2 ring-blue-500/25 shadow-sm'
-                              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                          }`}
-                        >
-                          <span className="font-bold text-xs">Fahrenheit (°F)</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Colon Separator Animation & Pulse Customization */}
                   <div className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-3.5">

@@ -6,14 +6,12 @@ import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
 import { SpringDigit } from './SpringDigit';
 import { SchoolStatusResult } from '../utils/timetable';
-import { WeatherWidget } from './WeatherWidget';
 
 interface DigitalClockProps {
   settings: ClockSettings;
   offsetMs?: number;
   statusResult?: SchoolStatusResult;
   onOpenTimetable?: () => void;
-  onUpdateWeatherUnit?: (unit: 'celsius' | 'fahrenheit') => void;
   onUpdateSettings?: (updater: (prev: ClockSettings) => ClockSettings) => void;
 }
 
@@ -22,7 +20,6 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   offsetMs = 0,
   statusResult,
   onOpenTimetable,
-  onUpdateWeatherUnit,
   onUpdateSettings,
 }) => {
   // Directly calculate time based on online atomic clock offset
@@ -206,11 +203,23 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const fontClass =
     settings.clockFont === 'mono'
       ? 'font-mono-digital'
+      : settings.clockFont === 'serif'
+      ? 'font-serif-clock'
       : settings.clockFont === 'outfit'
       ? 'font-outfit'
       : settings.clockFont === 'school'
       ? 'font-school'
+      : settings.clockFont === 'sans'
+      ? 'font-sans-clock'
       : 'font-inter';
+
+  // Tracking adjusted for typography style
+  const trackingClass =
+    settings.clockFont === 'serif'
+      ? 'tracking-normal'
+      : settings.clockFont === 'mono'
+      ? 'tracking-tight'
+      : 'tracking-tighter';
 
   // Font weight resolution
   const weightClass =
@@ -264,7 +273,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
           {/* Main Digits Row */}
           <div
             id="digital-time-display"
-            className={`flex items-baseline justify-center tracking-tighter leading-none ${fontClass} ${weightClass} tabular-numbers`}
+            className={`flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers`}
             style={{
               color: 'var(--clock-color, ' + settings.clockColor + ')',
               ...glowStyle,
@@ -369,16 +378,6 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             >
               {formattedDate}
             </div>
-          )}
-
-          {/* Weather Display Component on Main Screen */}
-          {settings.showWeather && (
-            <WeatherWidget
-              unit={settings.weatherUnit}
-              onUnitChange={onUpdateWeatherUnit}
-              backdropBlur={settings.backdropBlurIntensity}
-              accentColor={settings.accentColor}
-            />
           )}
 
           {/* Additional Time Zones (World Clock directly below main clock) */}
