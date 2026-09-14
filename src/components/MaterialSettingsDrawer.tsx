@@ -55,6 +55,7 @@ import {
   Coffee,
   Lock,
   Unlock,
+  Wand2,
 } from 'lucide-react';
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 
@@ -64,6 +65,7 @@ interface MaterialSettingsDrawerProps {
   onOpenGames?: () => void;
   onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
+  onOpenGeminiBg?: () => void;
   statusResult?: SchoolStatusResult;
   onSetSimulationMode?: (mode: SchoolSimulationMode) => void;
   teacherOverride?: boolean;
@@ -97,6 +99,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onOpenGames,
   onOpenStopwatch,
   onOpenTimetable,
+  onOpenGeminiBg,
   statusResult,
   onSetSimulationMode,
   teacherOverride = false,
@@ -585,9 +588,21 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
 
                 {/* Hintergrundauswahl */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-4">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                    Hintergrund-Typ
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                      Hintergrund-Typ
+                    </span>
+                    {onOpenGeminiBg && (
+                      <button
+                        type="button"
+                        onClick={onOpenGeminiBg}
+                        className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Gemini KI-Bild</span>
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'gradient', label: 'Farbverlauf' },
@@ -610,6 +625,38 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       </button>
                     ))}
                   </div>
+
+                  {/* Gemini AI Wallpaper Generator Banner */}
+                  {onOpenGeminiBg && (
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-950/50 via-indigo-950/40 to-purple-950/50 border border-blue-500/40 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                            <Sparkles className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white block">
+                              Gemini KI-Hintergrund erstellen
+                            </span>
+                            <span className="text-[10px] text-blue-200/80">
+                              Erzeuge individuelle Wallpaper per Text-Prompt
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          Gemini
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onOpenGeminiBg}
+                        className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-blue-500/25"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>KI-Studio öffnen & Bild generieren</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Gradient Presets */}
                   {settings.bgType === 'gradient' && (
@@ -676,24 +723,45 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                           </button>
                         )}
                       </div>
-                      <label className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-700 hover:border-blue-500/80 rounded-2xl cursor-pointer bg-slate-900/40 transition-colors">
-                        <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                        <span className="text-xs font-semibold text-slate-200">
-                          Bilddatei auswählen
-                        </span>
-                        <span className="text-[11px] text-slate-400 mt-0.5">
-                          PNG, JPG, WebP bis 10 MB
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file && onUploadImage) onUploadImage(file);
-                          }}
-                        />
-                      </label>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {/* Option 1: Gemini KI-Generierung */}
+                        {onOpenGeminiBg && (
+                          <button
+                            type="button"
+                            onClick={onOpenGeminiBg}
+                            className="flex flex-col items-center justify-center p-4 border border-blue-500/50 hover:border-blue-400 rounded-2xl bg-gradient-to-b from-blue-950/40 to-indigo-950/40 hover:from-blue-900/50 hover:to-indigo-900/50 transition-all cursor-pointer group text-center shadow-sm"
+                          >
+                            <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-300 mb-2 group-hover:scale-110 transition-transform">
+                              <Sparkles className="w-4 h-4 text-blue-400" />
+                            </div>
+                            <span className="text-xs font-bold text-white">Mit Gemini KI generieren</span>
+                            <span className="text-[10px] text-blue-300/80 mt-0.5">
+                              Individuelles Wallpaper per Prompt
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Option 2: Lokale Bilddatei auswählen */}
+                        <label className={`flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl cursor-pointer bg-slate-900/40 transition-colors text-center ${!onOpenGeminiBg ? 'col-span-2' : ''}`}>
+                          <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                          <span className="text-xs font-semibold text-slate-200">
+                            Datei hochladen
+                          </span>
+                          <span className="text-[10px] text-slate-400 mt-0.5">
+                            PNG, JPG, WebP bis 10 MB
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file && onUploadImage) onUploadImage(file);
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
                   )}
 

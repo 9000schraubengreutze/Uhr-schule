@@ -16,12 +16,14 @@ import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { GamesModal } from './games/GamesModal';
 import { StopwatchModal } from './components/StopwatchModal';
+import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGamesOpen, setIsGamesOpen] = useState(false);
   const [isStopwatchOpen, setIsStopwatchOpen] = useState(false);
+  const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -124,7 +126,8 @@ export default function App() {
         return;
       }
       if (e.key === 'Escape') {
-        if (isGamesOpen) setIsGamesOpen(false);
+        if (isGeminiBgOpen) setIsGeminiBgOpen(false);
+        else if (isGamesOpen) setIsGamesOpen(false);
         else if (isStopwatchOpen) setIsStopwatchOpen(false);
         else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
@@ -135,11 +138,13 @@ export default function App() {
         setIsGamesOpen((prev) => !prev);
       } else if (e.key === 'w' || e.key === 'W') {
         setIsStopwatchOpen((prev) => !prev);
+      } else if (e.key === 'b' || e.key === 'B') {
+        setIsGeminiBgOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, toggleFullscreen]);
+  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, toggleFullscreen]);
 
   const handleUploadImage = async (file: File) => {
     try {
@@ -302,6 +307,7 @@ export default function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenGames={() => setIsGamesOpen(true)}
         onOpenStopwatch={() => setIsStopwatchOpen(true)}
+        onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         backdropBlur={settings.backdropBlurIntensity}
       />
 
@@ -313,6 +319,15 @@ export default function App() {
           onUpdateSettings={setSettings}
         />
       </main>
+
+      {/* Gemini AI Background Generator Modal */}
+      <GeminiBackgroundModal
+        isOpen={isGeminiBgOpen}
+        onClose={() => setIsGeminiBgOpen(false)}
+        onApplyImage={handleUploadImage}
+        backdropBlur={settings.backdropBlurIntensity}
+        accentColor={settings.accentColor}
+      />
 
       {/* Stopwatch Modal with Lap Tracking & Pause/Resume */}
       <StopwatchModal
@@ -334,6 +349,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         onOpenGames={() => setIsGamesOpen(true)}
         onOpenStopwatch={() => setIsStopwatchOpen(true)}
+        onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         settings={settings}
         onUpdateSettings={setSettings}
         onUploadImage={handleUploadImage}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Gamepad2, Timer, Lock, GraduationCap, Coffee } from 'lucide-react';
+import { Settings, Gamepad2, Timer, Lock, GraduationCap, Coffee, Sparkles } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
 interface QuickControlsProps {
@@ -7,6 +7,7 @@ interface QuickControlsProps {
   onOpenGames?: () => void;
   onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
+  onOpenGeminiBg?: () => void;
   statusResult?: SchoolStatusResult;
   backdropBlur?: number;
 }
@@ -16,6 +17,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenGames,
   onOpenStopwatch,
   onOpenTimetable,
+  onOpenGeminiBg,
   statusResult,
   backdropBlur,
 }) => {
@@ -105,6 +107,22 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                 <span className="text-xs font-semibold">Games</span>
               </>
             )}
+          </button>
+        )}
+
+        {/* Gemini KI-Hintergrund Button */}
+        {onOpenGeminiBg && (
+          <button
+            id="open-gemini-bg-btn"
+            type="button"
+            onClick={onOpenGeminiBg}
+            title="Gemini KI-Hintergrund erstellen (B)"
+            aria-label="Gemini KI-Hintergrund erstellen"
+            style={blurStyle}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 hover:from-blue-800/80 hover:to-indigo-800/80 border border-blue-500/50 text-blue-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
+            <span className="text-xs font-semibold hidden md:inline">KI-Hintergrund</span>
           </button>
         )}
 
