@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Gamepad2, Timer, Lock, GraduationCap, Coffee, Sparkles } from 'lucide-react';
+import { Settings, Gamepad2, Timer, Lock, GraduationCap, Coffee, Sparkles, MessageSquareQuote, Wand2 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
 interface QuickControlsProps {
@@ -8,6 +8,7 @@ interface QuickControlsProps {
   onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
   onOpenGeminiBg?: () => void;
+  onOpenChat?: () => void;
   statusResult?: SchoolStatusResult;
   backdropBlur?: number;
 }
@@ -18,6 +19,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenStopwatch,
   onOpenTimetable,
   onOpenGeminiBg,
+  onOpenChat,
   statusResult,
   backdropBlur,
 }) => {
@@ -110,19 +112,35 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           </button>
         )}
 
-        {/* Gemini KI-Hintergrund Button */}
+        {/* Gemini Bild-Studio (Erstellen & Bearbeiten) Button */}
         {onOpenGeminiBg && (
           <button
             id="open-gemini-bg-btn"
             type="button"
             onClick={onOpenGeminiBg}
-            title="Gemini KI-Hintergrund erstellen (B)"
-            aria-label="Gemini KI-Hintergrund erstellen"
+            title="Gemini Bild-Studio: Bilder erstellen & bearbeiten (B)"
+            aria-label="Gemini Bild-Studio öffnen"
             style={blurStyle}
             className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 hover:from-blue-800/80 hover:to-indigo-800/80 border border-blue-500/50 text-blue-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
-            <span className="text-xs font-semibold hidden md:inline">KI-Hintergrund</span>
+            <Wand2 className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-semibold hidden md:inline">Bild-Studio</span>
+          </button>
+        )}
+
+        {/* Gemini Chatbot Button */}
+        {onOpenChat && (
+          <button
+            id="open-gemini-chat-btn"
+            type="button"
+            onClick={onOpenChat}
+            title="Gemini Chatbot öffnen (C)"
+            aria-label="Gemini Chatbot öffnen"
+            style={blurStyle}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-indigo-900/60 to-purple-900/60 hover:from-indigo-800/80 hover:to-purple-800/80 border border-indigo-500/50 text-indigo-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <MessageSquareQuote className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs font-semibold hidden sm:inline">KI-Chat</span>
           </button>
         )}
 

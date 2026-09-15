@@ -108,10 +108,12 @@ export function playIncorrectSound(): void {
 /**
  * Trigger device vibration if available and allowed
  */
-export function triggerHaptic(pattern: number | number[] = 15): void {
+export function triggerHaptic(pattern: number | number[] | boolean = 15): void {
   try {
+    if (pattern === false) return;
+    const actualPattern = typeof pattern === 'boolean' ? 15 : pattern;
     if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
-      navigator.vibrate(pattern);
+      navigator.vibrate(actualPattern);
     }
   } catch {
     // Vibrate not permitted

@@ -56,6 +56,8 @@ import {
   Lock,
   Unlock,
   Wand2,
+  MessageSquareQuote,
+  Bot,
 } from 'lucide-react';
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 
@@ -66,6 +68,7 @@ interface MaterialSettingsDrawerProps {
   onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
   onOpenGeminiBg?: () => void;
+  onOpenChat?: () => void;
   statusResult?: SchoolStatusResult;
   onSetSimulationMode?: (mode: SchoolSimulationMode) => void;
   teacherOverride?: boolean;
@@ -100,6 +103,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onOpenStopwatch,
   onOpenTimetable,
   onOpenGeminiBg,
+  onOpenChat,
   statusResult,
   onSetSimulationMode,
   teacherOverride = false,
@@ -725,7 +729,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {/* Option 1: Gemini KI-Generierung */}
+                        {/* Option 1: Gemini Bild-Studio (Erstellen & Bearbeiten) */}
                         {onOpenGeminiBg && (
                           <button
                             type="button"
@@ -733,11 +737,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                             className="flex flex-col items-center justify-center p-4 border border-blue-500/50 hover:border-blue-400 rounded-2xl bg-gradient-to-b from-blue-950/40 to-indigo-950/40 hover:from-blue-900/50 hover:to-indigo-900/50 transition-all cursor-pointer group text-center shadow-sm"
                           >
                             <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-300 mb-2 group-hover:scale-110 transition-transform">
-                              <Sparkles className="w-4 h-4 text-blue-400" />
+                              <Wand2 className="w-4 h-4 text-blue-400" />
                             </div>
-                            <span className="text-xs font-bold text-white">Mit Gemini KI generieren</span>
+                            <span className="text-xs font-bold text-white">Gemini Bild-Studio</span>
                             <span className="text-[10px] text-blue-300/80 mt-0.5">
-                              Individuelles Wallpaper per Prompt
+                              Bilder per Prompt erstellen & bearbeiten
                             </span>
                           </button>
                         )}
@@ -762,6 +766,34 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                           />
                         </label>
                       </div>
+
+                      {/* Option 3: Gemini Chatbot Schnellzugriff */}
+                      {onOpenChat && (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={onOpenChat}
+                            className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-purple-950/40 hover:from-indigo-900/50 hover:to-purple-900/50 border border-indigo-500/40 text-left transition-all cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
+                                <MessageSquareQuote className="w-4 h-4 text-indigo-400" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold text-white block">
+                                  Gemini KI-Chatbot
+                                </span>
+                                <span className="text-[10px] text-indigo-300/80">
+                                  Multi-Turn Chat, Zeit-Coach, Code-Experte & Rollen
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-indigo-400 font-semibold group-hover:text-white transition-colors">
+                              Öffnen →
+                            </span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

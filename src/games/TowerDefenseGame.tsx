@@ -370,6 +370,7 @@ export interface Enemy {
   waveNum: number;
   headingAngle: number;
   isSlowed?: number; // duration of slow effect in sec
+  slowDuration?: number;
 }
 
 export interface Bullet {
