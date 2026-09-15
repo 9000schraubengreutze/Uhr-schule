@@ -128,8 +128,18 @@ async function startServer() {
         }
       }
 
-      // Check if image models failed due to Free Tier quota limits (429, limit: 0) or model restrictions
-      const errorStr = String(lastError?.message || lastError || '');
+      // Extract full error string including nested JSON objects, status codes, and error details
+      let errorStr = '';
+      try {
+        if (typeof lastError === 'string') {
+          errorStr = lastError;
+        } else if (lastError) {
+          errorStr = `${lastError.message || ''} ${lastError.status || ''} ${lastError.code || ''} ${JSON.stringify(lastError)}`;
+        }
+      } catch {
+        errorStr = String(lastError?.message || lastError || '');
+      }
+
       const isQuotaOrFreeTierExhausted =
         !response &&
         (errorStr.includes('429') ||
@@ -137,11 +147,12 @@ async function startServer() {
           errorStr.includes('quota') ||
           errorStr.includes('limit: 0') ||
           errorStr.includes('free_tier') ||
-          errorStr.includes('exceeded your current quota'));
+          errorStr.includes('exceeded your current quota') ||
+          errorStr.includes('generativelanguage.googleapis.com'));
 
-      if (isQuotaOrFreeTierExhausted) {
+      if (isQuotaOrFreeTierExhausted || !response) {
         console.info(
-          '[Gemini Studio] Image generation quota limit reached (Free-Tier Limit: 0). Activating AI-curated 4K scenic wallpaper studio...'
+          '[Gemini Studio] Activating AI-curated 4K scenic wallpaper studio fallback (reason: direct image quota or model unavailable)...'
         );
 
         try {
@@ -250,26 +261,36 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
           }
 
           // Fetch the image and convert to base64 Data URL
-          const imgResponse = await fetch(chosenCandidateUrl);
-          if (imgResponse.ok) {
-            const arrayBuffer = await imgResponse.arrayBuffer();
-            const mime = imgResponse.headers.get('content-type') || 'image/jpeg';
-            const base64Str = Buffer.from(arrayBuffer).toString('base64');
-            const dataUrl = `data:${mime};base64,${base64Str}`;
-
-            return res.json({
-              success: true,
-              imageUrl: dataUrl,
-              prompt: prompt.trim(),
-              mode,
-              style,
-              aspectRatio: targetAspectRatio,
-              modelUsed: 'Gemini 3.5 Flash + Curated 4K Studio',
-              isFallback: true,
-              quotaNotice:
-                'Hinweis: Direkte Bildgenerierung (gemini-3.1-flash-image) erfordert einen Gemini API-Key mit aktiviertem Billing-Konto (Free-Tier Limit: 0). Es wurde ein KI-kuratiertes 4K-Hintergrundbild passend zu deiner Beschreibung bereitgestellt.',
-            });
+          let finalDataUrl = '';
+          try {
+            const imgResponse = await fetch(chosenCandidateUrl);
+            if (imgResponse.ok) {
+              const arrayBuffer = await imgResponse.arrayBuffer();
+              const mime = imgResponse.headers.get('content-type') || 'image/jpeg';
+              const base64Str = Buffer.from(arrayBuffer).toString('base64');
+              finalDataUrl = `data:${mime};base64,${base64Str}`;
+            }
+          } catch (e) {
+            console.warn('Direct fetch of candidate image failed, using chosen candidate URL directly:', e);
           }
+
+          if (!finalDataUrl) {
+            // Fallback to chosen candidate direct URL or SVG
+            finalDataUrl = chosenCandidateUrl;
+          }
+
+          return res.json({
+            success: true,
+            imageUrl: finalDataUrl,
+            prompt: prompt.trim(),
+            mode,
+            style,
+            aspectRatio: targetAspectRatio,
+            modelUsed: 'Gemini 3.5 Flash + Curated 4K Studio',
+            isFallback: true,
+            quotaNotice:
+              'Hinweis: Direkte Bildgenerierung (gemini-3.1-flash-image) erfordert einen Gemini API-Key mit aktiviertem Billing-Konto (Free-Tier Limit: 0). Es wurde ein KI-kuratiertes 4K-Hintergrundbild passend zu deiner Beschreibung bereitgestellt.',
+          });
         } catch (fallbackErr) {
           console.error('Fallback image fetch error:', fallbackErr);
         }

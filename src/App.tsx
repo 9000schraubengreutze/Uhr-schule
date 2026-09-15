@@ -28,6 +28,7 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
 
   // Online Atomic Clock synchronization state
   const [atomicState, setAtomicState] = useState<AtomicTimeState>({
@@ -145,11 +146,13 @@ export default function App() {
         setIsGeminiBgOpen((prev) => !prev);
       } else if (e.key === 'c' || e.key === 'C') {
         setIsChatOpen((prev) => !prev);
+      } else if (e.key === 'z' || e.key === 'Z') {
+        setIsZenMode((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, toggleFullscreen]);
+  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, toggleFullscreen]);
 
   const handleUploadImage = async (file: File) => {
     try {
@@ -315,6 +318,9 @@ export default function App() {
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
         backdropBlur={settings.backdropBlurIntensity}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isStopwatchOpen || isGeminiBgOpen || isChatOpen}
+        isZenMode={isZenMode}
+        onToggleZenMode={() => setIsZenMode((prev) => !prev)}
       />
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}

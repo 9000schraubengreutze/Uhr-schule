@@ -1,5 +1,19 @@
-import React from 'react';
-import { Settings, Gamepad2, Timer, Lock, GraduationCap, Coffee, Sparkles, MessageSquareQuote, Wand2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Settings,
+  Gamepad2,
+  Timer,
+  Lock,
+  GraduationCap,
+  Coffee,
+  Sparkles,
+  MessageSquareQuote,
+  Wand2,
+  Eye,
+  EyeOff,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
 interface QuickControlsProps {
@@ -11,6 +25,9 @@ interface QuickControlsProps {
   onOpenChat?: () => void;
   statusResult?: SchoolStatusResult;
   backdropBlur?: number;
+  anyModalOpen?: boolean;
+  isZenMode?: boolean;
+  onToggleZenMode?: () => void;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -21,145 +38,236 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenGeminiBg,
   onOpenChat,
   statusResult,
-  backdropBlur,
+  backdropBlur = 16,
+  anyModalOpen = false,
+  isZenMode: externalZenMode,
+  onToggleZenMode,
 }) => {
-  const blurStyle = {
-    backdropFilter: `blur(${backdropBlur ?? 16}px)`,
-    WebkitBackdropFilter: `blur(${backdropBlur ?? 16}px)`,
+  // Hidden by default: only display when user hovers over the top trigger area
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(true);
   };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 280);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleToggleZen = () => {
+    onToggleZenMode?.();
+  };
+
+  const isVisible = (isHovered || anyModalOpen) && !externalZenMode;
 
   const isGameAllowed = statusResult?.isGameAllowed ?? true;
   const isBreak = statusResult?.status === 'break';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-end pointer-events-none">
-      <div className="pointer-events-auto flex items-center gap-2 sm:gap-2.5">
-        {/* Stundenplan HO 2 Button */}
-        {onOpenTimetable && (
-          <button
-            id="open-timetable-btn"
-            type="button"
-            onClick={onOpenTimetable}
-            title="Stundenplan HO 2 (Frau Schmitz) öffnen"
-            aria-label="Stundenplan öffnen"
-            style={blurStyle}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 border border-slate-800/80 text-slate-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <GraduationCap className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-semibold hidden sm:inline">Stundenplan</span>
-          </button>
-        )}
+    <>
+      {/* Top Hover Trigger Zone - hovering anywhere near the top area reveals the dock */}
+      <div
+        id="top-hover-trigger-zone"
+        className="fixed top-0 left-0 right-0 h-16 sm:h-20 z-30 pointer-events-auto"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      />
 
-        {/* Stopwatch Button */}
-        {onOpenStopwatch && (
-          <button
-            id="open-stopwatch-btn"
-            type="button"
-            onClick={onOpenStopwatch}
-            title="Stoppuhr öffnen (W)"
-            aria-label="Stoppuhr öffnen"
-            style={blurStyle}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900/70 hover:bg-slate-800/80 border border-slate-800/80 text-slate-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <Timer className="w-4 h-4 text-sky-400" />
-            <span className="text-xs font-semibold">Stoppuhr</span>
-          </button>
-        )}
-
-        {/* Games Button with School Break Lock Status */}
-        {onOpenGames && (
-          <button
-            id="open-games-btn"
-            type="button"
-            onClick={onOpenGames}
-            title={
-              isGameAllowed
-                ? isBreak
-                  ? `Pause aktiv (${statusResult?.currentBreak?.remainingMinutes} Min.) – Games frei!`
-                  : 'Pausen-Spiele öffnen (G)'
-                : `Unterrichtszeit: Games nur in den Pausen erlaubt! Nächste Pause: ${statusResult?.nextBreak?.start || '10:30'} Uhr`
-            }
-            aria-label="Pausen-Spiele öffnen"
-            style={blurStyle}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl border transition-all shadow-md active:scale-95 cursor-pointer ${
-              !isGameAllowed
-                ? 'bg-rose-950/60 hover:bg-rose-900/70 border-rose-800/70 text-rose-200'
-                : isBreak
-                ? 'bg-emerald-950/60 hover:bg-emerald-900/70 border-emerald-700/80 text-emerald-200 ring-1 ring-emerald-500/40'
-                : 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-800/80 text-slate-200 hover:text-white'
-            }`}
-          >
-            {!isGameAllowed ? (
-              <>
-                <Lock className="w-4 h-4 text-rose-400" />
-                <span className="text-xs font-semibold text-rose-200">
-                  Games <span className="text-[11px] opacity-80">(Gesperrt)</span>
-                </span>
-              </>
-            ) : isBreak ? (
-              <>
-                <Coffee className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span className="text-xs font-semibold text-emerald-300">
-                  Pause <span className="text-[11px] opacity-80">({statusResult?.currentBreak?.remainingMinutes}m)</span>
-                </span>
-              </>
-            ) : (
-              <>
-                <Gamepad2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-semibold">Games</span>
-              </>
-            )}
-          </button>
-        )}
-
-        {/* Gemini Bild-Studio (Erstellen & Bearbeiten) Button */}
-        {onOpenGeminiBg && (
-          <button
-            id="open-gemini-bg-btn"
-            type="button"
-            onClick={onOpenGeminiBg}
-            title="Gemini Bild-Studio: Bilder erstellen & bearbeiten (B)"
-            aria-label="Gemini Bild-Studio öffnen"
-            style={blurStyle}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 hover:from-blue-800/80 hover:to-indigo-800/80 border border-blue-500/50 text-blue-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <Wand2 className="w-4 h-4 text-blue-400" />
-            <span className="text-xs font-semibold hidden md:inline">Bild-Studio</span>
-          </button>
-        )}
-
-        {/* Gemini Chatbot Button */}
-        {onOpenChat && (
-          <button
-            id="open-gemini-chat-btn"
-            type="button"
-            onClick={onOpenChat}
-            title="Gemini Chatbot öffnen (C)"
-            aria-label="Gemini Chatbot öffnen"
-            style={blurStyle}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-indigo-900/60 to-purple-900/60 hover:from-indigo-800/80 hover:to-purple-800/80 border border-indigo-500/50 text-indigo-200 hover:text-white transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <MessageSquareQuote className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-semibold hidden sm:inline">KI-Chat</span>
-          </button>
-        )}
-
-        {/* Einstellungen Button */}
+      {/* Floating Zen Reveal Button (visible only when in forced Zen mode) */}
+      {externalZenMode && (
         <button
-          id="open-settings-btn"
+          id="exit-zen-btn"
           type="button"
-          onClick={onOpenSettings}
-          title="Einstellungen öffnen (S)"
-          aria-label="Einstellungen öffnen"
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+          onClick={handleToggleZen}
+          title="Minimalismus-Modus beenden & Leiste wieder per Hover aktivieren (Taste: Z)"
+          aria-label="Minimalismus-Modus beenden"
+          className="fixed top-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/40 hover:bg-slate-900/80 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer"
         >
-          <Settings className="w-4 h-4" />
-          <span>Einstellungen</span>
+          <Eye className="w-4 h-4" />
         </button>
-      </div>
-    </header>
+      )}
+
+      {/* Subtle indicator hint when hidden */}
+      {!isVisible && !externalZenMode && (
+        <div
+          id="top-hover-hint"
+          aria-hidden="true"
+          className="fixed top-2 right-6 z-20 pointer-events-none transition-opacity duration-500 opacity-20"
+        >
+          <div className="w-8 h-1 rounded-full bg-white/50 backdrop-blur-md" />
+        </div>
+      )}
+
+      {/* Unified Material Frosted Island Dock */}
+      <header
+        id="quick-controls-header"
+        className={`fixed top-0 left-0 right-0 z-30 p-3 sm:p-5 flex items-center justify-end pointer-events-none transition-all duration-300 ease-out ${
+          isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 -translate-y-3 pointer-events-none'
+        }`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div
+          id="quick-controls-island"
+          style={{
+            backdropFilter: `blur(${backdropBlur}px)`,
+            WebkitBackdropFilter: `blur(${backdropBlur}px)`,
+          }}
+          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 rounded-full bg-slate-950/50 hover:bg-slate-950/70 border border-white/10 shadow-2xl shadow-black/50 transition-all duration-300"
+        >
+          {/* Optional Stundenplan */}
+          {onOpenTimetable && (
+            <button
+              id="open-timetable-btn"
+              type="button"
+              onClick={onOpenTimetable}
+              title="Stundenplan HO 2 (Frau Schmitz) öffnen"
+              aria-label="Stundenplan öffnen"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Stundenplan</span>
+            </button>
+          )}
+
+          {/* Stoppuhr Button */}
+          {onOpenStopwatch && (
+            <button
+              id="open-stopwatch-btn"
+              type="button"
+              onClick={onOpenStopwatch}
+              title="Stoppuhr öffnen (Taste: W)"
+              aria-label="Stoppuhr öffnen"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              <Timer className="w-3.5 h-3.5 text-sky-400" />
+              <span>Stoppuhr</span>
+            </button>
+          )}
+
+          {/* Games Button with subtle status badge */}
+          {onOpenGames && (
+            <button
+              id="open-games-btn"
+              type="button"
+              onClick={onOpenGames}
+              title={
+                isGameAllowed
+                  ? isBreak
+                    ? `Pause aktiv (${statusResult?.currentBreak?.remainingMinutes} Min.) – Games frei!`
+                    : 'Pausen-Spiele öffnen (Taste: G)'
+                  : `Unterrichtszeit: Games gesperrt. Nächste Pause: ${statusResult?.nextBreak?.start || '10:30'} Uhr`
+              }
+              aria-label="Pausen-Spiele öffnen"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              {!isGameAllowed ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Games</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                </>
+              ) : isBreak ? (
+                <>
+                  <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <span className="text-emerald-300">Games</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                </>
+              ) : (
+                <>
+                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Games</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-white/10 mx-0.5" />
+
+          {/* Gemini Bild-Studio Button */}
+          {onOpenGeminiBg && (
+            <button
+              id="open-gemini-bg-btn"
+              type="button"
+              onClick={onOpenGeminiBg}
+              title="Gemini Bild-Studio: Bilder generieren & bearbeiten (Taste: B)"
+              aria-label="Gemini Bild-Studio öffnen"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden md:inline">Bild-Studio</span>
+            </button>
+          )}
+
+          {/* Gemini KI-Chat Button */}
+          {onOpenChat && (
+            <button
+              id="open-gemini-chat-btn"
+              type="button"
+              onClick={onOpenChat}
+              title="Gemini KI-Chat öffnen (Taste: C)"
+              aria-label="Gemini KI-Chat öffnen"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">KI-Chat</span>
+            </button>
+          )}
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-white/10 mx-0.5" />
+
+          {/* Einstellungen Button - refined subtle glass accent */}
+          <button
+            id="open-settings-btn"
+            type="button"
+            onClick={onOpenSettings}
+            title="Einstellungen öffnen (Taste: S)"
+            aria-label="Einstellungen öffnen"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 active:scale-95 transition-all duration-150 cursor-pointer group"
+          >
+            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-45 transition-transform duration-300" />
+            <span>Einstellungen</span>
+          </button>
+
+          {/* Zen / Clean Mode Toggle */}
+          <button
+            id="toggle-zen-mode-btn"
+            type="button"
+            onClick={handleToggleZen}
+            title="Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)"
+            aria-label="Zen-Modus aktivieren"
+            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+          >
+            <EyeOff className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </header>
+    </>
   );
 };
+
 
 
 
