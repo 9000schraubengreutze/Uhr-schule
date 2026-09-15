@@ -37,6 +37,18 @@ export interface AdditionalTimeZone {
   flag?: string;
 }
 
+export interface SavedWallpaperItem {
+  id: string;
+  name?: string;
+  prompt?: string;
+  createdAt: number;
+  style?: string;
+  mode?: 'create' | 'edit' | 'upload';
+  isAi?: boolean;
+  url?: string;
+  isActive?: boolean;
+}
+
 export interface CuratedTheme {
   id: string;
   name: string;

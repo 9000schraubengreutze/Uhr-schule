@@ -4,6 +4,9 @@ import {
   loadSettings,
   saveSettings,
   storeLocalImage,
+  saveWallpaper,
+  setActiveWallpaper,
+  deleteSavedWallpaper,
   loadStoredImage,
   removeStoredImage,
 } from './utils/storage';
@@ -154,9 +157,19 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, toggleFullscreen]);
 
-  const handleUploadImage = async (file: File) => {
+  const handleApplyOrUploadImage = async (
+    file: File,
+    promptOrName?: string,
+    meta?: { id?: string; style?: string; mode?: 'create' | 'edit' | 'upload'; isAi?: boolean }
+  ) => {
     try {
-      const objectUrl = await storeLocalImage(file);
+      const { objectUrl } = await saveWallpaper(file, {
+        prompt: promptOrName || (meta?.isAi ? 'Gemini KI Wallpaper' : file.name || 'Eigenes Foto'),
+        name: promptOrName ? promptOrName.slice(0, 42) : file.name || 'Eigenes Wallpaper',
+        style: meta?.style || 'cinematic',
+        mode: meta?.mode || (meta?.isAi ? 'create' : 'upload'),
+        isAi: meta?.isAi !== false,
+      });
       setCustomImageUrl(objectUrl);
       setSettings((prev) => ({
         ...prev,
@@ -165,6 +178,41 @@ export default function App() {
       }));
     } catch (err) {
       console.error('Image upload failed', err);
+    }
+  };
+
+  const handleSelectSavedWallpaper = async (id: string) => {
+    try {
+      const objectUrl = await setActiveWallpaper(id);
+      if (objectUrl) {
+        setCustomImageUrl(objectUrl);
+        setSettings((prev) => ({
+          ...prev,
+          bgType: 'image',
+          hasCustomImage: true,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to select wallpaper', err);
+    }
+  };
+
+  const handleDeleteSavedWallpaper = async (id: string) => {
+    try {
+      await deleteSavedWallpaper(id);
+      const remaining = await loadStoredImage();
+      if (remaining) {
+        setCustomImageUrl(remaining);
+      } else {
+        setCustomImageUrl(null);
+        setSettings((prev) => ({
+          ...prev,
+          hasCustomImage: false,
+          bgType: prev.bgType === 'image' ? 'gradient' : prev.bgType,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to delete wallpaper', err);
     }
   };
 
@@ -336,7 +384,8 @@ export default function App() {
       <GeminiBackgroundModal
         isOpen={isGeminiBgOpen}
         onClose={() => setIsGeminiBgOpen(false)}
-        onApplyImage={handleUploadImage}
+        onApplyImage={handleApplyOrUploadImage}
+        onSelectWallpaper={handleSelectSavedWallpaper}
         backdropBlur={settings.backdropBlurIntensity}
         accentColor={settings.accentColor}
         currentWallpaperUrl={customImageUrl}
@@ -374,7 +423,10 @@ export default function App() {
         onOpenChat={() => setIsChatOpen(true)}
         settings={settings}
         onUpdateSettings={setSettings}
-        onUploadImage={handleUploadImage}
+        currentWallpaperUrl={customImageUrl}
+        onSelectSavedWallpaper={handleSelectSavedWallpaper}
+        onDeleteSavedWallpaper={handleDeleteSavedWallpaper}
+        onUploadImage={(file) => handleApplyOrUploadImage(file, file.name, { isAi: false, mode: 'upload' })}
         onRemoveImage={handleRemoveImage}
         atomicState={atomicState}
         onTriggerSync={performSync}

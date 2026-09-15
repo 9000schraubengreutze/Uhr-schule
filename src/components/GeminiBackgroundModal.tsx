@@ -16,12 +16,21 @@ import {
   Edit3,
   Layers,
   Sparkle,
+  Dices,
+  Undo2,
+  CheckCircle2,
+  ShieldCheck,
+  Plus,
+  Trash2,
 } from 'lucide-react';
+import { SavedWallpaperItem } from '../types';
+import { getSavedWallpapers, setActiveWallpaper, deleteSavedWallpaper } from '../utils/storage';
 
 export interface GeminiBackgroundModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyImage: (file: File, promptDescription: string) => Promise<void> | void;
+  onApplyImage: (file: File, promptDescription: string, meta?: any) => Promise<void> | void;
+  onSelectWallpaper?: (id: string) => Promise<void> | void;
   backdropBlur?: number;
   accentColor?: string;
   showFeedback?: (msg: string) => void;
@@ -56,6 +65,32 @@ const CREATE_PROMPT_INSPIRATIONS = [
   'Minimalistische geschwungene Sanddünen in der Sahara im goldenen Abendlicht',
   'Malerischer Sonnenuntergang über einem ruhigen Kiefernwald mit weichen Wolken',
   'Nordlichter Aurora Borealis über einer verschneiten Fjordszene in Norwegen',
+];
+
+const RANDOM_DREAM_PROMPTS = [
+  'Ein stiller Bergsee in den Schweizer Alpen bei Sonnenaufgang mit aufsteigendem Morgendunst und sanftem goldenen Lichtsaum',
+  'Leuchtender kosmischer Nebel im tiefen Weltraum mit feinem Sternenstaub, fernen Spiralgalaxien in Violett und Cyan',
+  'Cyberpunk-Metropole bei Nacht im Regen mit sanften bunten Neon-Spiegelungen auf nassem Asphalt und schwebenden Lichtbändern',
+  'Minimalistische samtige Sanddünen in der Sahara im goldenen Abendlicht mit weichen, langen Schatten',
+  'Malerischer Sonnenuntergang über einem ruhigen Kiefernwald mit weichen Farbverläufen im Makoto-Shinkai-Anime-Stil',
+  'Nordlichter Aurora Borealis über einer verschneiten Fjordszene in Norwegen bei klarem Sternenhimmel und Eis-Reflexionen',
+  'Gemütliche moderne Holzhütte im Wald zur blauen Stunde mit warmem Kaminfeuer-Schein durch große Panoramafenster',
+  'Gläserne futuristische Skyline im warmen Abendrot an einem ruhigen Ozean mit sanften Wellen und klarer Spiegelung',
+  'Mystischer Smaragd-Regenwald mit Moos, Wasserfällen und durch das Blätterdach fallenden goldenen Sonnenstrahlen',
+  'Futuristischer Sportwagen auf einer einsamen Küstenstraße im Sonnenuntergang mit warmem Lens Flare',
+  'Majestätische Kirschblüten-Allee in Kyoto zur Dämmerung mit schwebenden rosa Blütenblättern und warmen Laternen',
+  'Fließende organische 3D-Wellenformen aus schillerndem Chrom und tiefblauem Glas mit edlem Studio-Licht',
+];
+
+const PROMPT_MODIFIER_CHIPS = [
+  { label: 'Goldene Stunde', text: 'im warmen goldenen Licht der Abendsonne', icon: '🌅' },
+  { label: 'Volumetrisches Licht', text: 'mit weichen volumetrischen Sonnenstrahlen (God Rays)', icon: '✨' },
+  { label: 'Morgennebel', text: 'umhüllt von dichtem, mystischem Frühnebel', icon: '🌫️' },
+  { label: 'Neon-Spiegelungen', text: 'mit sanften Neon-Lichtreflexionen auf nassem Grund', icon: '🌃' },
+  { label: 'Deep Space', text: 'unter einem funkelnden Sternenhimmel mit Milchstraße', icon: '🌌' },
+  { label: '8K Weitwinkel', text: 'ultra-weitwinkelige 35mm Kameraperspektive mit 8K Details', icon: '📸' },
+  { label: 'Minimalistischer Freiraum', text: 'ruhige Komposition mit viel freiem Platz im Bildzentrum', icon: '🕊️' },
+  { label: 'Makoto-Anime-Look', text: 'im malerischen Shinkai Anime-Stil mit dramatischem Wolkenhimmel', icon: '🌸' },
 ];
 
 const EDIT_PROMPT_INSPIRATIONS = [
@@ -93,7 +128,90 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
   const [history, setHistory] = useState<GeneratedHistoryItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // AI Prompt Enhancement State
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+  const [originalPromptBackup, setOriginalPromptBackup] = useState<string | null>(null);
+  const [enhancementDetails, setEnhancementDetails] = useState<{
+    summary?: string;
+    highlights?: string[];
+  } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle AI Prompt Enhancement
+  const handleEnhancePrompt = async () => {
+    const textToEnhance =
+      prompt.trim() ||
+      RANDOM_DREAM_PROMPTS[Math.floor(Math.random() * RANDOM_DREAM_PROMPTS.length)];
+
+    setIsEnhancingPrompt(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch('/api/gemini/enhance-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: textToEnhance,
+          style: selectedStyle,
+          aspectRatio,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Veredelung fehlgeschlagen');
+      }
+
+      if (data.enhancedPrompt) {
+        if (!originalPromptBackup) {
+          setOriginalPromptBackup(prompt.trim() || null);
+        }
+        setPrompt(data.enhancedPrompt);
+        setEnhancementDetails({
+          summary: data.germanSummary,
+          highlights: data.highlights,
+        });
+        showFeedback?.('Prompt erfolgreich mit KI veredelt!');
+      }
+    } catch (err: any) {
+      console.warn('Enhance prompt error:', err);
+      setErrorMessage(err?.message || 'Prompt-Veredelung fehlgeschlagen.');
+    } finally {
+      setIsEnhancingPrompt(false);
+    }
+  };
+
+  // Restore original prompt
+  const handleRestoreOriginalPrompt = () => {
+    if (originalPromptBackup !== null) {
+      setPrompt(originalPromptBackup);
+      setOriginalPromptBackup(null);
+      setEnhancementDetails(null);
+      showFeedback?.('Ursprünglicher Prompt wiederhergestellt');
+    }
+  };
+
+  // Append a prompt modifier chip
+  const handleAppendModifier = (modifierText: string) => {
+    setPrompt((prev) => {
+      const trimmed = prev.trim();
+      if (!trimmed) return modifierText;
+      if (trimmed.toLowerCase().includes(modifierText.toLowerCase())) return prev;
+      return `${trimmed}, ${modifierText}`;
+    });
+  };
+
+  // Pick random dream prompt
+  const handleRandomDreamPrompt = () => {
+    const candidates = RANDOM_DREAM_PROMPTS.filter((p) => p !== prompt);
+    const chosen =
+      candidates[Math.floor(Math.random() * candidates.length)] || RANDOM_DREAM_PROMPTS[0];
+    setPrompt(chosen);
+    setOriginalPromptBackup(null);
+    setEnhancementDetails(null);
+    showFeedback?.('Traum-Prompt eingefügt!');
+  };
 
   // Load history from localStorage
   useEffect(() => {
@@ -600,10 +718,10 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
                 </div>
               )}
 
-              {/* Prompt Input Field */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
+              {/* Prompt Input Field with AI Enhancer */}
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
                     {activeTab === 'edit' ? (
                       <>
                         <Edit3 className="w-3.5 h-3.5 text-blue-400" />
@@ -615,11 +733,54 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
                         <span>Bildbeschreibung (Create Prompt)</span>
                       </>
                     )}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {prompt.length} Zeichen
-                  </span>
-                </label>
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    {/* Revert to original if enhanced */}
+                    {originalPromptBackup !== null && (
+                      <button
+                        type="button"
+                        onClick={handleRestoreOriginalPrompt}
+                        disabled={isLoading || isEnhancingPrompt}
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer border border-slate-700"
+                        title="Vorherigen Prompt wiederherstellen"
+                      >
+                        <Undo2 className="w-3 h-3 text-amber-400" />
+                        <span>Original</span>
+                      </button>
+                    )}
+
+                    {/* Magic AI Prompt Enhancer Button */}
+                    <button
+                      type="button"
+                      onClick={handleEnhancePrompt}
+                      disabled={isLoading || isEnhancingPrompt}
+                      className={`text-[11px] px-3 py-1 rounded-xl font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                        isEnhancingPrompt
+                          ? 'bg-blue-600/50 text-blue-200 border border-blue-400/40 cursor-wait'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border border-blue-400/40 hover:shadow-blue-500/20 active:scale-95'
+                      }`}
+                      title="Erweitert die Beschreibung mit atmosphärischer Beleuchtung, Kamerawinkel, 8K-Details und Freiraum für die Uhr"
+                    >
+                      {isEnhancingPrompt ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin text-blue-200" />
+                          <span>Veredle mit KI...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Mit KI veredeln</span>
+                        </>
+                      )}
+                    </button>
+
+                    <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                      {prompt.length} Zeichen
+                    </span>
+                  </div>
+                </div>
+
                 <div className="relative">
                   <textarea
                     value={prompt}
@@ -630,26 +791,113 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
                         : 'z. B. Ein malerischer Bergsee in den Alpen bei Sonnenaufgang mit aufsteigendem Frühnebel...'
                     }
                     rows={3}
-                    disabled={isLoading}
+                    disabled={isLoading || isEnhancingPrompt}
                     className="w-full bg-slate-950/60 border border-slate-700/80 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all resize-none disabled:opacity-50"
                   />
-                  {prompt.length > 0 && !isLoading && (
+                  {prompt.length > 0 && !isLoading && !isEnhancingPrompt && (
                     <button
                       type="button"
-                      onClick={() => setPrompt('')}
-                      className="absolute top-2.5 right-2.5 p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      onClick={() => {
+                        setPrompt('');
+                        setOriginalPromptBackup(null);
+                        setEnhancementDetails(null);
+                      }}
+                      className="absolute top-2.5 right-2.5 p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                      title="Prompt leeren"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
+
+                {/* AI Enhancement Info Banner */}
+                {enhancementDetails && (
+                  <div className="p-3 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-300">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                        <span>KI-Veredelung aktiv:</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRestoreOriginalPrompt}
+                        className="text-[10px] text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer font-medium"
+                      >
+                        <Undo2 className="w-2.5 h-2.5" />
+                        Original wiederherstellen
+                      </button>
+                    </div>
+                    {enhancementDetails.summary && (
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {enhancementDetails.summary}
+                      </p>
+                    )}
+                    {Array.isArray(enhancementDetails.highlights) &&
+                      enhancementDetails.highlights.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          {enhancementDetails.highlights.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-200 border border-blue-500/30"
+                            >
+                              ✨ {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                {/* Prompt Modifier Quick Chips (Add atmosphere, lighting, camera) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                      <span>🎨 Schnelle Prompt-Bausteine (Klick zum Ergänzen):</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PROMPT_MODIFIER_CHIPS.map((chip, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleAppendModifier(chip.text)}
+                        disabled={isLoading || isEnhancingPrompt}
+                        className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <span>{chip.icon}</span>
+                        <span>{chip.label}</span>
+                        <Plus className="w-2.5 h-2.5 opacity-60 text-blue-400" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Wallpaper Clarity Note */}
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>
+                    <strong>Wallpaper-Optimierung:</strong> Die Bildmitte wird automatisch für die
+                    Uhrzeit freigehalten (keine störenden Zahlen oder Wasserzeichen).
+                  </span>
+                </div>
               </div>
 
-              {/* Prompt Inspiration Chips */}
+              {/* Prompt Inspiration Chips & Random Dream Prompt */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-400 block">
-                  💡 Vorschläge für {activeTab === 'edit' ? 'Bearbeitungen' : 'Erstellungen'}:
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400 block">
+                    💡 Vorschläge für {activeTab === 'edit' ? 'Bearbeitungen' : 'Erstellungen'}:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRandomDreamPrompt}
+                    disabled={isLoading || isEnhancingPrompt}
+                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Dices className="w-3.5 h-3.5" />
+                    <span>Überrasche mich</span>
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
                   {(activeTab === 'edit'
                     ? EDIT_PROMPT_INSPIRATIONS
@@ -658,8 +906,12 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setPrompt(insp)}
-                      disabled={isLoading}
+                      onClick={() => {
+                        setPrompt(insp);
+                        setOriginalPromptBackup(null);
+                        setEnhancementDetails(null);
+                      }}
+                      disabled={isLoading || isEnhancingPrompt}
                       className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white transition-all cursor-pointer text-left truncate max-w-full"
                     >
                       {insp}

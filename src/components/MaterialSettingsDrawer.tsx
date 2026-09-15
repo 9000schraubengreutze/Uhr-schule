@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ClockSettings,
@@ -58,8 +58,11 @@ import {
   Wand2,
   MessageSquareQuote,
   Bot,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
+import { SavedWallpaperItem } from '../types';
+import { getSavedWallpapers, setActiveWallpaper, deleteSavedWallpaper } from '../utils/storage';
 
 interface MaterialSettingsDrawerProps {
   isOpen: boolean;
@@ -75,6 +78,9 @@ interface MaterialSettingsDrawerProps {
   onToggleTeacherOverride?: () => void;
   settings: ClockSettings;
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
+  currentWallpaperUrl?: string | null;
+  onSelectSavedWallpaper?: (id: string) => Promise<void> | void;
+  onDeleteSavedWallpaper?: (id: string) => Promise<void> | void;
   onUploadImage?: (file: File) => void;
   onRemoveImage?: () => void;
   atomicState?: AtomicTimeState;
@@ -110,6 +116,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onToggleTeacherOverride,
   settings,
   onUpdateSettings,
+  currentWallpaperUrl,
+  onSelectSavedWallpaper,
+  onDeleteSavedWallpaper,
   onUploadImage,
   onRemoveImage,
   atomicState,
@@ -119,6 +128,58 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [savedWallpapers, setSavedWallpapers] = useState<SavedWallpaperItem[]>([]);
+  const [isLoadingWallpapers, setIsLoadingWallpapers] = useState(false);
+
+  const loadWallpapers = useCallback(async () => {
+    setIsLoadingWallpapers(true);
+    try {
+      const list = await getSavedWallpapers();
+      setSavedWallpapers(list);
+    } catch (err) {
+      console.warn('Failed to load wallpapers', err);
+    } finally {
+      setIsLoadingWallpapers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadWallpapers();
+    }
+  }, [isOpen, loadWallpapers, currentWallpaperUrl]);
+
+  const handleSelectWallpaperCard = async (wp: SavedWallpaperItem) => {
+    try {
+      if (onSelectSavedWallpaper) {
+        await onSelectSavedWallpaper(wp.id);
+      } else {
+        await setActiveWallpaper(wp.id);
+      }
+      onUpdateSettings((prev) => ({
+        ...prev,
+        bgType: 'image',
+        hasCustomImage: true,
+      }));
+      showFeedback(`Wallpaper "${wp.name || 'Ausgewählt'}" aktiviert!`);
+      loadWallpapers();
+    } catch (err) {
+      console.error('Failed to select wallpaper', err);
+    }
+  };
+
+  const handleDeleteWallpaperCard = async (e: React.MouseEvent, wpId: string) => {
+    e.stopPropagation();
+    if (window.confirm('Möchtest du dieses gespeicherte Wallpaper wirklich löschen?')) {
+      if (onDeleteSavedWallpaper) {
+        await onDeleteSavedWallpaper(wpId);
+      } else {
+        await deleteSavedWallpaper(wpId);
+      }
+      showFeedback('Wallpaper gelöscht');
+      loadWallpapers();
+    }
+  };
 
   const showFeedback = (msg: string) => {
     setSaveToast(msg);
@@ -711,23 +772,116 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     </div>
                   )}
 
-                  {/* Image Upload */}
+                  {/* Image Upload & Saved Wallpapers */}
                   {settings.bgType === 'image' && (
-                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-300 font-medium">Hintergrundbild</span>
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-blue-400" />
+                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                            Gespeicherte Wallpapers ({savedWallpapers.length})
+                          </span>
+                        </div>
                         {settings.hasCustomImage && onRemoveImage && (
                           <button
                             type="button"
                             onClick={onRemoveImage}
-                            className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                            className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer font-medium"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            Bild entfernen
+                            Hintergrund entfernen
                           </button>
                         )}
                       </div>
 
+                      {/* Saved Wallpapers Gallery Grid */}
+                      {savedWallpapers.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-slate-400">
+                            Wähle eines deiner erstellten KI-Bilder oder hochgeladenen Fotos als aktives Uhr-Wallpaper:
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+                            {savedWallpapers.map((wp) => {
+                              const isActive =
+                                wp.isActive || (currentWallpaperUrl && wp.url === currentWallpaperUrl);
+                              return (
+                                <div
+                                  key={wp.id}
+                                  onClick={() => handleSelectWallpaperCard(wp)}
+                                  className={`group relative rounded-2xl overflow-hidden border aspect-video cursor-pointer transition-all ${
+                                    isActive
+                                      ? 'border-blue-500 ring-2 ring-blue-500/50 shadow-lg scale-[1.02]'
+                                      : 'border-slate-800 hover:border-slate-600 bg-slate-950/60'
+                                  }`}
+                                  title={wp.prompt || wp.name}
+                                >
+                                  {wp.url ? (
+                                    <img
+                                      src={wp.url}
+                                      alt={wp.name || 'Wallpaper'}
+                                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-600">
+                                      <ImageIcon className="w-6 h-6" />
+                                    </div>
+                                  )}
+
+                                  {/* Vignette */}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+
+                                  {/* Badge: KI vs Foto */}
+                                  <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-900/90 text-blue-300 border border-slate-700/80 shadow-sm">
+                                      {wp.isAi ? 'KI' : 'Foto'}
+                                    </span>
+                                  </div>
+
+                                  {/* Active Badge */}
+                                  {isActive && (
+                                    <div className="absolute top-2 right-2 z-10">
+                                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-md">
+                                        <Check className="w-3 h-3 stroke-[3]" />
+                                        <span>Aktiv</span>
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Delete button on hover for non-active */}
+                                  {!isActive && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteWallpaperCard(e, wp.id)}
+                                      className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-slate-900/90 hover:bg-rose-900/90 text-slate-400 hover:text-rose-200 border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow"
+                                      title="Wallpaper löschen"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  )}
+
+                                  {/* Caption */}
+                                  <div className="absolute bottom-1.5 left-2 right-2 z-10 pointer-events-none">
+                                    <p className="text-[10px] font-semibold text-white line-clamp-1 drop-shadow-sm">
+                                      {wp.prompt || wp.name}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-800/80 text-center space-y-1.5">
+                          <p className="text-xs font-semibold text-slate-300">
+                            Noch keine eigenen Wallpapers gespeichert
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            Erstelle ein einzigartiges Bild mit dem Gemini KI-Studio oder lade ein Foto hoch.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Action options: Gemini Studio & Upload */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {/* Option 1: Gemini Bild-Studio (Erstellen & Bearbeiten) */}
                         {onOpenGeminiBg && (
@@ -759,9 +913,12 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => {
+                            onChange={async (e) => {
                               const file = e.target.files?.[0];
-                              if (file && onUploadImage) onUploadImage(file);
+                              if (file && onUploadImage) {
+                                await onUploadImage(file);
+                                loadWallpapers();
+                              }
                             }}
                           />
                         </label>

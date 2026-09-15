@@ -91,11 +91,11 @@ async function startServer() {
           },
         });
 
-        const editInstruction = `Image editing instruction: Modify the input image according to the following description: "${prompt.trim()}". Maintain aesthetic quality, high resolution, suitable as wallpaper. Strictly no unwanted text or numbers.`;
+        const editInstruction = `Masterful image editing instruction: Modify the input image precisely according to this description: "${prompt.trim()}". Maintain high visual fidelity, seamless lighting integration, photorealistic aesthetic, suitable as a clock wallpaper. Strictly zero unwanted text, zero clock digits, zero watermarks.`;
         parts.push({ text: editInstruction });
       } else {
         // Image creation mode: enriched prompt
-        const enrichedPrompt = `${prompt.trim()}. Style requirements: ${selectedGuide}. Scenic wallpaper background for a clock display.`;
+        const enrichedPrompt = `Masterpiece cinematic wallpaper photograph. Subject: ${prompt.trim()}. Style requirements: ${selectedGuide}. Atmospheric lighting, deep dynamic range, exquisite 8K fine textures, spacious center negative space crafted for a digital clock display. Negative constraints: Strictly no text, no numbers, no clock numerals, no letters, no logos, no watermarks, no blur, no low resolution artifacts.`;
         parts.push({ text: enrichedPrompt });
       }
 
@@ -163,11 +163,11 @@ async function startServer() {
           try {
             const analysisPrompt = `The user wants a wallpaper with prompt: "${prompt.trim()}" and style: "${style}".
 Select the single best matching category from this list:
-[mountains, lake, space, cyberpunk, aurora, desert, forest, winter, sunset, anime, minimalist, ocean, abstract]
+[mountains, lake, space, cyberpunk, aurora, desert, forest, winter, sunset, anime, minimalist, ocean, abstract, architecture, cars, cozy, flowers, rain]
 Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise morning fog"}`;
 
             const analysisRes = await ai.models.generateContent({
-              model: 'gemini-3.5-flash',
+              model: 'gemini-3.8-flash',
               contents: analysisPrompt,
               config: {
                 responseMimeType: 'application/json',
@@ -186,18 +186,22 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
             mountains: [
               'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1920&q=85',
             ],
             lake: [
               'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1439853941329-a9f1a941f924?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1920&q=85',
             ],
             space: [
               'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
             ],
             cyberpunk: [
               'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1920&q=85',
             ],
             aurora: [
               'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1920&q=85',
@@ -205,10 +209,12 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
             ],
             desert: [
               'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1920&q=85',
             ],
             forest: [
               'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1920&q=85',
             ],
             winter: [
               'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1920&q=85',
@@ -217,12 +223,15 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
             sunset: [
               'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1920&q=85',
               'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=85',
             ],
             anime: [
               'https://images.unsplash.com/photo-1528164344705-475426879c0d?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1920&q=85',
             ],
             minimalist: [
               'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1920&q=85',
             ],
             ocean: [
               'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
@@ -230,6 +239,27 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
             ],
             abstract: [
               'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=85',
+            ],
+            architecture: [
+              'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
+            ],
+            cars: [
+              'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1920&q=85',
+            ],
+            cozy: [
+              'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1920&q=85',
+            ],
+            flowers: [
+              'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?auto=format&fit=crop&w=1920&q=85',
+            ],
+            rain: [
+              'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=1920&q=85',
+              'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=1920&q=85',
             ],
           };
 
@@ -350,6 +380,95 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
       return res.status(500).json({ error: errorMessage });
     }
   }
+
+  // Handler for AI-Powered Prompt Enhancement (optimizes user prompts for gorgeous wallpaper creation)
+  async function handleEnhancePrompt(req: express.Request, res: express.Response) {
+    try {
+      const { prompt, style = 'cinematic', aspectRatio = '16:9' } = req.body;
+
+      if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+        return res.status(400).json({ error: 'Bitte gib einen Prompt ein, der veredelt werden soll.' });
+      }
+
+      const ai = getGeminiClient();
+
+      const systemInstruction = `You are a world-class AI prompt engineer and visual art director specializing in creating breathtaking, high-fidelity wallpapers for digital clock displays.
+Your task: Take the user's raw prompt (which may be in German or English, brief or simple) and transform it into an exquisitely detailed, atmospheric, photographic prompt for Gemini image generation.
+
+Requirements:
+1. Retain the core subject and emotional essence of the user's input.
+2. Infuse photographic and atmospheric excellence: precise lighting (e.g. golden hour rim light, soft volumetric rays, cinematic moody haze), composition (e.g. expansive panoramic framing, wide depth of field), rich textures, and harmonized color palette.
+3. Clean Wallpaper Optimization: Emphasize calm, uncluttered negative space in the central composition so digital clock numbers remain effortlessly readable.
+4. Strict negative guidance: Forbid text, watermarks, clock numerals, blurry details, and artifacts.
+5. Provide a short German explanation (germanSummary) of how the prompt was enhanced, plus 3-4 concise highlight badges.
+
+Return ONLY valid JSON matching this schema:
+{
+  "enhancedPrompt": "Detailed English photographic wallpaper prompt...",
+  "germanSummary": "Kurze prägnante Erklärung auf Deutsch...",
+  "suggestedStyle": "cinematic",
+  "highlights": ["Volumetrisches Licht", "35mm Weitwinkel", "Goldene Stunde"]
+}`;
+
+      const userMessage = `User Raw Prompt: "${prompt.trim()}"
+Selected Style Preset: "${style}"
+Aspect Ratio: "${aspectRatio}"
+
+Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid JSON.`;
+
+      let response: any = null;
+      const modelCandidates = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+
+      for (const modelName of modelCandidates) {
+        try {
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: userMessage,
+            config: {
+              systemInstruction,
+              responseMimeType: 'application/json',
+            },
+          });
+          if (response && response.text) break;
+        } catch (err: any) {
+          console.warn(`Enhance prompt attempt with ${modelName} failed:`, err?.message || err);
+        }
+      }
+
+      if (!response || !response.text) {
+        throw new Error('Die Prompt-Veredelung konnte nicht durchgeführt werden.');
+      }
+
+      let parsed: any = {};
+      try {
+        parsed = JSON.parse(response.text.trim());
+      } catch (jsonErr) {
+        console.warn('Failed to parse JSON prompt enhancement, using raw text:', jsonErr);
+        parsed = {
+          enhancedPrompt: response.text.trim(),
+          germanSummary: 'Prompt mit atmosphärischer Beleuchtung und Bilddetails veredelt.',
+          highlights: ['Fotorealistisch', '8K Wallpaper', 'Atmosphärisches Licht'],
+        };
+      }
+
+      return res.json({
+        success: true,
+        originalPrompt: prompt.trim(),
+        enhancedPrompt: parsed.enhancedPrompt || prompt.trim(),
+        germanSummary: parsed.germanSummary || 'Prompt erfolgreich mit KI veredelt.',
+        suggestedStyle: parsed.suggestedStyle || style,
+        highlights: Array.isArray(parsed.highlights) ? parsed.highlights : ['8K Wallpaper', 'Atmosphärisch'],
+      });
+    } catch (error: any) {
+      console.error('Gemini enhance prompt error:', error);
+      return res.status(500).json({
+        error: error?.message || 'Fehler bei der Prompt-Veredelung.',
+      });
+    }
+  }
+
+  // POST /api/gemini/enhance-prompt (Refine and enrich image prompts with Gemini)
+  app.post('/api/gemini/enhance-prompt', handleEnhancePrompt);
 
   // POST /api/gemini/generate-image (Create & edit images using gemini-3.1-flash-image-preview)
   app.post('/api/gemini/generate-image', handleGenerateOrEditImage);
