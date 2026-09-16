@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Minimize2,
   Maximize2,
+  Search,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -178,11 +179,34 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showRoleConfig, setShowRoleConfig] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const activeRole = CHAT_ROLES.find((r) => r.id === selectedRoleId) || CHAT_ROLES[0];
+
+  // Global keyboard shortcut: Ctrl+F / Cmd+F to open search
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setShowSearchBar(true);
+        setTimeout(() => searchInputRef.current?.focus(), 50);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (showSearchBar) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [showSearchBar]);
 
   // Save messages to localStorage
   useEffect(() => {
@@ -277,6 +301,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
     const updatedHistory = [...messages, newUserMsg];
     setMessages(updatedHistory);
     setInputPrompt('');
+    setSearchQuery('');
     setIsLoading(true);
 
     const effectiveModel = getEffectiveModel(promptToSend);
@@ -324,10 +349,57 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
 
   const handleClearChat = () => {
     if (messages.length === 0) return;
-    if (window.confirm('Möchtest du den bisherigen Chat-Verlauf wirklich löschen?')) {
-      setMessages([]);
-      localStorage.removeItem(STORAGE_CHAT_KEY);
-    }
+    setShowConfirmClear(true);
+  };
+
+  const confirmClearChat = () => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_CHAT_KEY);
+    setShowConfirmClear(false);
+    setSearchQuery('');
+    setShowSearchBar(false);
+  };
+
+  const handleDeleteMessage = (id: string) => {
+    setMessages((prev) => {
+      const updated = prev.filter((m) => m.id !== id);
+      try {
+        if (updated.length === 0) {
+          localStorage.removeItem(STORAGE_CHAT_KEY);
+        } else {
+          localStorage.setItem(STORAGE_CHAT_KEY, JSON.stringify(updated.slice(-50)));
+        }
+      } catch {
+        // ignore storage errors
+      }
+      return updated;
+    });
+  };
+
+  // Filter messages based on search query
+  const filteredMessages = searchQuery.trim()
+    ? messages.filter((m) =>
+        m.text.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      )
+    : messages;
+
+  // Highlight matches in text
+  const highlightMatch = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    const escaped = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.trim().toLowerCase() ? (
+        <mark
+          key={i}
+          className="bg-amber-400/30 text-amber-200 rounded px-0.5 py-0.2 font-semibold"
+        >
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -435,14 +507,37 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
               ))}
             </div>
 
+            {/* Search in History Button */}
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSearchBar((prev) => !prev);
+                  if (!showSearchBar) {
+                    setTimeout(() => searchInputRef.current?.focus(), 50);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer border ${
+                  showSearchBar || searchQuery
+                    ? 'bg-blue-600/25 border-blue-500/40 text-blue-300'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border-transparent'
+                }`}
+                title="Chat-Historie durchsuchen (Strg+F)"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="hidden md:inline text-[11px] font-medium">Suchen</span>
+              </button>
+            )}
+
             {messages.length > 0 && (
               <button
                 type="button"
                 onClick={handleClearChat}
-                className="p-2 rounded-xl text-slate-400 hover:text-rose-300 hover:bg-slate-800/80 transition-colors cursor-pointer"
-                title="Chat-Verlauf leeren"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 text-xs transition-colors cursor-pointer"
+                title="Gesamten Chat-Verlauf löschen"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden md:inline text-[11px] font-medium">Chat löschen</span>
               </button>
             )}
 
@@ -456,6 +551,53 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Interactive Search Bar for Chat History */}
+        {(showSearchBar || searchQuery) && (
+          <div className="px-4 py-2.5 bg-slate-950/90 border-b border-slate-800/80 flex items-center gap-2 animate-in slide-in-from-top-1 duration-150">
+            <div className="relative flex-1 flex items-center">
+              <Search className="w-4 h-4 text-blue-400 absolute left-3 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="In Chat-Historie nach Begriffen filtern..."
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-9 pr-8 py-1.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 p-0.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Suchbegriff leeren"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {searchQuery.trim() && (
+              <span className="text-[11px] text-slate-300 shrink-0 font-medium px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800">
+                {filteredMessages.length === 1
+                  ? '1 Treffer'
+                  : `${filteredMessages.length} Treffer`}
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowSearchBar(false);
+                setSearchQuery('');
+              }}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Suche schließen"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Role Configuration Drawer (Collapsible) */}
         {showRoleConfig && (
@@ -591,47 +733,139 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                 </div>
               </div>
             </div>
+          ) : searchQuery.trim() && filteredMessages.length === 0 ? (
+            /* Empty State for Search */
+            <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-12 animate-in fade-in duration-200">
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center justify-center shadow-inner">
+                <Search className="w-6 h-6 text-slate-500" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white">Keine Treffer gefunden</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Für den Suchbegriff <span className="text-blue-400 font-medium">„{searchQuery}“</span> wurden in der aktuellen Konversation keine passenden Nachrichten gefunden.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer font-medium"
+              >
+                Filter zurücksetzen
+              </button>
+            </div>
           ) : (
-            /* Message Thread */
-            messages.map((msg) => {
-              const isUser = msg.role === 'user';
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isUser && (
-                    <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
-                      style={{
-                        backgroundColor: `${activeRole.color}25`,
-                        borderColor: `${activeRole.color}50`,
-                        borderWidth: '1px',
-                      }}
-                    >
-                      <RoleIcon className="w-4 h-4" style={{ color: activeRole.color }} />
-                    </div>
-                  )}
-
-                  <div
-                    className={`relative max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-md ${
-                      isUser
-                        ? 'bg-blue-600 text-white rounded-tr-sm'
-                        : 'bg-slate-950/70 border border-slate-800 text-slate-200 rounded-tl-sm'
-                    }`}
+            <>
+              {/* Active Filter Indicator */}
+              {searchQuery.trim() && (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-blue-950/50 border border-blue-800/60 text-xs text-blue-200 shadow-sm animate-in fade-in duration-150">
+                  <div className="flex items-center gap-2 truncate pr-2">
+                    <Search className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span className="truncate">
+                      Gefiltert nach <strong className="text-white font-semibold">„{searchQuery}“</strong> ({filteredMessages.length} von {messages.length} Nachrichten)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-[11px] font-medium text-blue-300 hover:text-white underline cursor-pointer shrink-0"
                   >
-                    {!isUser ? (
-                      <div className="space-y-2">
-                        <div className="markdown-body prose prose-invert max-w-none text-xs sm:text-sm">
-                          <ReactMarkdown>{msg.text}</ReactMarkdown>
-                        </div>
+                    Filter aufheben
+                  </button>
+                </div>
+              )}
 
-                        {/* Bottom message info: model badge & copy button */}
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-400">
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono">
-                              {msg.modelUsed || 'gemini-3.5-flash'}
-                            </span>
+              {/* Message Thread */}
+              {filteredMessages.map((msg) => {
+                const isUser = msg.role === 'user';
+                const hasSearchHit = searchQuery.trim() && msg.text.toLowerCase().includes(searchQuery.trim().toLowerCase());
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {!isUser && (
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
+                        style={{
+                          backgroundColor: `${activeRole.color}25`,
+                          borderColor: `${activeRole.color}50`,
+                          borderWidth: '1px',
+                        }}
+                      >
+                        <RoleIcon className="w-4 h-4" style={{ color: activeRole.color }} />
+                      </div>
+                    )}
+
+                    <div
+                      className={`relative group/msg max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-md ${
+                        isUser
+                          ? 'bg-blue-600 text-white rounded-tr-sm'
+                          : 'bg-slate-950/70 border border-slate-800 text-slate-200 rounded-tl-sm'
+                      }`}
+                    >
+                      {!isUser ? (
+                        <div className="space-y-2">
+                          {hasSearchHit && (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-400/15 border border-amber-400/30 text-[10px] text-amber-300 font-medium">
+                              <Search className="w-2.5 h-2.5" />
+                              <span>Suchtreffer</span>
+                            </div>
+                          )}
+                          <div className="markdown-body prose prose-invert max-w-none text-xs sm:text-sm">
+                            <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          </div>
+
+                          {/* Bottom message info: model badge, copy button & delete button */}
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-400">
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono">
+                                {msg.modelUsed || 'gemini-3.5-flash'}
+                              </span>
+                              <span>
+                                {new Date(msg.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(msg.id, msg.text)}
+                                className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+                                title="Antwort kopieren"
+                              >
+                                {copiedId === msg.id ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Diese Nachricht löschen"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <p className="whitespace-pre-wrap">{highlightMatch(msg.text, searchQuery)}</p>
+                          <div className="flex items-center justify-between text-[10px] text-blue-200/80 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMessage(msg.id)}
+                              className="text-blue-200/70 hover:text-white hover:bg-blue-700/60 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Diese Nachricht löschen"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span className="text-[9px]">Löschen</span>
+                            </button>
                             <span>
                               {new Date(msg.timestamp).toLocaleTimeString([], {
                                 hour: '2-digit',
@@ -639,42 +873,19 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                               })}
                             </span>
                           </div>
+                        </div>
+                      )}
+                    </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(msg.id, msg.text)}
-                            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Antwort kopieren"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
-                        <div className="text-[10px] text-blue-200/80 text-right">
-                          {new Date(msg.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
+                    {isUser && (
+                      <div className="w-8 h-8 rounded-xl bg-blue-700/60 border border-blue-500/40 flex items-center justify-center shrink-0 mt-0.5 shadow-sm text-white">
+                        <User className="w-4 h-4" />
                       </div>
                     )}
                   </div>
-
-                  {isUser && (
-                    <div className="w-8 h-8 rounded-xl bg-blue-700/60 border border-blue-500/40 flex items-center justify-center shrink-0 mt-0.5 shadow-sm text-white">
-                      <User className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                );
+              })}
+            </>
           )}
 
           {/* Loading Indicator */}
@@ -770,6 +981,39 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Confirmation Overlay for Clearing All Messages */}
+        {showConfirmClear && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-2xl text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white">Chat-Verlauf löschen?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Möchtest du wirklich alle Nachrichten aus diesem Chat unwiderruflich entfernen?
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmClear(false)}
+                  className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmClearChat}
+                  className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white transition-colors cursor-pointer shadow-md"
+                >
+                  Ja, Chat löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
