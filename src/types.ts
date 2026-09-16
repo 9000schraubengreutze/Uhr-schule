@@ -5,7 +5,7 @@ export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
-export type DigitTransition = 'fade' | 'crossfade' | 'slide-fade' | 'none';
+export type DigitTransition = 'flip' | 'fade' | 'crossfade' | 'slide-fade' | 'none';
 
 export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
 
@@ -90,6 +90,10 @@ export interface ClockSettings {
 
   // Digital Clock Typography & Appearance
   clockColor: string; // Digit text color
+  hoursColor?: string; // Optional custom color for hours digits
+  minutesColor?: string; // Optional custom color for minutes digits
+  secondsColor?: string; // Optional custom color for seconds digits
+  colonColor?: string; // Optional custom color for colon separators
   accentColor: string; // Glow / badge / button accent color
   clockFont: ClockFont;
   clockWeight: ClockWeight;

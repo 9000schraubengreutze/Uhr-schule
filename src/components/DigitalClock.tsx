@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation } from 'motion/react';
-import { Coffee, GraduationCap, Lock } from 'lucide-react';
+import { Coffee, GraduationCap, Lock, Palette } from 'lucide-react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
 import { SpringDigit } from './SpringDigit';
 import { SchoolStatusResult } from '../utils/timetable';
+import { ClockColorPickerPopover, ColorScope } from './ClockColorPickerPopover';
 
 interface DigitalClockProps {
   settings: ClockSettings;
@@ -30,6 +31,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
 
   const [time, setTime] = useState<Date>(getCalculatedTime);
   const lastSecondRef = useRef<number>(time.getSeconds());
+
+  // Interactive clock color changing state
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [colorPickerScope, setColorPickerScope] = useState<ColorScope>('all');
+  const [isHovered, setIsHovered] = useState(false);
 
   const clockControls = useAnimation();
   const secondsControls = useAnimation();
@@ -241,6 +247,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
       }
     : {};
 
+  // Resolve individual segment colors (with fallback to main clockColor)
+  const hoursColor = settings.hoursColor || settings.clockColor;
+  const minutesColor = settings.minutesColor || settings.clockColor;
+  const secondsColor = settings.secondsColor || settings.clockColor;
+  const colonColor = settings.colonColor || settings.clockColor;
+
   return (
     <div
       id="digital-clock-centerpiece"
@@ -270,10 +282,18 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
           animate={clockControls}
           className="flex flex-col items-center justify-center w-full will-change-transform"
         >
-          {/* Main Digits Row */}
+          {/* Main Digits Row with Click-To-Change-Color interactivity */}
           <div
             id="digital-time-display"
-            className={`flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setColorPickerScope('all');
+              setIsColorPickerOpen(true);
+            }}
+            title="Klicken, um die Ziffernfarbe anzupassen"
+            className={`flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers group cursor-pointer`}
             style={{
               color: 'var(--clock-color, ' + settings.clockColor + ')',
               ...glowStyle,
@@ -283,7 +303,19 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             {/* Hours */}
             <span
               id="clock-hours"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                setColorPickerScope('hours');
+                setIsColorPickerOpen(true);
+              }}
+              title="Stunden: Klicken zum Ändern der Farbe"
+              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
+              style={{
+                color: hoursColor,
+                textShadow: settings.enableGlow
+                  ? `0 0 30px ${hoursColor}70, 0 0 60px ${hoursColor}30`
+                  : undefined,
+              }}
             >
               {formattedHours.split('').map((char, index) => (
                 <SpringDigit
@@ -301,7 +333,16 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               id="clock-colon-1"
               aria-hidden="true"
               animate={colonControls}
-              className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setColorPickerScope('all');
+                setIsColorPickerOpen(true);
+              }}
+              title="Klicken, um Ziffernfarbe zu ändern"
+              className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
+              style={{
+                color: colonColor,
+              }}
             >
               :
             </motion.span>
@@ -309,7 +350,19 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             {/* Minutes */}
             <span
               id="clock-minutes"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                setColorPickerScope('minutes');
+                setIsColorPickerOpen(true);
+              }}
+              title="Minuten: Klicken zum Ändern der Farbe"
+              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
+              style={{
+                color: minutesColor,
+                textShadow: settings.enableGlow
+                  ? `0 0 30px ${minutesColor}70, 0 0 60px ${minutesColor}30`
+                  : undefined,
+              }}
             >
               {formattedMinutes.split('').map((char, index) => (
                 <SpringDigit
@@ -329,14 +382,35 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   id="clock-colon-2"
                   aria-hidden="true"
                   animate={colonControls}
-                  className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setColorPickerScope('all');
+                    setIsColorPickerOpen(true);
+                  }}
+                  title="Klicken, um Ziffernfarbe zu ändern"
+                  className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
+                  style={{
+                    color: colonColor,
+                  }}
                 >
                   :
                 </motion.span>
                 <motion.span
                   id="clock-seconds"
                   animate={secondsControls}
-                  className="text-[clamp(3.4rem,14.5vw,11rem)] inline-flex items-baseline opacity-90 select-none will-change-transform"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setColorPickerScope('seconds');
+                    setIsColorPickerOpen(true);
+                  }}
+                  title="Sekunden: Klicken zum Ändern der Farbe"
+                  className="text-[clamp(3.4rem,14.5vw,11rem)] inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 hover:brightness-125 hover:scale-[1.03] active:scale-[0.98] rounded-2xl px-1"
+                  style={{
+                    color: secondsColor,
+                    textShadow: settings.enableGlow
+                      ? `0 0 30px ${secondsColor}70, 0 0 60px ${secondsColor}30`
+                      : undefined,
+                  }}
                 >
                   {formattedSeconds.split('').map((char, index) => (
                     <SpringDigit
@@ -364,6 +438,29 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 {ampm}
               </span>
             )}
+          </div>
+
+          {/* Quick Hover Action Chip for Changing Color */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 mt-2 rounded-full text-xs font-medium border shadow-lg transition-all duration-300 cursor-pointer ${
+              isHovered
+                ? 'opacity-100 translate-y-0 bg-slate-900/80 border-slate-700/80 text-slate-200 hover:bg-slate-800 hover:text-white'
+                : 'opacity-0 -translate-y-1 pointer-events-none'
+            }`}
+            style={{
+              backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+              WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setColorPickerScope('all');
+              setIsColorPickerOpen(true);
+            }}
+            title="Klicken, um Ziffernfarbe zu ändern"
+          >
+            <Palette className="w-3.5 h-3.5 text-blue-400" />
+            <span>Farbe anpassen</span>
+            <span className="text-[10px] text-slate-400 hidden sm:inline">(Ziffern anklicken)</span>
           </div>
 
           {/* Optional Date String */}
@@ -436,6 +533,17 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
           )}
         </motion.div>
       </div>
+
+      {/* Interactive Clock & Digits Color Picker Modal */}
+      {onUpdateSettings && (
+        <ClockColorPickerPopover
+          isOpen={isColorPickerOpen}
+          onClose={() => setIsColorPickerOpen(false)}
+          settings={settings}
+          onUpdateSettings={onUpdateSettings}
+          initialScope={colorPickerScope}
+        />
+      )}
     </div>
   );
 };

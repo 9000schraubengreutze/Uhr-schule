@@ -21,10 +21,16 @@ const TRANSITION_OPTIONS: {
   desc: string;
 }[] = [
   {
+    id: 'flip',
+    label: 'Sanfter Flip',
+    badge: '3D-Klappeffekt',
+    desc: 'Mechanisch-dynamischer 3D-Flip mit Tiefenperspektive beim Ziffernwechsel',
+  },
+  {
     id: 'fade',
-    label: 'Subtiles Fading',
-    badge: 'Standard',
-    desc: 'Geschmeidige Auflösung mit sanftem Micro-Drift für maximale Fluidität',
+    label: 'Sanfter Fade',
+    badge: 'Fließend & Weich',
+    desc: 'Geschmeidige Weichzeichner-Überblendung mit organischem Micro-Drift',
   },
   {
     id: 'crossfade',
@@ -36,12 +42,12 @@ const TRANSITION_OPTIONS: {
     id: 'slide-fade',
     label: 'Gleiten & Fade',
     badge: 'Dynamisch',
-    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit vollem Ausfaden',
+    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit sanftem Fading',
   },
   {
     id: 'none',
     label: 'Direkt (Aus)',
-    badge: 'Klassisch',
+    badge: 'Sofort',
     desc: 'Sofortiges Umschalten der Ziffern ohne Übergangseffekt',
   },
 ];
@@ -160,7 +166,7 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
       </div>
 
       {/* Style Option Buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
         {TRANSITION_OPTIONS.map((option) => {
           const isSelected = transitionType === option.id;
           return (

@@ -328,7 +328,8 @@ export default function App() {
         if (
           !target.closest('button') &&
           !target.closest('#settings-panel') &&
-          !target.closest('#material-settings-backdrop')
+          !target.closest('#material-settings-backdrop') &&
+          !target.closest('#clock-color-picker-backdrop')
         ) {
           toggleFullscreen();
         }

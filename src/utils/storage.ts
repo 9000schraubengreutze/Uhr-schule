@@ -75,6 +75,7 @@ export function loadSettings(): ClockSettings {
             : Math.max(0.2, Math.min(3.0, Number(parsed.particleSpeed.toFixed(2))))
           : DEFAULT_SETTINGS.particleSpeed,
       digitTransition:
+        parsed.digitTransition === 'flip' ||
         parsed.digitTransition === 'crossfade' ||
         parsed.digitTransition === 'slide-fade' ||
         parsed.digitTransition === 'none' ||
