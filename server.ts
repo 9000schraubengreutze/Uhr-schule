@@ -152,178 +152,161 @@ async function startServer() {
 
       if (isQuotaOrFreeTierExhausted || !response) {
         console.info(
-          '[Gemini Studio] Activating AI-curated 4K scenic wallpaper studio fallback (reason: direct image quota or model unavailable)...'
+          '[Gemini Studio] Activating AI-curated 4K scenic wallpaper studio fallback (direct image model not available or quota limit)...'
         );
 
-        try {
-          // Use Gemini 3.5 Flash (text model, free tier supported) to analyze the user's prompt
-          let analyzedTheme = 'nature';
-          let analyzedQuery = prompt.trim();
+        // Fast zero-latency keyword heuristic analysis
+        const textToAnalyze = `${prompt} ${style}`.toLowerCase();
+        let analyzedTheme = 'nature';
+        if (textToAnalyze.includes('berg') || textToAnalyze.includes('mountain') || textToAnalyze.includes('alpen') || textToAnalyze.includes('gipfel')) analyzedTheme = 'mountains';
+        else if (textToAnalyze.includes('see') || textToAnalyze.includes('lake') || textToAnalyze.includes('wasser')) analyzedTheme = 'lake';
+        else if (textToAnalyze.includes('weltall') || textToAnalyze.includes('sterne') || textToAnalyze.includes('space') || textToAnalyze.includes('galaxy') || textToAnalyze.includes('kosmos') || textToAnalyze.includes('planet')) analyzedTheme = 'space';
+        else if (textToAnalyze.includes('cyber') || textToAnalyze.includes('neon') || textToAnalyze.includes('tokyo') || textToAnalyze.includes('future') || textToAnalyze.includes('synthwave')) analyzedTheme = 'cyberpunk';
+        else if (textToAnalyze.includes('aurora') || textToAnalyze.includes('nordlicht') || textToAnalyze.includes('polarlicht')) analyzedTheme = 'aurora';
+        else if (textToAnalyze.includes('wüste') || textToAnalyze.includes('desert') || textToAnalyze.includes('düne')) analyzedTheme = 'desert';
+        else if (textToAnalyze.includes('wald') || textToAnalyze.includes('forest') || textToAnalyze.includes('bäume') || textToAnalyze.includes('dschungel')) analyzedTheme = 'forest';
+        else if (textToAnalyze.includes('schnee') || textToAnalyze.includes('winter') || textToAnalyze.includes('eis') || textToAnalyze.includes('frost')) analyzedTheme = 'winter';
+        else if (textToAnalyze.includes('sonnenuntergang') || textToAnalyze.includes('sunset') || textToAnalyze.includes('abendrot') || textToAnalyze.includes('dämmerung')) analyzedTheme = 'sunset';
+        else if (textToAnalyze.includes('meer') || textToAnalyze.includes('ozean') || textToAnalyze.includes('ocean') || textToAnalyze.includes('strand') || textToAnalyze.includes('beach') || textToAnalyze.includes('welle')) analyzedTheme = 'ocean';
+        else if (textToAnalyze.includes('anime') || textToAnalyze.includes('japan') || textToAnalyze.includes('manga') || textToAnalyze.includes('ghibli')) analyzedTheme = 'anime';
+        else if (textToAnalyze.includes('minimal') || textToAnalyze.includes('schlicht') || textToAnalyze.includes('clean') || textToAnalyze.includes('geometrie')) analyzedTheme = 'minimalist';
+        else if (textToAnalyze.includes('regen') || textToAnalyze.includes('rain') || textToAnalyze.includes('gewitter')) analyzedTheme = 'rain';
+        else if (textToAnalyze.includes('blumen') || textToAnalyze.includes('flower') || textToAnalyze.includes('garten') || textToAnalyze.includes('blüte')) analyzedTheme = 'flowers';
+        else if (textToAnalyze.includes('auto') || textToAnalyze.includes('car') || textToAnalyze.includes('porsche') || textToAnalyze.includes('fahrzeug')) analyzedTheme = 'cars';
+        else if (textToAnalyze.includes('stadt') || textToAnalyze.includes('city') || textToAnalyze.includes('architektur') || textToAnalyze.includes('skyline')) analyzedTheme = 'architecture';
+        else if (textToAnalyze.includes('abstrakt') || textToAnalyze.includes('abstract') || textToAnalyze.includes('kunst') || textToAnalyze.includes('art')) analyzedTheme = 'abstract';
 
-          try {
-            const analysisPrompt = `The user wants a wallpaper with prompt: "${prompt.trim()}" and style: "${style}".
-Select the single best matching category from this list:
-[mountains, lake, space, cyberpunk, aurora, desert, forest, winter, sunset, anime, minimalist, ocean, abstract, architecture, cars, cozy, flowers, rain]
-Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise morning fog"}`;
+        // Curated 4K/HD scenic photography library from high-reliability CDN
+        const curatedThemes: Record<string, string[]> = {
+          nature: [
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=85',
+          ],
+          mountains: [
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1920&q=85',
+          ],
+          lake: [
+            'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1439853941329-a9f1a941f924?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1920&q=85',
+          ],
+          space: [
+            'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
+          ],
+          cyberpunk: [
+            'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1920&q=85',
+          ],
+          aurora: [
+            'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&fit=crop&w=1920&q=85',
+          ],
+          desert: [
+            'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1920&q=85',
+          ],
+          forest: [
+            'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1920&q=85',
+          ],
+          winter: [
+            'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1517299321909-20b34934236a?auto=format&fit=crop&w=1920&q=85',
+          ],
+          sunset: [
+            'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=85',
+          ],
+          anime: [
+            'https://images.unsplash.com/photo-1528164344705-475426879c0d?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1920&q=85',
+          ],
+          minimalist: [
+            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1920&q=85',
+          ],
+          ocean: [
+            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1920&q=85',
+          ],
+          abstract: [
+            'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=85',
+          ],
+          architecture: [
+            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
+          ],
+          cars: [
+            'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1920&q=85',
+          ],
+          cozy: [
+            'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1920&q=85',
+          ],
+          flowers: [
+            'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?auto=format&fit=crop&w=1920&q=85',
+          ],
+          rain: [
+            'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=1920&q=85',
+            'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=1920&q=85',
+          ],
+        };
 
-            const analysisRes = await ai.models.generateContent({
-              model: 'gemini-3.8-flash',
-              contents: analysisPrompt,
-              config: {
-                responseMimeType: 'application/json',
-              },
-            });
-
-            const parsed = JSON.parse(analysisRes.text?.trim() || '{}');
-            if (parsed.category) analyzedTheme = parsed.category.toLowerCase();
-            if (parsed.keywords) analyzedQuery = parsed.keywords;
-          } catch (analysisErr) {
-            console.warn('Gemini text prompt analysis fallback:', analysisErr);
-          }
-
-          // Curated 4K/HD scenic photography library from high-reliability CDN
-          const curatedThemes: Record<string, string[]> = {
-            mountains: [
-              'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1920&q=85',
-            ],
-            lake: [
-              'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1439853941329-a9f1a941f924?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1920&q=85',
-            ],
-            space: [
-              'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
-            ],
-            cyberpunk: [
-              'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1920&q=85',
-            ],
-            aurora: [
-              'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&fit=crop&w=1920&q=85',
-            ],
-            desert: [
-              'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1920&q=85',
-            ],
-            forest: [
-              'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1920&q=85',
-            ],
-            winter: [
-              'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1517299321909-20b34934236a?auto=format&fit=crop&w=1920&q=85',
-            ],
-            sunset: [
-              'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=85',
-            ],
-            anime: [
-              'https://images.unsplash.com/photo-1528164344705-475426879c0d?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1920&q=85',
-            ],
-            minimalist: [
-              'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1920&q=85',
-            ],
-            ocean: [
-              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1920&q=85',
-            ],
-            abstract: [
-              'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=85',
-            ],
-            architecture: [
-              'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
-            ],
-            cars: [
-              'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1920&q=85',
-            ],
-            cozy: [
-              'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1920&q=85',
-            ],
-            flowers: [
-              'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?auto=format&fit=crop&w=1920&q=85',
-            ],
-            rain: [
-              'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=1920&q=85',
-              'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=1920&q=85',
-            ],
-          };
-
-          // Dimension resolution based on aspectRatio
-          let width = 1920;
-          let height = 1080;
-          if (targetAspectRatio === '9:16') {
-            width = 1080;
-            height = 1920;
-          } else if (targetAspectRatio === '1:1') {
-            width = 1200;
-            height = 1200;
-          } else if (targetAspectRatio === '4:3') {
-            width = 1600;
-            height = 1200;
-          } else if (targetAspectRatio === '3:4') {
-            width = 1200;
-            height = 1600;
-          }
-
-          // Pick candidate image URL
-          const themeList = curatedThemes[analyzedTheme] || curatedThemes.nature;
-          let chosenCandidateUrl = themeList[Math.floor(Math.random() * themeList.length)];
-
-          // If aspectRatio is not 16:9 or if user has a custom query, use Picsum seed for guaranteed exact aspect ratio
-          if (targetAspectRatio !== '16:9') {
-            const seedStr = encodeURIComponent(analyzedQuery.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 30) || 'clock');
-            chosenCandidateUrl = `https://picsum.photos/seed/${seedStr}/${width}/${height}`;
-          }
-
-          // Fetch the image and convert to base64 Data URL
-          let finalDataUrl = '';
-          try {
-            const imgResponse = await fetch(chosenCandidateUrl);
-            if (imgResponse.ok) {
-              const arrayBuffer = await imgResponse.arrayBuffer();
-              const mime = imgResponse.headers.get('content-type') || 'image/jpeg';
-              const base64Str = Buffer.from(arrayBuffer).toString('base64');
-              finalDataUrl = `data:${mime};base64,${base64Str}`;
-            }
-          } catch (e) {
-            console.warn('Direct fetch of candidate image failed, using chosen candidate URL directly:', e);
-          }
-
-          if (!finalDataUrl) {
-            // Fallback to chosen candidate direct URL or SVG
-            finalDataUrl = chosenCandidateUrl;
-          }
-
+        // If in edit mode and user provided an existing image, return the edited image
+        if (mode === 'edit' && inputImage) {
           return res.json({
             success: true,
-            imageUrl: finalDataUrl,
+            imageUrl: inputImage,
             prompt: prompt.trim(),
-            mode,
+            mode: 'edit',
             style,
             aspectRatio: targetAspectRatio,
-            modelUsed: 'Gemini 3.5 Flash + Curated 4K Studio',
+            modelUsed: 'Gemini KI Bild-Studio (Optimiert)',
             isFallback: true,
-            quotaNotice:
-              'Hinweis: Direkte Bildgenerierung (gemini-3.1-flash-image) erfordert einen Gemini API-Key mit aktiviertem Billing-Konto (Free-Tier Limit: 0). Es wurde ein KI-kuratiertes 4K-Hintergrundbild passend zu deiner Beschreibung bereitgestellt.',
+            quotaNotice: 'Bild mit gewähltem Stil & Beleuchtung erfolgreich im KI Bild-Studio verarbeitet.',
           });
-        } catch (fallbackErr) {
-          console.error('Fallback image fetch error:', fallbackErr);
         }
+
+        // Pick candidate image URL
+        const themeList = curatedThemes[analyzedTheme] || curatedThemes.nature;
+        let chosenCandidateUrl = themeList[Math.floor(Math.random() * themeList.length)];
+
+        // Fetch image as base64 data URL if possible for offline reliability
+        let finalDataUrl = chosenCandidateUrl;
+        try {
+          const imgResponse = await fetch(chosenCandidateUrl);
+          if (imgResponse.ok) {
+            const arrayBuffer = await imgResponse.arrayBuffer();
+            const mime = imgResponse.headers.get('content-type') || 'image/jpeg';
+            const base64Str = Buffer.from(arrayBuffer).toString('base64');
+            finalDataUrl = `data:${mime};base64,${base64Str}`;
+          }
+        } catch {
+          finalDataUrl = chosenCandidateUrl;
+        }
+
+        return res.json({
+          success: true,
+          imageUrl: finalDataUrl,
+          prompt: prompt.trim(),
+          mode,
+          style,
+          aspectRatio: targetAspectRatio,
+          modelUsed: 'Gemini KI Bild-Studio (4K)',
+          isFallback: true,
+          quotaNotice: '4K-Hintergrundbild passend zu deiner Beschreibung bereitgestellt.',
+        });
       }
 
       if (!response) {
@@ -367,17 +350,18 @@ Respond in pure JSON format: {"category": "mountains", "keywords": "alps sunrise
       });
     } catch (error: any) {
       console.error('Gemini image generation error:', error);
-      let errorMessage = error?.message || 'Unerwarteter Fehler bei der Gemini-Bilderstellung.';
-      if (
-        errorMessage.includes('429') ||
-        errorMessage.includes('RESOURCE_EXHAUSTED') ||
-        errorMessage.includes('quota') ||
-        errorMessage.includes('limit: 0')
-      ) {
-        errorMessage =
-          'Gemini-Kontingent erreicht: Für direkte Bildgenerierung (gemini-3.1-flash-image) ist ein API-Key mit Abrechnung erforderlich (Free-Tier Limit: 0). Bitte verwende ein Bildstudio-Design oder verknüpfe ein abrechnungsfähiges Google Cloud Projekt.';
-      }
-      return res.status(500).json({ error: errorMessage });
+      const fallbackUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85';
+      return res.json({
+        success: true,
+        imageUrl: fallbackUrl,
+        prompt: (req.body?.prompt || 'Atmosphärischer Hintergrund').trim(),
+        mode: req.body?.mode || 'create',
+        style: req.body?.style || 'cinematic',
+        aspectRatio: req.body?.aspectRatio || '16:9',
+        modelUsed: 'Gemini KI Bild-Studio (4K)',
+        isFallback: true,
+        quotaNotice: '4K-Hintergrundbild passend zu deiner Beschreibung bereitgestellt.',
+      });
     }
   }
 

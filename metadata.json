@@ -1,6 +1,6 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Vollbild-Uhr mit Gemini Bild-Studio zum Erstellen und Bearbeiten von Bildern (gemini-3.1-flash-image-preview), interaktivem Multi-Turn Gemini Chatbot mit Rollen und intelligenter Modellauswahl, Online-Atomuhr-Synchronisation und anpassbaren Themes.",
+  "description": "Moderne digitale Vollbild-Uhr mit professionellem universellem Gemini KI-Assistenten, Bild-Studio für 4K-Hintergründe, Online-Atomuhr-Synchronisation und anpassbaren Themes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

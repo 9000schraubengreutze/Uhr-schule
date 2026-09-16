@@ -44,91 +44,76 @@ export interface ChatRole {
 
 export const CHAT_ROLES: ChatRole[] = [
   {
-    id: 'time_coach',
-    name: 'Zeit- & Produktivitäts-Coach',
-    shortDesc: 'Fokus, Pomodoro, Tagesstruktur & Zeitmanagement',
-    icon: Clock,
-    color: '#38bdf8',
-    defaultModel: 'gemini-3.5-flash',
-    systemInstruction:
-      'Du bist ein motivierender und strukturierter Zeit- und Produktivitäts-Coach für die digitale Uhr-Applikation WebClock. Hilf dem Nutzer bei Time-Boxing, Pomodoro-Intervallen, Pausenplanung, Konzentration und gesunden Arbeits- und Schlafrhythmen. Antworte klar, freundlich, empathisch und lösungsorientiert in verständlichem Deutsch.',
-    samplePrompts: [
-      'Erstelle mir einen strukturierten Pomodoro-Arbeitsplan für 3 Stunden.',
-      'Wie überwinde ich das Nachmittagstief nach der Pause?',
-      'Gib mir 3 Tipps für besseres Zeitgefühl ohne Stress.',
-    ],
-  },
-  {
     id: 'general_assistant',
-    name: 'Gemini Allrounder',
-    shortDesc: 'Allgemeine Fragen, Wissensabfragen & Alltagsrat',
+    name: 'Professioneller Assistent',
+    shortDesc: 'Universeller KI-Assistent für Recherche, Analysen, Texte & Wissen',
     icon: Sparkles,
-    color: '#818cf8',
+    color: '#3b82f6',
     defaultModel: 'gemini-3.5-flash',
     systemInstruction:
-      'Du bist ein intelligenter, hilfsbereiter Universal-Assistent, angetrieben von Google Gemini. Beantworte alle Fragen des Nutzers präzise, faktenbasiert, höflich und gut formatiert. Nutze Markdown mit Absätzen und Listen.',
+      'Du bist ein professioneller, vielseitiger und hochkompetenter KI-Assistent auf Basis neuester Google Gemini Modelle. Du unterstützt den Nutzer präzise, faktenbasiert, lösungsorientiert und strukturiert bei allen erdenklichen Aufgaben: Von Recherchen, Analysen, professionellen Texten und E-Mails über logische und technische Fragestellungen bis hin zu Allgemeinwissen und Problemlösungen. Antworte in klarem, professionellem Deutsch (oder der Sprache der Nutzeranfrage), gut gegliedert mit Markdown-Formatierung.',
     samplePrompts: [
-      'Was ist der Unterschied zwischen Atomzeit (TAI) und koordinierter Weltzeit (UTC)?',
-      'Erkläre mir die Entstehung der Zeitzonen in einfachen Worten.',
-      'Fasse die wichtigsten Ereignisse des heutigen Tages zusammen.',
+      'Fasse mir einen komplexen Sachverhalt klar und strukturiert zusammen.',
+      'Formuliere einen professionellen Textentwurf oder eine E-Mail.',
+      'Erkläre ein anspruchsvolles Konzept verständlich mit Beispielen.',
+      'Analysiere eine Fragestellung und erstelle einen logischen Lösungsansatz.',
     ],
   },
   {
     id: 'complex_expert',
-    name: 'Code- & Logik-Experte',
-    shortDesc: 'Besonders komplexe Aufgaben, Programmierung & Mathe',
+    name: 'Code- & Analyse-Experte',
+    shortDesc: 'Programmierung, Software-Architektur, Logik & Mathematik',
     icon: Code2,
-    color: '#a855f7',
+    color: '#8b5cf6',
     defaultModel: 'gemini-3.1-pro-preview',
     systemInstruction:
-      'Du bist ein hochentwickelter KI-Experte für anspruchsvolle Probleme, Softwareentwicklung (TypeScript, Python, Web, Algorithmen), Mathematik, Logik und tiefgreifende wissenschaftliche Fragestellungen. Liefere stets präzisen, gut dokumentierten Code, detaillierte Erklärungen und mathematisch saubere Schritte.',
+      'Du bist ein spezialisierter KI-Experte für anspruchsvolle Programmierung (TypeScript, Python, Web, Algorithmen), Software-Architektur, Logik und mathematisch-naturwissenschaftliche Fragestellungen. Liefere stets sauberen, präzisen Code, fundierte Erklärungen und mathematisch nachvollziehbare Schritte.',
     samplePrompts: [
-      'Schreibe eine TypeScript-Funktion zur NTP-Latenz- und Offset-Berechnung.',
-      'Erkläre das Dreikörperproblem in der Himmelsmechanik.',
-      'Optimiere einen React-Hook für hochfrequente Uhrzeit-Renderings.',
+      'Erstelle eine performante TypeScript-Funktion für ein konkretes Problem.',
+      'Analysiere einen Algorithmus und schlage Optimierungen vor.',
+      'Erkläre die mathematischen Hintergründe eines Verfahrens.',
     ],
   },
   {
     id: 'fast_info',
-    name: 'Blitz-Auskunft',
-    shortDesc: 'Schnelle Fakten, Definitionen & Kurzinfos',
+    name: 'Direkte Kurzauskunft',
+    shortDesc: 'Schnelle Fakten, Definitionen & kompakte Antworten',
     icon: Zap,
     color: '#f59e0b',
     defaultModel: 'gemini-3.1-flash-lite',
     systemInstruction:
-      'Du bist ein extrem schneller Auskunfts-Assistent. Antworte maximal prägnant und direkt auf den Punkt, ohne lange Einleitungen oder Höflichkeitsfloskeln. Gib die Kernantwort in 1-3 Sätzen.',
+      'Du bist ein extrem schneller Auskunfts-Assistent. Antworte maximal prägnant, direkt auf den Punkt, ohne überflüssige Einleitungen oder Füllwörter. Gib die Kernantwort in 1-3 präzisen Sätzen.',
     samplePrompts: [
-      'Wie viele Zeitzonen hat Russland?',
-      'Was bedeutet UTC+02:00 (MESZ)?',
-      'Kurzdefinition: Was ist ein Schaltjahr?',
+      'Was bedeutet dieser Fachbegriff kurz und prägnant?',
+      'Nenne mir die 3 wichtigsten Fakten zu diesem Thema.',
+      'Was ist der Unterschied zwischen diesen beiden Begriffen?',
     ],
   },
   {
-    id: 'study_buddy',
-    name: 'Schul- & Lernhilfe',
-    shortDesc: 'Einfache Erklärungen, Hausaufgaben & Zusammenfassungen',
-    icon: GraduationCap,
+    id: 'creative_writing',
+    name: 'Kreativ & Formulierung',
+    shortDesc: 'Ideenfindung, Schreibberatung, Formulierungen & Entwürfe',
+    icon: Brain,
     color: '#10b981',
     defaultModel: 'gemini-3.5-flash',
     systemInstruction:
-      'Du bist ein freundlicher, geduldiger Lernassistent für Schüler und Studierende (passend zum Stundenplan-Feature der WebClock). Erkläre komplexe Themen altersgerecht, anschaulich mit Beispielen und Merkhilfen, ohne die fertigen Hausaufgaben einfach nur vorzukauen.',
+      'Du bist ein inspirierender, stilsicherer Schreib- und Kreativpartner. Hilf dem Nutzer beim Brainstorming innovativer Ideen, beim Verfassen ausdrucksstarker Texte, Präsentationskonzepte und ansprechender Formulierungen.',
     samplePrompts: [
-      'Erkläre die Französische Revolution in 5 einfachen Punkten.',
-      'Wie funktioniert der Satz des Pythagoras anschaulich?',
-      'Wie bereite ich mich am Vorabend optimal auf eine Klassenarbeit vor?',
+      'Gib mir 5 innovative Ansätze für ein neues Vorhaben.',
+      'Optimiere diesen Textabschnitt für einen überzeugenden Vortrag.',
+      'Erstelle ein kurzes, prägnantes Konzept.',
     ],
   },
   {
     id: 'custom',
-    name: 'Benutzerdefinierte Rolle',
+    name: 'Benutzerdefiniert',
     shortDesc: 'Eigene System-Instruction für die Gemini-KI definieren',
     icon: Sliders,
     color: '#ec4899',
     defaultModel: 'gemini-3.5-flash',
-    systemInstruction: 'Du bist ein nützlicher KI-Assistent. Befolge die Anweisungen des Benutzers genau.',
+    systemInstruction: 'Du bist ein professioneller, nützlicher KI-Assistent. Befolge die Anweisungen des Benutzers genau.',
     samplePrompts: [
-      'Schreibe ein kurzes Gedicht über die Vergänglichkeit der Zeit.',
-      'Gib mir Feedback zu meinem Tagesablauf.',
+      'Beantworte meine Frage nach deinen benutzerdefinierten Richtlinien.',
     ],
   },
 ];
@@ -165,9 +150,13 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
 
   const [selectedRoleId, setSelectedRoleId] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_ROLE_KEY) || 'time_coach';
+      const saved = localStorage.getItem(STORAGE_ROLE_KEY);
+      if (saved && saved !== 'time_coach' && CHAT_ROLES.some((r) => r.id === saved)) {
+        return saved;
+      }
+      return 'general_assistant';
     } catch {
-      return 'time_coach';
+      return 'general_assistant';
     }
   });
 
@@ -175,10 +164,10 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
     try {
       return (
         localStorage.getItem(STORAGE_CUSTOM_SYS_KEY) ||
-        'Du bist ein freundlicher, persönlicher Assistent auf der digitalen Uhr-Website.'
+        'Du bist ein professioneller, nützlicher Universal-KI-Assistent auf Basis neuester Google Gemini Modelle.'
       );
     } catch {
-      return 'Du bist ein freundlicher, persönlicher Assistent auf der digitalen Uhr-Website.';
+      return 'Du bist ein professioneller, nützlicher Universal-KI-Assistent auf Basis neuester Google Gemini Modelle.';
     }
   });
 
@@ -387,26 +376,28 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
                   <span>Gemini Chatbot</span>
                 </h2>
                 <button
                   type="button"
                   onClick={() => setShowRoleConfig((p) => !p)}
-                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-all cursor-pointer flex items-center gap-1"
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-full border transition-all cursor-pointer flex items-center gap-1"
                   style={{
                     backgroundColor: `${activeRole.color}20`,
                     borderColor: `${activeRole.color}40`,
                     color: activeRole.color,
                   }}
-                  title="Rolle oder System-Instruction anpassen"
+                  title="Modus oder Rolle anpassen"
                 >
                   <span>{activeRole.name}</span>
                   <Sliders className="w-3 h-3" />
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 truncate max-w-[280px] sm:max-w-md">
-                {activeRole.shortDesc}
-              </p>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Professioneller KI-Assistent • Bereit</span>
+              </div>
             </div>
           </div>
 
@@ -573,18 +564,17 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-bold text-white">
-                  Gespräch mit {activeRole.name} beginnen
+                  Wie kann ich dir helfen?
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Stelle Fragen zu Zeitmanagement, lerne etwas Neues oder lass dir bei kniffligen
-                  Aufgaben helfen. Gemini merkt sich den Gesprächsverlauf.
+                <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                  Stelle Fragen zu beliebigen Themen, analysiere Texte oder lass dir bei Recherchen, Planungen und Aufgaben helfen.
                 </p>
               </div>
 
               {/* Sample Prompt Chips */}
               <div className="w-full space-y-2 pt-2">
                 <span className="text-[11px] font-semibold text-slate-400 block text-left">
-                  Vorgeschlagene Fragen:
+                  Vorgeschlagene Fragen & Themen:
                 </span>
                 <div className="space-y-2">
                   {activeRole.samplePrompts.map((prompt, idx) => (
@@ -739,7 +729,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={`Nachricht an ${activeRole.name} schreiben... (Enter zum Senden)`}
+                placeholder="Nachricht an Gemini schreiben... (Enter zum Senden)"
                 rows={1}
                 disabled={isLoading}
                 className="w-full bg-slate-900/90 border border-slate-700/80 rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all resize-none max-h-32 disabled:opacity-50"
