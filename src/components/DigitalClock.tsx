@@ -14,6 +14,7 @@ interface DigitalClockProps {
   statusResult?: SchoolStatusResult;
   onOpenTimetable?: () => void;
   onUpdateSettings?: (updater: (prev: ClockSettings) => ClockSettings) => void;
+  onColorPickerOpenChange?: (isOpen: boolean) => void;
 }
 
 export const DigitalClock: React.FC<DigitalClockProps> = ({
@@ -22,6 +23,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   statusResult,
   onOpenTimetable,
   onUpdateSettings,
+  onColorPickerOpenChange,
 }) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
@@ -36,6 +38,17 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [colorPickerScope, setColorPickerScope] = useState<ColorScope>('all');
   const [isHovered, setIsHovered] = useState(false);
+
+  const openColorPicker = (scope: ColorScope) => {
+    setColorPickerScope(scope);
+    setIsColorPickerOpen(true);
+    onColorPickerOpenChange?.(true);
+  };
+
+  const closeColorPicker = () => {
+    setIsColorPickerOpen(false);
+    onColorPickerOpenChange?.(false);
+  };
 
   const clockControls = useAnimation();
   const secondsControls = useAnimation();
@@ -289,8 +302,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             onMouseLeave={() => setIsHovered(false)}
             onClick={(e) => {
               e.stopPropagation();
-              setColorPickerScope('all');
-              setIsColorPickerOpen(true);
+              openColorPicker('all');
             }}
             title="Klicken, um die Ziffernfarbe anzupassen"
             className={`flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers group cursor-pointer`}
@@ -305,8 +317,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               id="clock-hours"
               onClick={(e) => {
                 e.stopPropagation();
-                setColorPickerScope('hours');
-                setIsColorPickerOpen(true);
+                openColorPicker('hours');
               }}
               title="Stunden: Klicken zum Ändern der Farbe"
               className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
@@ -335,8 +346,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               animate={colonControls}
               onClick={(e) => {
                 e.stopPropagation();
-                setColorPickerScope('all');
-                setIsColorPickerOpen(true);
+                openColorPicker('all');
               }}
               title="Klicken, um Ziffernfarbe zu ändern"
               className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
@@ -352,8 +362,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               id="clock-minutes"
               onClick={(e) => {
                 e.stopPropagation();
-                setColorPickerScope('minutes');
-                setIsColorPickerOpen(true);
+                openColorPicker('minutes');
               }}
               title="Minuten: Klicken zum Ändern der Farbe"
               className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
@@ -384,8 +393,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   animate={colonControls}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setColorPickerScope('all');
-                    setIsColorPickerOpen(true);
+                    openColorPicker('all');
                   }}
                   title="Klicken, um Ziffernfarbe zu ändern"
                   className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
@@ -400,8 +408,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   animate={secondsControls}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setColorPickerScope('seconds');
-                    setIsColorPickerOpen(true);
+                    openColorPicker('seconds');
                   }}
                   title="Sekunden: Klicken zum Ändern der Farbe"
                   className="text-[clamp(3.4rem,14.5vw,11rem)] inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 hover:brightness-125 hover:scale-[1.03] active:scale-[0.98] rounded-2xl px-1"
@@ -453,8 +460,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             }}
             onClick={(e) => {
               e.stopPropagation();
-              setColorPickerScope('all');
-              setIsColorPickerOpen(true);
+              openColorPicker('all');
             }}
             title="Klicken, um Ziffernfarbe zu ändern"
           >
@@ -538,7 +544,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
       {onUpdateSettings && (
         <ClockColorPickerPopover
           isOpen={isColorPickerOpen}
-          onClose={() => setIsColorPickerOpen(false)}
+          onClose={closeColorPicker}
           settings={settings}
           onUpdateSettings={onUpdateSettings}
           initialScope={colorPickerScope}

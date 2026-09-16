@@ -62,6 +62,7 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   vibrationEnabled: true,
   useAtomicSync: true,
   showSyncBadge: true,
+  showBatteryIndicator: true,
 
   // SCHUL-STUNDENPLAN & PAUSEN-SPERRE
   schoolBreakGameLockEnabled: true,

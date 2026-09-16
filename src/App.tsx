@@ -17,6 +17,7 @@ import { ParticleBackground } from './components/ParticleBackground';
 import { SmoothBackground } from './components/SmoothBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
+import { MobileBatteryIndicator } from './components/MobileBatteryIndicator';
 import { GamesModal } from './games/GamesModal';
 import { StopwatchModal } from './components/StopwatchModal';
 import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
@@ -32,6 +33,7 @@ export default function App() {
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
+  const [isClockColorPickerOpen, setIsClockColorPickerOpen] = useState(false);
 
   // Online Atomic Clock synchronization state
   const [atomicState, setAtomicState] = useState<AtomicTimeState>({
@@ -105,11 +107,25 @@ export default function App() {
 
   // Track fullscreen changes
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+    const checkIsFullscreen = () => {
+      const doc = document as any;
+      return Boolean(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      );
     };
+    const handleFullscreenChange = () => {
+      setIsFullscreen(checkIsFullscreen());
+    };
+    handleFullscreenChange();
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   const toggleFullscreen = useCallback(async () => {
@@ -129,6 +145,12 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (isClockColorPickerOpen) {
+        if (e.key === 'Escape') {
+          setIsClockColorPickerOpen(false);
+        }
         return;
       }
       if (e.key === 'Escape') {
@@ -155,7 +177,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, toggleFullscreen]);
+  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -359,7 +381,7 @@ export default function App() {
         speed={settings.particleSpeed}
       />
 
-      {/* Quick Access Material 3 Top Controls */}
+      {/* Quick Access Material 3 Controls at Bottom */}
       <QuickControls
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenGames={() => setIsGamesOpen(true)}
@@ -370,14 +392,24 @@ export default function App() {
         anyModalOpen={isSettingsOpen || isGamesOpen || isStopwatchOpen || isGeminiBgOpen || isChatOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
+        disabled={isClockColorPickerOpen}
+      />
+
+      {/* Subtle Mobile Battery Indicator (Appears when not in fullscreen mode) */}
+      <MobileBatteryIndicator
+        isFullscreen={isFullscreen}
+        enabled={settings.showBatteryIndicator ?? true}
+        backdropBlur={settings.backdropBlurIntensity}
+        isZenMode={isZenMode}
       />
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
-      <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4">
+      <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4 pb-16 sm:pb-20">
         <DigitalClock
           settings={settings}
           offsetMs={atomicState.offsetMs}
           onUpdateSettings={setSettings}
+          onColorPickerOpenChange={setIsClockColorPickerOpen}
         />
       </main>
 

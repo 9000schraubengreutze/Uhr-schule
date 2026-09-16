@@ -49,6 +49,10 @@ export function loadSettings(): ClockSettings {
         typeof parsed.showAdditionalTimeZones === 'boolean'
           ? parsed.showAdditionalTimeZones
           : DEFAULT_SETTINGS.showAdditionalTimeZones,
+      showBatteryIndicator:
+        typeof parsed.showBatteryIndicator === 'boolean'
+          ? parsed.showBatteryIndicator
+          : DEFAULT_SETTINGS.showBatteryIndicator,
       additionalTimeZones: Array.isArray(parsed.additionalTimeZones)
         ? parsed.additionalTimeZones.map((z: any, idx: number) => ({
             id: typeof z?.id === 'string' && z.id.trim() ? z.id : `tz-${idx}-${z?.timeZone || 'zone'}`,

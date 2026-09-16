@@ -128,6 +128,7 @@ export interface ClockSettings {
   vibrationEnabled: boolean; // Haptic feedback on mobile
   useAtomicSync: boolean; // Use online atomic clock (NTP) instead of device clock
   showSyncBadge: boolean; // Display sync indicator on the main screen
+  showBatteryIndicator?: boolean; // Subtle battery level indicator for mobile devices (hidden in fullscreen)
 
   // === SCHUL-STUNDENPLAN & PAUSEN-SPERRE (HO 2) ===
   schoolBreakGameLockEnabled: boolean; // Games only in breaks

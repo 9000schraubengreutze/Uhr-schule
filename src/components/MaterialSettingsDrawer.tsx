@@ -1525,6 +1525,17 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     }}
                   />
 
+                  {/* Mobile Akku-Anzeige */}
+                  <MaterialSwitch
+                    label="Akku-Anzeige auf Mobilgeräten"
+                    description="Dezente Akkuladestands-Anzeige auf Smartphones & Tablets (wird im Vollbildmodus automatisch ausgeblendet)"
+                    checked={settings.showBatteryIndicator ?? true}
+                    onChange={(v) => {
+                      onUpdateSettings((p) => ({ ...p, showBatteryIndicator: v }));
+                      showFeedback(v ? 'Akku-Anzeige aktiviert' : 'Akku-Anzeige deaktiviert');
+                    }}
+                  />
+
                   {/* Colon Separator Animation & Pulse Customization */}
                   <div className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-3.5">
                     <div className="flex items-center justify-between">

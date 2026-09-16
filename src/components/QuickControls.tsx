@@ -28,6 +28,7 @@ interface QuickControlsProps {
   anyModalOpen?: boolean;
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
+  disabled?: boolean;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -42,12 +43,25 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   anyModalOpen = false,
   isZenMode: externalZenMode,
   onToggleZenMode,
+  disabled = false,
 }) => {
   // Hidden by default: only display when user hovers over the top trigger area
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Immediately hide and cancel hover if disabled becomes true
+  useEffect(() => {
+    if (disabled) {
+      setIsHovered(false);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+    }
+  }, [disabled]);
+
   const handleMouseEnter = () => {
+    if (disabled) return;
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
@@ -76,20 +90,22 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
     onToggleZenMode?.();
   };
 
-  const isVisible = (isHovered || anyModalOpen) && !externalZenMode;
+  const isVisible = !disabled && (isHovered || anyModalOpen) && !externalZenMode;
 
   const isGameAllowed = statusResult?.isGameAllowed ?? true;
   const isBreak = statusResult?.status === 'break';
 
   return (
     <>
-      {/* Top Hover Trigger Zone - hovering anywhere near the top area reveals the dock */}
-      <div
-        id="top-hover-trigger-zone"
-        className="fixed top-0 left-0 right-0 h-16 sm:h-20 z-30 pointer-events-auto"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      />
+      {/* Bottom Hover Trigger Zone - hovering anywhere near the bottom area reveals the dock, unless disabled */}
+      {!disabled && (
+        <div
+          id="bottom-hover-trigger-zone"
+          className="fixed bottom-0 left-0 right-0 h-16 sm:h-20 z-30 pointer-events-auto"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        />
+      )}
 
       {/* Floating Zen Reveal Button (visible only when in forced Zen mode) */}
       {externalZenMode && (
@@ -97,43 +113,44 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           id="exit-zen-btn"
           type="button"
           onClick={handleToggleZen}
-          title="Minimalismus-Modus beenden & Leiste wieder per Hover aktivieren (Taste: Z)"
+          title="Minimalismus-Modus beenden & Menüband wieder per Hover aktivieren (Taste: Z)"
           aria-label="Minimalismus-Modus beenden"
-          className="fixed top-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/40 hover:bg-slate-900/80 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer"
+          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/40 hover:bg-slate-900/80 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer"
         >
           <Eye className="w-4 h-4" />
         </button>
       )}
 
-      {/* Subtle indicator hint when hidden */}
+      {/* Subtle indicator hint when hidden at the bottom */}
       {!isVisible && !externalZenMode && (
         <div
-          id="top-hover-hint"
+          id="bottom-hover-hint"
           aria-hidden="true"
-          className="fixed top-2 right-6 z-20 pointer-events-none transition-opacity duration-500 opacity-20"
+          className="fixed bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-opacity duration-500 opacity-25"
         >
-          <div className="w-8 h-1 rounded-full bg-white/50 backdrop-blur-md" />
+          <div className="w-12 h-1 rounded-full bg-white/40 backdrop-blur-md" />
         </div>
       )}
 
-      {/* Unified Material Frosted Island Dock */}
-      <header
-        id="quick-controls-header"
-        className={`fixed top-0 left-0 right-0 z-30 p-3 sm:p-5 flex items-center justify-end pointer-events-none transition-all duration-300 ease-out ${
+      {/* Unified Material Frosted Island Dock at Bottom */}
+      <footer
+        id="quick-controls-footer"
+        className={`fixed bottom-0 left-0 right-0 z-30 p-3 sm:p-5 flex items-center justify-center pointer-events-none transition-all duration-300 ease-out ${
           isVisible
             ? 'opacity-100 translate-y-0'
-            : 'opacity-0 -translate-y-3 pointer-events-none'
+            : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div
+        <nav
           id="quick-controls-island"
+          aria-label="Schnellzugriff Menüleiste"
           style={{
             backdropFilter: `blur(${backdropBlur}px)`,
             WebkitBackdropFilter: `blur(${backdropBlur}px)`,
           }}
-          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 rounded-full bg-slate-950/50 hover:bg-slate-950/70 border border-white/10 shadow-2xl shadow-black/50 transition-all duration-300"
+          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 max-w-[calc(100vw-1.5rem)] overflow-x-auto scrollbar-none rounded-full bg-slate-950/55 hover:bg-slate-950/75 border border-white/10 shadow-2xl shadow-black/50 transition-all duration-300"
         >
           {/* Optional Stundenplan */}
           {onOpenTimetable && (
@@ -262,8 +279,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           >
             <EyeOff className="w-3.5 h-3.5" />
           </button>
-        </div>
-      </header>
+        </nav>
+      </footer>
     </>
   );
 };
