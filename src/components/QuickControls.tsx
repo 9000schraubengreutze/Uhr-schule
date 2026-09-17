@@ -13,6 +13,8 @@ import {
   EyeOff,
   Maximize2,
   Minimize2,
+  Clock,
+  Moon,
 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
@@ -29,6 +31,9 @@ interface QuickControlsProps {
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
   disabled?: boolean;
+  zenScheduleEnabled?: boolean;
+  zenScheduleActive?: boolean;
+  zenScheduleRange?: string;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -44,6 +49,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   isZenMode: externalZenMode,
   onToggleZenMode,
   disabled = false,
+  zenScheduleEnabled = false,
+  zenScheduleActive = false,
+  zenScheduleRange,
 }) => {
   // Hidden by default: only display when user hovers over the top trigger area
   const [isHovered, setIsHovered] = useState(false);
@@ -113,11 +121,20 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           id="exit-zen-btn"
           type="button"
           onClick={handleToggleZen}
-          title="Minimalismus-Modus beenden & Menüband wieder per Hover aktivieren (Taste: Z)"
+          title={
+            zenScheduleEnabled && zenScheduleActive
+              ? `Zen-Modus aktiv (Plan: ${zenScheduleRange || 'automatisch'}). Klicken zum Beenden (Taste: Z)`
+              : 'Minimalismus-Modus beenden & Menüband wieder per Hover aktivieren (Taste: Z)'
+          }
           aria-label="Minimalismus-Modus beenden"
-          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/40 hover:bg-slate-900/80 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer"
+          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/50 hover:bg-slate-900/90 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer flex items-center gap-1.5 group"
         >
           <Eye className="w-4 h-4" />
+          {zenScheduleEnabled && zenScheduleActive && (
+            <span className="hidden group-hover:inline text-[11px] font-medium text-indigo-300 pr-1 transition-all">
+              Plan aktiv
+            </span>
+          )}
         </button>
       )}
 
@@ -273,11 +290,23 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             id="toggle-zen-mode-btn"
             type="button"
             onClick={handleToggleZen}
-            title="Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)"
+            title={
+              zenScheduleEnabled
+                ? `Zen-Modus: Zeitplan aktiviert (${zenScheduleRange || 'automatisch'}). Klicken zum Umschalten (Taste: Z)`
+                : 'Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)'
+            }
             aria-label="Zen-Modus aktivieren"
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="relative p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
           >
             <EyeOff className="w-3.5 h-3.5" />
+            {zenScheduleEnabled && (
+              <span
+                className={`absolute 0.5 top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
+                  zenScheduleActive ? 'bg-emerald-400 animate-pulse' : 'bg-indigo-400'
+                }`}
+                title={zenScheduleActive ? 'Zen-Zeitplan aktiv' : 'Zen-Zeitplan scharf'}
+              />
+            )}
           </button>
         </nav>
       </footer>

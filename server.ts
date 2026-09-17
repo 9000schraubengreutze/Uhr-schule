@@ -567,6 +567,91 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
     }
   });
 
+  // GET /api/quote (Fetches an inspirational quote from a free public API with fallback)
+  app.get('/api/quote', async (_req, res) => {
+    // Curated rich fallback pool of profound inspirational quotes
+    const fallbackQuotes = [
+      { quote: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
+      { quote: 'We are what we repeatedly do. Excellence, then, is not an act, but a habit.', author: 'Aristotle' },
+      { quote: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' },
+      { quote: 'In the middle of difficulty lies opportunity.', author: 'Albert Einstein' },
+      { quote: 'Act as if what you do makes a difference. It does.', author: 'William James' },
+      { quote: 'What lies behind us and what lies before us are tiny matters compared to what lies within us.', author: 'Ralph Waldo Emerson' },
+      { quote: 'Happiness is not something ready-made. It comes from your own actions.', author: 'Dalai Lama' },
+      { quote: 'Turn your wounds into wisdom.', author: 'Oprah Winfrey' },
+      { quote: 'It always seems impossible until it is done.', author: 'Nelson Mandela' },
+      { quote: 'The future belongs to those who believe in the beauty of their dreams.', author: 'Eleanor Roosevelt' },
+      { quote: 'Believe you can and you\'re halfway there.', author: 'Theodore Roosevelt' },
+      { quote: 'Success is not final, failure is not fatal: it is the courage to continue that counts.', author: 'Winston Churchill' },
+      { quote: 'You must be the change you wish to see in the world.', author: 'Mahatma Gandhi' },
+      { quote: 'Do what you can, with what you have, where you are.', author: 'Theodore Roosevelt' },
+      { quote: 'Everything you’ve ever wanted is sitting on the other side of fear.', author: 'George Addair' },
+      { quote: 'Simplicity is the ultimate sophistication.', author: 'Leonardo da Vinci' },
+      { quote: 'Time you enjoy wasting is not wasted time.', author: 'Marthe Troly-Curtin' },
+      { quote: 'Fall seven times, stand up eight.', author: 'Japanese Proverb' },
+      { quote: 'Knowing is not enough; we must apply. Willing is not enough; we must do.', author: 'Johann Wolfgang von Goethe' },
+      { quote: 'Keep your face always toward the sunshine, and shadows will fall behind you.', author: 'Walt Whitman' },
+    ];
+
+    try {
+      // 1. Try DummyJSON quotes API
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const resp = await fetch('https://dummyjson.com/quotes/random', {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      clearTimeout(timeoutId);
+
+      if (resp.ok) {
+        const data = (await resp.json()) as any;
+        if (data && data.quote && data.author) {
+          return res.json({
+            quote: data.quote,
+            author: data.author,
+            source: 'dummyjson',
+          });
+        }
+      }
+    } catch (apiErr) {
+      console.warn('DummyJSON quote fetch failed, attempting ZenQuotes fallback:', (apiErr as any)?.message || apiErr);
+    }
+
+    try {
+      // 2. Try ZenQuotes API
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const resp = await fetch('https://zenquotes.io/api/random', {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      clearTimeout(timeoutId);
+
+      if (resp.ok) {
+        const data = (await resp.json()) as any;
+        if (Array.isArray(data) && data[0]?.q && data[0]?.a) {
+          return res.json({
+            quote: data[0].q,
+            author: data[0].a,
+            source: 'zenquotes',
+          });
+        }
+      }
+    } catch (zenErr) {
+      console.warn('ZenQuotes fetch failed, using curated fallback quote:', (zenErr as any)?.message || zenErr);
+    }
+
+    // 3. Fallback to curated wisdom
+    const randomFallback = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    return res.json({
+      quote: randomFallback.quote,
+      author: randomFallback.author,
+      source: 'curated',
+    });
+  });
+
   // Vite middleware for development; static server for production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -29,8 +29,13 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   clockWeight: '600',
   typographySet: 'geometric',
   clockScale: 100,
+  autoScaleFontSize: true, // Automatically scale font size dynamically to fill the view optimally
   enableBreathingAnimation: true,
+  enableEntranceAnimation: true,
+  entranceAnimationType: 'slide-up',
   enableGlow: true,
+  glowIntensity: 55, // 0 to 100% color intensity
+  glowSpread: 45, // 10 to 120px radiating spread radius
   digitTransition: 'flip', // Subtle tactile 3D flip animation
   digitFadeDuration: 340, // 340ms tactile duration
   hasCustomImage: false,
@@ -55,6 +60,17 @@ export const DEFAULT_SETTINGS: ClockSettings = {
     { id: 'tz-ny', name: 'New York', timeZone: 'America/New_York', flag: '🇺🇸' },
     { id: 'tz-tokyo', name: 'Tokio', timeZone: 'Asia/Tokyo', flag: '🇯🇵' },
   ],
+
+  // ZEN-MODUS AUTOMATISCHER ZEITPLAN
+  zenScheduleEnabled: false,
+  zenScheduleStartTime: '22:00',
+  zenScheduleEndTime: '07:00',
+
+  // TÄGLICHES ZITAT (DAILY INSPIRATIONAL QUOTE)
+  showDailyQuote: false,
+  quoteFont: 'serif',
+  quoteColor: '#e2e8f0',
+  quoteAuthorColor: '#94a3b8',
 
   // EINSTELLUNGEN
   appLanguage: 'de',

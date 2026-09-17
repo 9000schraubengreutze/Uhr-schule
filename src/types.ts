@@ -99,8 +99,14 @@ export interface ClockSettings {
   clockWeight: ClockWeight;
   typographySet?: string; // Predefined typography set ID (e.g. 'mono', 'serif', 'sans')
   clockScale: number; // 70 to 140 percent
+  autoScaleFontSize: boolean; // Dynamically scale font size based on window/viewport to fill the view optimally
   enableBreathingAnimation: boolean;
-  enableGlow: boolean; // Ambient neon / soft backlight glow
+  enableEntranceAnimation: boolean; // Smooth CSS entrance animation when toggling Zen mode or returning from settings
+  entranceAnimationType: 'slide-up' | 'fade-in'; // 'slide-up' (Slide-up & Fade) | 'fade-in' (Fade-in only)
+  enableGlow: boolean; // Ambient neon / soft backlight glow radiating from behind digits
+  glowIntensity: number; // 0 to 100 percent (color intensity)
+  glowSpread: number; // 10 to 120 px (glow spread radius radiating behind digits)
+  glowColor?: string; // Optional custom glow color (or undefined for automatic digit color)
   digitTransition: DigitTransition; // 'flip' | 'slide' | 'slide-fade' | 'fade' | 'crossfade' | 'none'
   digitFadeDuration: number; // 150 to 800 ms (default 340ms)
   _digitTransitionCustomized?: boolean;
@@ -122,6 +128,17 @@ export interface ClockSettings {
   // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)
   showAdditionalTimeZones: boolean;
   additionalTimeZones: AdditionalTimeZone[];
+
+  // === ZEN-MODUS AUTOMATISCHER ZEITPLAN ===
+  zenScheduleEnabled: boolean; // Automatischer Timer für Zen-Modus
+  zenScheduleStartTime: string; // z. B. '22:00' (10:00 PM)
+  zenScheduleEndTime: string; // z. B. '07:00' (07:00 AM)
+
+  // === TÄGLICHES ZITAT (DAILY INSPIRATIONAL QUOTE) ===
+  showDailyQuote: boolean; // Zitat-Widget unter der Uhr ein-/ausblenden
+  quoteFont: ClockFont; // Schriftart des Zitats ('serif' | 'outfit' | 'inter' | 'mono' | 'school' | 'sans')
+  quoteColor: string; // Schriftfarbe des Zitat-Texts
+  quoteAuthorColor?: string; // Optionale Schriftfarbe des Autors
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';

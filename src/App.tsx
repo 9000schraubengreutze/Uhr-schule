@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, type CSSProperties } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type CSSProperties } from 'react';
 import { ClockSettings, ColorScheme } from './types';
 import {
   loadSettings,
@@ -22,6 +22,7 @@ import { GamesModal } from './games/GamesModal';
 import { StopwatchModal } from './components/StopwatchModal';
 import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
+import { isTimeInZenSchedule } from './utils/zenSchedule';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
@@ -127,6 +128,52 @@ export default function App() {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  // Automated timer to toggle Zen mode based on user-defined schedule
+  const lastZenScheduleStateRef = useRef<boolean | null>(null);
+  const prevZenScheduleConfigRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!settings.zenScheduleEnabled) {
+      lastZenScheduleStateRef.current = null;
+      return;
+    }
+
+    const currentConfigKey = `${settings.zenScheduleStartTime}-${settings.zenScheduleEndTime}`;
+    if (prevZenScheduleConfigRef.current !== currentConfigKey) {
+      // Configuration changed: reset state tracker to evaluate immediately
+      prevZenScheduleConfigRef.current = currentConfigKey;
+      lastZenScheduleStateRef.current = null;
+    }
+
+    const evaluateZenSchedule = () => {
+      const now = new Date(settings.useAtomicSync ? Date.now() + atomicState.offsetMs : Date.now());
+      const inSchedule = isTimeInZenSchedule(
+        now,
+        settings.zenScheduleStartTime || '22:00',
+        settings.zenScheduleEndTime || '07:00'
+      );
+
+      // Trigger automatic toggle on initial enablement or when crossing schedule boundary
+      if (lastZenScheduleStateRef.current === null) {
+        lastZenScheduleStateRef.current = inSchedule;
+        setIsZenMode(inSchedule);
+      } else if (lastZenScheduleStateRef.current !== inSchedule) {
+        lastZenScheduleStateRef.current = inSchedule;
+        setIsZenMode(inSchedule);
+      }
+    };
+
+    evaluateZenSchedule();
+    const interval = setInterval(evaluateZenSchedule, 1000);
+    return () => clearInterval(interval);
+  }, [
+    settings.zenScheduleEnabled,
+    settings.zenScheduleStartTime,
+    settings.zenScheduleEndTime,
+    settings.useAtomicSync,
+    atomicState.offsetMs,
+  ]);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -393,6 +440,13 @@ export default function App() {
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
+        zenScheduleEnabled={settings.zenScheduleEnabled}
+        zenScheduleActive={isTimeInZenSchedule(
+          new Date(settings.useAtomicSync ? Date.now() + atomicState.offsetMs : Date.now()),
+          settings.zenScheduleStartTime || '22:00',
+          settings.zenScheduleEndTime || '07:00'
+        )}
+        zenScheduleRange={`${settings.zenScheduleStartTime || '22:00'} – ${settings.zenScheduleEndTime || '07:00'}`}
       />
 
       {/* Subtle Mobile Battery Indicator (Appears when not in fullscreen mode) */}
@@ -410,6 +464,8 @@ export default function App() {
           offsetMs={atomicState.offsetMs}
           onUpdateSettings={setSettings}
           onColorPickerOpenChange={setIsClockColorPickerOpen}
+          isZenMode={isZenMode}
+          isSettingsOpen={isSettingsOpen}
         />
       </main>
 
@@ -463,6 +519,8 @@ export default function App() {
         onRemoveImage={handleRemoveImage}
         atomicState={atomicState}
         onTriggerSync={performSync}
+        isZenMode={isZenMode}
+        onToggleZenMode={() => setIsZenMode((prev) => !prev)}
       />
     </div>
   );

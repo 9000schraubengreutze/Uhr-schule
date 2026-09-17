@@ -74,11 +74,33 @@ export function sanitizeClockSettings(input: any): ClockSettings {
       typeof raw.clockScale === 'number'
         ? Math.max(70, Math.min(140, raw.clockScale))
         : DEFAULT_SETTINGS.clockScale,
+    autoScaleFontSize:
+      typeof raw.autoScaleFontSize === 'boolean'
+        ? raw.autoScaleFontSize
+        : DEFAULT_SETTINGS.autoScaleFontSize,
     enableBreathingAnimation:
       typeof raw.enableBreathingAnimation === 'boolean'
         ? raw.enableBreathingAnimation
         : DEFAULT_SETTINGS.enableBreathingAnimation,
+    enableEntranceAnimation:
+      typeof raw.enableEntranceAnimation === 'boolean'
+        ? raw.enableEntranceAnimation
+        : DEFAULT_SETTINGS.enableEntranceAnimation,
+    entranceAnimationType:
+      raw.entranceAnimationType === 'slide-up' || raw.entranceAnimationType === 'fade-in'
+        ? raw.entranceAnimationType
+        : DEFAULT_SETTINGS.entranceAnimationType,
     enableGlow: typeof raw.enableGlow === 'boolean' ? raw.enableGlow : DEFAULT_SETTINGS.enableGlow,
+    glowIntensity:
+      typeof raw.glowIntensity === 'number'
+        ? Math.max(0, Math.min(100, Math.round(raw.glowIntensity)))
+        : DEFAULT_SETTINGS.glowIntensity,
+    glowSpread:
+      typeof raw.glowSpread === 'number'
+        ? Math.max(10, Math.min(120, Math.round(raw.glowSpread)))
+        : DEFAULT_SETTINGS.glowSpread,
+    glowColor:
+      typeof raw.glowColor === 'string' && raw.glowColor.trim() ? raw.glowColor.trim() : undefined,
     digitTransition:
       raw.digitTransition === 'flip' ||
       raw.digitTransition === 'slide' ||
@@ -134,6 +156,16 @@ export function sanitizeClockSettings(input: any): ClockSettings {
 
     appLanguage: raw.appLanguage === 'en' ? 'en' : 'de',
     soundEnabled: typeof raw.soundEnabled === 'boolean' ? raw.soundEnabled : DEFAULT_SETTINGS.soundEnabled,
+    zenScheduleEnabled:
+      typeof raw.zenScheduleEnabled === 'boolean' ? raw.zenScheduleEnabled : DEFAULT_SETTINGS.zenScheduleEnabled,
+    zenScheduleStartTime:
+      typeof raw.zenScheduleStartTime === 'string' && /^\d{1,2}:\d{2}$/.test(raw.zenScheduleStartTime)
+        ? raw.zenScheduleStartTime
+        : DEFAULT_SETTINGS.zenScheduleStartTime,
+    zenScheduleEndTime:
+      typeof raw.zenScheduleEndTime === 'string' && /^\d{1,2}:\d{2}$/.test(raw.zenScheduleEndTime)
+        ? raw.zenScheduleEndTime
+        : DEFAULT_SETTINGS.zenScheduleEndTime,
     vibrationEnabled:
       typeof raw.vibrationEnabled === 'boolean' ? raw.vibrationEnabled : DEFAULT_SETTINGS.vibrationEnabled,
     useAtomicSync: typeof raw.useAtomicSync === 'boolean' ? raw.useAtomicSync : DEFAULT_SETTINGS.useAtomicSync,

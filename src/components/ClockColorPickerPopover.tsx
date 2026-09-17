@@ -384,7 +384,7 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
               <span>Zufällige Farbe</span>
             </button>
 
-            {activeScope !== 'all' ? (
+            {activeScope !== 'all' && (
               <button
                 type="button"
                 onClick={handleApplyToAll}
@@ -394,19 +394,81 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
                 <Layers className="w-3.5 h-3.5 text-blue-400" />
                 <span>Auf alle Ziffern</span>
               </button>
-            ) : (
+            )}
+          </div>
+
+          {/* Ziffern-Glow & Hinterleuchtung (Schnellsteuerung) */}
+          <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800/80 mb-3 space-y-2.5">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                Ziffern-Glow (Hinterleuchtung):
+              </span>
               <button
                 type="button"
                 onClick={handleToggleGlow}
-                className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 ${
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors border ${
                   settings.enableGlow
-                    ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Glow: {settings.enableGlow ? 'An' : 'Aus'}</span>
+                {settings.enableGlow ? 'Aktiv' : 'Aus'}
               </button>
+            </div>
+
+            {settings.enableGlow && (
+              <div className="space-y-2 pt-1 border-t border-slate-800/80">
+                {/* Intensität */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Intensität</span>
+                    <span className="font-mono text-amber-300 font-bold">
+                      {settings.glowIntensity ?? 55}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={settings.glowIntensity ?? 55}
+                    onChange={(e) =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        glowIntensity: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
+                    aria-label="Glow Intensität"
+                  />
+                </div>
+
+                {/* Ausbreitung / Spread */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Ausbreitung (Spread)</span>
+                    <span className="font-mono text-amber-300 font-bold">
+                      {settings.glowSpread ?? 45}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="120"
+                    step="2"
+                    value={settings.glowSpread ?? 45}
+                    onChange={(e) =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        glowSpread: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
+                    aria-label="Glow Ausbreitung"
+                  />
+                </div>
+              </div>
             )}
           </div>
 

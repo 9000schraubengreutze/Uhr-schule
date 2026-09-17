@@ -19,6 +19,10 @@ import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
 import { ParticleSettingsCard } from './ParticleSettingsCard';
 import { BackdropBlurControl } from './BackdropBlurControl';
 import { DigitTransitionControl } from './DigitTransitionControl';
+import { GlowEffectControl } from './GlowEffectControl';
+import { EntranceAnimationControl } from './EntranceAnimationControl';
+import { ZenScheduleCard } from './ZenScheduleCard';
+import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -85,6 +89,8 @@ interface MaterialSettingsDrawerProps {
   onRemoveImage?: () => void;
   atomicState?: AtomicTimeState;
   onTriggerSync?: () => void;
+  isZenMode?: boolean;
+  onToggleZenMode?: () => void;
 }
 
 interface NavItem {
@@ -123,6 +129,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onRemoveImage,
   atomicState,
   onTriggerSync,
+  isZenMode,
+  onToggleZenMode,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('darstellung');
   const [searchQuery, setSearchQuery] = useState('');
@@ -313,6 +321,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Typografie-Sets (Mono-space, Serif, Sans-Serif)', desc: 'Vordefinierte Typografie-Kombinationen für den visuellen Stil der Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftart & Schriftstärke', desc: 'Outfit, Inter, Monospace Digital, Serif, Schulbuch' },
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
+      { tab: 'darstellung' as SettingsTab, title: 'Eingangsanimation (Zen / Einstellungen)', desc: 'Sanftes Hereingleiten & Einblenden der Digitaluhr beim Umschalten des Zen-Modus oder Schließen der Einstellungen' },
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
       { tab: 'darstellung' as SettingsTab, title: 'Ziffern-Fading & Übergang', desc: 'Fließende Ein- und Ausblend-Animation beim Sekundentakt der Uhrzeit (Subtil, Crossfade, Gleiten)' },
@@ -324,6 +333,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'uhr' as SettingsTab, title: 'Online-Atomuhr (NTP)', desc: 'Zeitsynchronisation mit Atomuhr-Servern' },
       { tab: 'uhr' as SettingsTab, title: 'Stoppuhr', desc: 'Präzise Stoppuhr mit Rundenzeiten und Pausieren' },
       { tab: 'uhr' as SettingsTab, title: 'Zusätzliche Zeitzonen (Weltuhr)', desc: 'Weltzeit-Uhren (z. B. New York, Tokio, London) unter der Hauptuhr' },
+      { tab: 'uhr' as SettingsTab, title: 'Zen-Modus Zeitplan (Automatischer Timer)', desc: 'Zen-Modus automatisch zu bestimmten Uhrzeiten (z. B. 22:00 bis 07:00) aktivieren und deaktivieren' },
+      { tab: 'darstellung' as SettingsTab, title: 'Zen-Modus Zeitplan', desc: 'Automatischer Timer für aufgeräumten Vollbild-Modus' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
@@ -1162,9 +1173,21 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
 
                 {/* Skalierung & Effekte */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-4">
+                  <MaterialSwitch
+                    label="Automatische Schriftgrößen-Skalierung"
+                    description="Passt die Zifferngröße der Uhr dynamisch an die Fenster- und Bildschirmgröße an, um den Anzeigebereich stets optimal auszufüllen"
+                    checked={settings.autoScaleFontSize ?? true}
+                    onChange={(v) => onUpdateSettings((p) => ({ ...p, autoScaleFontSize: v }))}
+                  />
+
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-slate-200">Größen-Skalierung</span>
+                      <div>
+                        <span className="font-semibold text-slate-200">Größen-Skalierung</span>
+                        <span className="text-[10px] text-slate-400 ml-1.5">
+                          {settings.autoScaleFontSize ? '(Feinabstimmung)' : '(Statisch)'}
+                        </span>
+                      </div>
                       <span className="font-mono text-slate-400">{settings.clockScale}%</span>
                     </div>
                     <input
@@ -1183,13 +1206,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
 
                   <MaterialSwitch
-                    label="Glüheffekt (Ambient Glow)"
-                    description="Sanftes Leuchten um die Ziffern passend zur Akzentfarbe"
-                    checked={settings.enableGlow}
-                    onChange={(v) => onUpdateSettings((p) => ({ ...p, enableGlow: v }))}
-                  />
-
-                  <MaterialSwitch
                     label="Puls-Animation (Atmung)"
                     description="Subtiles rhythmisches Atmen der Ziffern im Sekundentakt"
                     checked={settings.enableBreathingAnimation}
@@ -1198,6 +1214,49 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     }
                   />
                 </div>
+
+                {/* Ziffern-Glow & Hinterleuchtung (Intensität & Ausbreitung) */}
+                <GlowEffectControl
+                  enabled={settings.enableGlow}
+                  intensity={settings.glowIntensity ?? 55}
+                  spread={settings.glowSpread ?? 45}
+                  glowColor={settings.glowColor}
+                  clockColor={settings.clockColor}
+                  onToggleEnabled={(enabled) =>
+                    onUpdateSettings((prev) => ({ ...prev, enableGlow: enabled }))
+                  }
+                  onChangeIntensity={(intensity) =>
+                    onUpdateSettings((prev) => ({ ...prev, glowIntensity: intensity }))
+                  }
+                  onChangeSpread={(spread) =>
+                    onUpdateSettings((prev) => ({ ...prev, glowSpread: spread }))
+                  }
+                  onChangeGlowColor={(glowColor) =>
+                    onUpdateSettings((prev) => ({ ...prev, glowColor }))
+                  }
+                  showFeedback={showFeedback}
+                  vibrationEnabled={settings.vibrationEnabled}
+                />
+
+                {/* CSS-basierte Eingangsanimation (Zen-Modus & Einstellungen) */}
+                <EntranceAnimationControl
+                  enabled={settings.enableEntranceAnimation ?? true}
+                  animationType={settings.entranceAnimationType ?? 'slide-up'}
+                  onToggleEnabled={(enabled) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      enableEntranceAnimation: enabled,
+                    }))
+                  }
+                  onChangeAnimationType={(type) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      entranceAnimationType: type,
+                    }))
+                  }
+                  showFeedback={showFeedback}
+                  vibrationEnabled={settings.vibrationEnabled}
+                />
 
                 {/* Taktile Ziffernwechsel-Animation (Flip & Slide) */}
                 <DigitTransitionControl
@@ -1436,6 +1495,31 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   settings={settings}
                   onUpdateSettings={onUpdateSettings}
                   showFeedback={showFeedback}
+                />
+
+                {/* Automatischer Zen-Modus Zeitplan (Timer) */}
+                <ZenScheduleCard
+                  enabled={settings.zenScheduleEnabled ?? false}
+                  startTime={settings.zenScheduleStartTime ?? '22:00'}
+                  endTime={settings.zenScheduleEndTime ?? '07:00'}
+                  is24Hour={settings.is24Hour}
+                  onToggleEnabled={(enabled) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      zenScheduleEnabled: enabled,
+                    }))
+                  }
+                  onChangeTimes={(startTime, endTime) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      zenScheduleStartTime: startTime,
+                      zenScheduleEndTime: endTime,
+                    }))
+                  }
+                  onToggleZenNow={onToggleZenMode}
+                  isCurrentlyZen={isZenMode}
+                  showFeedback={showFeedback}
+                  vibrationEnabled={settings.vibrationEnabled}
                 />
 
                 {/* Display & Layout Options */}

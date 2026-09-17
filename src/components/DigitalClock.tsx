@@ -4,9 +4,11 @@ import { Coffee, GraduationCap, Lock, Palette } from 'lucide-react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
+import { DailyQuoteWidget } from './DailyQuoteWidget';
 import { SpringDigit } from './SpringDigit';
 import { SchoolStatusResult } from '../utils/timetable';
 import { ClockColorPickerPopover, ColorScope } from './ClockColorPickerPopover';
+import { colorWithAlpha, calculateRadiatingTextShadow } from '../utils/colorUtils';
 
 interface DigitalClockProps {
   settings: ClockSettings;
@@ -15,6 +17,8 @@ interface DigitalClockProps {
   onOpenTimetable?: () => void;
   onUpdateSettings?: (updater: (prev: ClockSettings) => ClockSettings) => void;
   onColorPickerOpenChange?: (isOpen: boolean) => void;
+  isZenMode?: boolean;
+  isSettingsOpen?: boolean;
 }
 
 export const DigitalClock: React.FC<DigitalClockProps> = ({
@@ -24,6 +28,8 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   onOpenTimetable,
   onUpdateSettings,
   onColorPickerOpenChange,
+  isZenMode,
+  isSettingsOpen,
 }) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
@@ -53,6 +59,76 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const clockControls = useAnimation();
   const secondsControls = useAnimation();
   const colonControls = useAnimation();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const timeDisplayRef = useRef<HTMLDivElement>(null);
+
+  // CSS-based entrance animation states (triggered on Zen mode toggle or returning from settings)
+  const [entranceKey, setEntranceKey] = useState(0);
+  const [isEntranceActive, setIsEntranceActive] = useState(true);
+  const prevZenModeRef = useRef<boolean | undefined>(undefined);
+  const prevSettingsOpenRef = useRef<boolean | undefined>(undefined);
+
+  // Trigger entrance when user toggles Zen mode
+  useEffect(() => {
+    if (prevZenModeRef.current === undefined) {
+      prevZenModeRef.current = isZenMode;
+      return;
+    }
+    if (prevZenModeRef.current !== isZenMode) {
+      prevZenModeRef.current = isZenMode;
+      if (settings.enableEntranceAnimation !== false) {
+        setEntranceKey((k) => k + 1);
+        setIsEntranceActive(true);
+      }
+    }
+  }, [isZenMode, settings.enableEntranceAnimation]);
+
+  // Trigger entrance when user returns from settings (isSettingsOpen transitions true -> false)
+  useEffect(() => {
+    if (prevSettingsOpenRef.current === undefined) {
+      prevSettingsOpenRef.current = isSettingsOpen;
+      return;
+    }
+    if (prevSettingsOpenRef.current === true && !isSettingsOpen) {
+      if (settings.enableEntranceAnimation !== false) {
+        setEntranceKey((k) => k + 1);
+        setIsEntranceActive(true);
+      }
+    }
+    prevSettingsOpenRef.current = isSettingsOpen;
+  }, [isSettingsOpen, settings.enableEntranceAnimation]);
+
+  // Listen for custom event trigger (e.g. settings drawer preview or external control)
+  useEffect(() => {
+    const handleEntranceTrigger = () => {
+      if (settings.enableEntranceAnimation !== false) {
+        setEntranceKey((k) => k + 1);
+        setIsEntranceActive(true);
+      }
+    };
+    window.addEventListener('trigger-clock-entrance', handleEntranceTrigger);
+    return () => window.removeEventListener('trigger-clock-entrance', handleEntranceTrigger);
+  }, [settings.enableEntranceAnimation]);
+
+  const isEntranceEnabled = settings.enableEntranceAnimation !== false;
+  const entranceClass =
+    isEntranceEnabled && isEntranceActive
+      ? settings.entranceAnimationType === 'fade-in'
+        ? 'animate-clock-fade-in'
+        : 'animate-clock-slide-up'
+      : '';
+
+  const isAutoScaling = settings.autoScaleFontSize ?? true;
+
+  // Initial font size estimation based on viewport dimensions
+  const [autoFontSizePx, setAutoFontSizePx] = useState<number>(() => {
+    if (typeof window === 'undefined') return 120;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const approx = Math.min(w * 0.16, h * 0.35);
+    return Math.max(36, Math.min(480, Math.round(approx)));
+  });
 
   useEffect(() => {
     // High-frequency polling (50ms) guarantees exact alignment with online atomic clock
@@ -253,12 +329,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   // Colon blink logic
   const isColonVisible = !settings.showBlinkingSeparator || currentSecondsNum % 2 === 0;
 
-  // Glow styling
-  const glowStyle = settings.enableGlow
-    ? {
-        filter: 'drop-shadow(0 0 35px var(--accent-glow, rgba(56,189,248,0.35)))',
-      }
-    : {};
+  // Glow effect parameters & radiating shadows
+  const glowEnabled = Boolean(settings.enableGlow);
+  const glowIntensity = typeof settings.glowIntensity === 'number' ? settings.glowIntensity : 55;
+  const glowSpread = typeof settings.glowSpread === 'number' ? settings.glowSpread : 45;
+  const glowIntensityFactor = glowEnabled ? Math.max(0, Math.min(1, glowIntensity / 100)) : 0;
 
   // Resolve individual segment colors (with fallback to main clockColor)
   const hoursColor = settings.hoursColor || settings.clockColor;
@@ -266,18 +341,185 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const secondsColor = settings.secondsColor || settings.clockColor;
   const colonColor = settings.colonColor || settings.clockColor;
 
+  // Custom or fallback color for radiating glow
+  const primaryGlowColor = settings.glowColor || settings.clockColor || '#38bdf8';
+  const hoursGlowColor = settings.glowColor || hoursColor;
+  const minutesGlowColor = settings.glowColor || minutesColor;
+  const secondsGlowColor = settings.glowColor || secondsColor;
+  const colonGlowColor = settings.glowColor || colonColor;
+
+  // Multi-layered radiating text shadows for each segment
+  const hoursGlowShadow =
+    glowEnabled && glowIntensityFactor > 0
+      ? calculateRadiatingTextShadow(hoursGlowColor, glowIntensity, glowSpread)
+      : undefined;
+
+  const minutesGlowShadow =
+    glowEnabled && glowIntensityFactor > 0
+      ? calculateRadiatingTextShadow(minutesGlowColor, glowIntensity, glowSpread)
+      : undefined;
+
+  const secondsGlowShadow =
+    glowEnabled && glowIntensityFactor > 0
+      ? calculateRadiatingTextShadow(secondsGlowColor, glowIntensity, glowSpread)
+      : undefined;
+
+  const colonGlowShadow =
+    glowEnabled && glowIntensityFactor > 0
+      ? calculateRadiatingTextShadow(
+          colonGlowColor,
+          Math.max(10, Math.round(glowIntensity * 0.7)),
+          Math.max(8, Math.round(glowSpread * 0.7))
+        )
+      : undefined;
+
+  // Glow styling on overall container
+  const glowStyle =
+    glowEnabled && glowIntensityFactor > 0
+      ? {
+          filter: `drop-shadow(0 0 ${Math.max(4, Math.round(glowSpread * 0.4))}px ${colorWithAlpha(
+            primaryGlowColor,
+            0.38 * glowIntensityFactor
+          )})`,
+        }
+      : {};
+
+  // Dynamically calculate optimal font size based on container & browser window dimensions
+  useEffect(() => {
+    if (!isAutoScaling) return;
+
+    const calculateOptimalFontSize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const parentEl = container.parentElement;
+      const availableWidth = parentEl?.clientWidth || container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
+      const availableHeight = parentEl?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
+
+      // Padding factor: ensures clock breathes comfortably and fits within card/screen borders
+      const paddingFactor = settings.showCardContainer ? 0.86 : 0.94;
+      const targetWidth = Math.max(260, availableWidth * paddingFactor);
+
+      // Usable height: subtract space needed for secondary elements
+      let reservedHeight = 80;
+      if (settings.showDate) reservedHeight += 46;
+      if (settings.showAdditionalTimeZones) reservedHeight += 72;
+      if (settings.showSchoolBadge && statusResult) reservedHeight += 48;
+      if (settings.showCardContainer) reservedHeight += 76;
+
+      const targetHeight = Math.max(90, (availableHeight - reservedHeight) * 0.78);
+
+      // Em-width resolution based on active font typography and active segments
+      const isMono = settings.clockFont === 'mono';
+      const digitEm = isMono ? 0.62 : settings.clockFont === 'serif' ? 0.58 : 0.56;
+      const colonEm = isMono ? 0.32 : 0.26;
+
+      // Base hours + colon + minutes: 4 digits + 1 colon
+      let totalEmWidth = 4 * digitEm + colonEm;
+
+      // Seconds: + colon + 2 digits at 0.82em scale
+      if (settings.showSeconds) {
+        totalEmWidth += colonEm + 2 * (digitEm * 0.82);
+      }
+
+      // 12-Hour AM/PM badge
+      if (!settings.is24Hour && ampm) {
+        totalEmWidth += 1.15;
+      }
+
+      // Safety buffer for character padding & letter tracking
+      totalEmWidth += 0.18;
+
+      // Font size based on both width and height constraints
+      const widthBasedFontSize = targetWidth / totalEmWidth;
+      const heightBasedFontSize = targetHeight / 1.05;
+
+      // Optimal font size ensuring clock fits both dimensions
+      const optimalSize = Math.min(widthBasedFontSize, heightBasedFontSize);
+
+      // Apply user fine-tuning scale (70% - 140%)
+      const userMultiplier = (settings.clockScale || 100) / 100;
+      let finalSize = Math.round(optimalSize * userMultiplier);
+
+      // DOM measurement refinement if rendered to avoid any subpixel wrapping
+      if (timeDisplayRef.current && timeDisplayRef.current.scrollWidth > 0) {
+        const measuredWidth = timeDisplayRef.current.scrollWidth;
+        if (measuredWidth > targetWidth + 4) {
+          finalSize = Math.round(finalSize * (targetWidth / measuredWidth));
+        }
+      }
+
+      const clampedSize = Math.max(32, Math.min(520, finalSize));
+      setAutoFontSizePx(clampedSize);
+    };
+
+    calculateOptimalFontSize();
+
+    let rafId: number | null = null;
+    const scheduleCalc = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(calculateOptimalFontSize);
+    };
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        scheduleCalc();
+      });
+
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+        if (containerRef.current.parentElement) {
+          resizeObserver.observe(containerRef.current.parentElement);
+        }
+      }
+    }
+
+    window.addEventListener('resize', scheduleCalc);
+    window.addEventListener('orientationchange', scheduleCalc);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', scheduleCalc);
+      window.removeEventListener('orientationchange', scheduleCalc);
+    };
+  }, [
+    isAutoScaling,
+    settings.clockScale,
+    settings.showSeconds,
+    settings.is24Hour,
+    settings.clockFont,
+    settings.showDate,
+    settings.showAdditionalTimeZones,
+    settings.showSchoolBadge,
+    settings.showCardContainer,
+    statusResult,
+    ampm,
+  ]);
+
   return (
     <div
+      ref={containerRef}
       id="digital-clock-centerpiece"
-      className="flex flex-col items-center justify-center text-center select-none w-full max-w-5xl mx-auto px-4"
+      className={`flex flex-col items-center justify-center text-center select-none w-full ${
+        isAutoScaling
+          ? settings.showCardContainer
+            ? 'max-w-7xl mx-auto px-3 sm:px-6'
+            : 'max-w-none px-2 sm:px-4'
+          : 'max-w-5xl mx-auto px-4'
+      }`}
       style={{
-        transform: `scale(${settings.clockScale / 100})`,
+        transform: isAutoScaling ? undefined : `scale(${settings.clockScale / 100})`,
         transformOrigin: 'center center',
         transition: 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       <div
-        className={`w-full flex flex-col items-center justify-center transition-all duration-300 ${
+        key={entranceKey}
+        id="clock-display-entrance-wrapper"
+        onAnimationEnd={() => setIsEntranceActive(false)}
+        className={`w-full flex flex-col items-center justify-center transition-all duration-300 ${entranceClass} ${
           settings.showCardContainer
             ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-700/50 shadow-2xl'
             : ''
@@ -297,6 +539,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
         >
           {/* Main Digits Row with Click-To-Change-Color interactivity */}
           <div
+            ref={timeDisplayRef}
             id="digital-time-display"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -305,13 +548,59 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               openColorPicker('all');
             }}
             title="Klicken, um die Ziffernfarbe anzupassen"
-            className={`flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers group cursor-pointer`}
+            className={`relative flex items-baseline justify-center ${trackingClass} leading-none ${fontClass} ${weightClass} tabular-numbers group cursor-pointer`}
             style={{
+              fontSize: isAutoScaling ? `${autoFontSizePx}px` : undefined,
               color: 'var(--clock-color, ' + settings.clockColor + ')',
               ...glowStyle,
               transition: 'color 400ms ease, filter 400ms ease',
             }}
           >
+            {/* Ambient Radiating Backlight Glow Layer (radiating from behind the digits) */}
+            {glowEnabled && glowIntensityFactor > 0 && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-x-8 sm:-inset-x-12 -inset-y-6 sm:-inset-y-8 -z-10 flex items-center justify-center select-none overflow-visible will-change-transform"
+                style={{
+                  opacity: Math.min(1, glowIntensityFactor * 1.15),
+                  transition: 'opacity 300ms ease, filter 300ms ease',
+                }}
+              >
+                {/* Primary wide diffused radiating aura */}
+                <div
+                  className="w-full h-full max-w-[115%] rounded-[60px]"
+                  style={{
+                    background: `radial-gradient(ellipse 70% 55% at 50% 50%, ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.55 * glowIntensityFactor
+                    )} 0%, ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.26 * glowIntensityFactor
+                    )} 45%, ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.07 * glowIntensityFactor
+                    )} 75%, transparent 100%)`,
+                    filter: `blur(${Math.round(glowSpread * 0.95)}px)`,
+                    transform: 'translate3d(0, 0, 0)',
+                  }}
+                />
+                {/* Secondary core hot glow radiating directly behind the digits */}
+                <div
+                  className="absolute inset-x-6 inset-y-3 rounded-[40px]"
+                  style={{
+                    background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.45 * glowIntensityFactor
+                    )} 0%, ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.12 * glowIntensityFactor
+                    )} 60%, transparent 80%)`,
+                    filter: `blur(${Math.max(4, Math.round(glowSpread * 0.42))}px)`,
+                  }}
+                />
+              </div>
+            )}
+
             {/* Hours */}
             <span
               id="clock-hours"
@@ -320,12 +609,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 openColorPicker('hours');
               }}
               title="Stunden: Klicken zum Ändern der Farbe"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
+              className={`${
+                isAutoScaling ? 'text-[1em]' : 'text-[clamp(4.5rem,19vw,14rem)]'
+              } inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1`}
               style={{
                 color: hoursColor,
-                textShadow: settings.enableGlow
-                  ? `0 0 30px ${hoursColor}70, 0 0 60px ${hoursColor}30`
-                  : undefined,
+                textShadow: hoursGlowShadow,
               }}
             >
               {formattedHours.split('').map((char, index) => (
@@ -349,9 +638,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 openColorPicker('all');
               }}
               title="Klicken, um Ziffernfarbe zu ändern"
-              className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
+              className={`${
+                isAutoScaling ? 'text-[0.84em] px-[0.06em]' : 'text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2'
+              } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all`}
               style={{
                 color: colonColor,
+                textShadow: colonGlowShadow,
               }}
             >
               :
@@ -365,12 +657,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 openColorPicker('minutes');
               }}
               title="Minuten: Klicken zum Ändern der Farbe"
-              className="text-[clamp(4.5rem,19vw,14rem)] inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1"
+              className={`${
+                isAutoScaling ? 'text-[1em]' : 'text-[clamp(4.5rem,19vw,14rem)]'
+              } inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1`}
               style={{
                 color: minutesColor,
-                textShadow: settings.enableGlow
-                  ? `0 0 30px ${minutesColor}70, 0 0 60px ${minutesColor}30`
-                  : undefined,
+                textShadow: minutesGlowShadow,
               }}
             >
               {formattedMinutes.split('').map((char, index) => (
@@ -396,9 +688,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                     openColorPicker('all');
                   }}
                   title="Klicken, um Ziffernfarbe zu ändern"
-                  className="text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2 relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all"
+                  className={`${
+                    isAutoScaling ? 'text-[0.84em] px-[0.06em]' : 'text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2'
+                  } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all`}
                   style={{
                     color: colonColor,
+                    textShadow: colonGlowShadow,
                   }}
                 >
                   :
@@ -411,12 +706,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                     openColorPicker('seconds');
                   }}
                   title="Sekunden: Klicken zum Ändern der Farbe"
-                  className="text-[clamp(3.4rem,14.5vw,11rem)] inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 hover:brightness-125 hover:scale-[1.03] active:scale-[0.98] rounded-2xl px-1"
+                  className={`${
+                    isAutoScaling ? 'text-[0.82em]' : 'text-[clamp(3.4rem,14.5vw,11rem)]'
+                  } inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 hover:brightness-125 hover:scale-[1.03] active:scale-[0.98] rounded-2xl px-1`}
                   style={{
                     color: secondsColor,
-                    textShadow: settings.enableGlow
-                      ? `0 0 30px ${secondsColor}70, 0 0 60px ${secondsColor}30`
-                      : undefined,
+                    textShadow: secondsGlowShadow,
                   }}
                 >
                   {formattedSeconds.split('').map((char, index) => (
@@ -436,7 +731,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             {!settings.is24Hour && ampm && (
               <span
                 id="clock-ampm-badge"
-                className="ml-3 sm:ml-5 text-[clamp(1rem,3vw,2rem)] tracking-wider font-bold uppercase self-center py-1.5 px-3 sm:px-4 rounded-2xl border border-white/20 bg-white/10 shadow-md transition-all select-none"
+                className={`${
+                  isAutoScaling
+                    ? 'ml-[0.22em] text-[0.2em] py-[0.2em] px-[0.45em]'
+                    : 'ml-3 sm:ml-5 text-[clamp(1rem,3vw,2rem)] py-1.5 px-3 sm:px-4'
+                } tracking-wider font-bold uppercase self-center rounded-2xl border border-white/20 bg-white/10 shadow-md transition-all select-none`}
                 style={{
                   backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
                   WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
@@ -473,7 +772,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
           {settings.showDate && (
             <div
               id="digital-date-display"
-              className="mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.6rem)] font-light tracking-[0.18em] uppercase select-none opacity-85 transition-colors duration-300"
+              className={`${
+                isAutoScaling
+                  ? 'mt-3 text-[clamp(0.95rem,0.16em,2rem)]'
+                  : 'mt-3 sm:mt-5 text-[clamp(0.95rem,2.2vw,1.6rem)]'
+              } font-light tracking-[0.18em] uppercase select-none opacity-85 transition-colors duration-300`}
               style={{
                 color: 'var(--clock-color, ' + settings.clockColor + ')',
                 textShadow: '0 2px 10px rgba(0,0,0,0.3)',
@@ -490,6 +793,17 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               settings={settings}
               mainTimeZone={targetTimeZone}
               onUpdateSettings={onUpdateSettings}
+            />
+          )}
+
+          {/* Optional Daily Quote Widget */}
+          {settings.showDailyQuote && (
+            <DailyQuoteWidget
+              font={settings.quoteFont}
+              color={settings.quoteColor}
+              authorColor={settings.quoteAuthorColor}
+              backdropBlur={settings.backdropBlurIntensity}
+              isZenMode={isZenMode}
             />
           )}
 

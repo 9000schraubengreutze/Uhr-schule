@@ -78,6 +78,67 @@ export function loadSettings(): ClockSettings {
             ? 1.5
             : Math.max(0.2, Math.min(3.0, Number(parsed.particleSpeed.toFixed(2))))
           : DEFAULT_SETTINGS.particleSpeed,
+      autoScaleFontSize:
+        typeof parsed.autoScaleFontSize === 'boolean'
+          ? parsed.autoScaleFontSize
+          : DEFAULT_SETTINGS.autoScaleFontSize,
+      zenScheduleEnabled:
+        typeof parsed.zenScheduleEnabled === 'boolean'
+          ? parsed.zenScheduleEnabled
+          : DEFAULT_SETTINGS.zenScheduleEnabled,
+      zenScheduleStartTime:
+        typeof parsed.zenScheduleStartTime === 'string' && /^\d{1,2}:\d{2}$/.test(parsed.zenScheduleStartTime)
+          ? parsed.zenScheduleStartTime
+          : DEFAULT_SETTINGS.zenScheduleStartTime,
+      zenScheduleEndTime:
+        typeof parsed.zenScheduleEndTime === 'string' && /^\d{1,2}:\d{2}$/.test(parsed.zenScheduleEndTime)
+          ? parsed.zenScheduleEndTime
+          : DEFAULT_SETTINGS.zenScheduleEndTime,
+      showDailyQuote:
+        typeof parsed.showDailyQuote === 'boolean'
+          ? parsed.showDailyQuote
+          : DEFAULT_SETTINGS.showDailyQuote,
+      quoteFont:
+        parsed.quoteFont === 'serif' ||
+        parsed.quoteFont === 'outfit' ||
+        parsed.quoteFont === 'inter' ||
+        parsed.quoteFont === 'mono' ||
+        parsed.quoteFont === 'school' ||
+        parsed.quoteFont === 'sans'
+          ? parsed.quoteFont
+          : DEFAULT_SETTINGS.quoteFont,
+      quoteColor:
+        typeof parsed.quoteColor === 'string' && parsed.quoteColor.trim()
+          ? parsed.quoteColor.trim()
+          : DEFAULT_SETTINGS.quoteColor,
+      quoteAuthorColor:
+        typeof parsed.quoteAuthorColor === 'string' && parsed.quoteAuthorColor.trim()
+          ? parsed.quoteAuthorColor.trim()
+          : DEFAULT_SETTINGS.quoteAuthorColor,
+      enableEntranceAnimation:
+        typeof parsed.enableEntranceAnimation === 'boolean'
+          ? parsed.enableEntranceAnimation
+          : DEFAULT_SETTINGS.enableEntranceAnimation,
+      entranceAnimationType:
+        parsed.entranceAnimationType === 'slide-up' || parsed.entranceAnimationType === 'fade-in'
+          ? parsed.entranceAnimationType
+          : DEFAULT_SETTINGS.entranceAnimationType,
+      enableGlow:
+        typeof parsed.enableGlow === 'boolean'
+          ? parsed.enableGlow
+          : DEFAULT_SETTINGS.enableGlow,
+      glowIntensity:
+        typeof parsed.glowIntensity === 'number'
+          ? Math.max(0, Math.min(100, Math.round(parsed.glowIntensity)))
+          : DEFAULT_SETTINGS.glowIntensity,
+      glowSpread:
+        typeof parsed.glowSpread === 'number'
+          ? Math.max(10, Math.min(120, Math.round(parsed.glowSpread)))
+          : DEFAULT_SETTINGS.glowSpread,
+      glowColor:
+        typeof parsed.glowColor === 'string' && parsed.glowColor.trim()
+          ? parsed.glowColor.trim()
+          : undefined,
       digitTransition:
         parsed.digitTransition === 'flip' ||
         parsed.digitTransition === 'slide' ||
