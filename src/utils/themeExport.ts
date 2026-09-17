@@ -80,6 +80,8 @@ export function sanitizeClockSettings(input: any): ClockSettings {
         : DEFAULT_SETTINGS.enableBreathingAnimation,
     enableGlow: typeof raw.enableGlow === 'boolean' ? raw.enableGlow : DEFAULT_SETTINGS.enableGlow,
     digitTransition:
+      raw.digitTransition === 'flip' ||
+      raw.digitTransition === 'slide' ||
       raw.digitTransition === 'crossfade' ||
       raw.digitTransition === 'slide-fade' ||
       raw.digitTransition === 'none' ||

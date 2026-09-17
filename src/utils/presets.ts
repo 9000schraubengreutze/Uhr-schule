@@ -31,8 +31,8 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   clockScale: 100,
   enableBreathingAnimation: true,
   enableGlow: true,
-  digitTransition: 'fade', // Default subtle fluid fading animation
-  digitFadeDuration: 360, // 360ms fluid duration
+  digitTransition: 'flip', // Subtle tactile 3D flip animation
+  digitFadeDuration: 340, // 340ms tactile duration
   hasCustomImage: false,
 
   // UHR (Digitale Uhr-Funktionen)

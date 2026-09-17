@@ -11,15 +11,16 @@ export interface SpringDigitProps {
 }
 
 /**
- * SpringDigit (FluidClockDigit) renders an individual character or digit
- * with a subtle, silky fading transition whenever the value updates each second.
+ * SpringDigit (TactileClockDigit) renders an individual character or digit
+ * with tactile, premium animations (such as 3D flip or precision slide)
+ * whenever the value changes.
  */
 export const SpringDigit: React.FC<SpringDigitProps> = ({
   digit,
   className = '',
   id,
-  transitionType = 'fade',
-  durationMs = 360,
+  transitionType = 'flip',
+  durationMs = 340,
 }) => {
   if (transitionType === 'none') {
     return (
@@ -33,23 +34,25 @@ export const SpringDigit: React.FC<SpringDigitProps> = ({
     );
   }
 
-  const durationSec = Math.max(0.15, Math.min(0.8, (durationMs || 360) / 1000));
+  const durationSec = Math.max(0.18, Math.min(0.65, (durationMs || 340) / 1000));
   const isFlip = transitionType === 'flip';
+  const isSlide = transitionType === 'slide';
+  const isSlideFade = transitionType === 'slide-fade';
 
-  // Determine transition configuration based on mode
-  let initialStyle: any = { opacity: 0, scale: 0.96, y: '3%', filter: 'blur(3px)' };
+  // Default subtle fade animation styles
+  let initialStyle: any = { opacity: 0, scale: 0.97, y: '3%', filter: 'blur(2px)' };
   let animateStyle: any = { opacity: 1, scale: 1, y: '0%', filter: 'blur(0px)' };
-  let exitStyle: any = { opacity: 0, scale: 1.04, y: '-3%', filter: 'blur(3px)' };
-  let transitionEase: any = [0.16, 1, 0.3, 1]; // Fluid cubic ease-out
+  let exitStyle: any = { opacity: 0, scale: 1.03, y: '-3%', filter: 'blur(2px)' };
+  let transitionEase: any = [0.2, 1, 0.35, 1]; // Fluid cubic ease-out
 
-  if (transitionType === 'flip') {
-    // 3D Flip transition with perspective and realistic lighting shift
+  if (isFlip) {
+    // Tactile 3D Split-Flap animation with realistic lighting dynamics and physics-inspired ease
     initialStyle = {
       opacity: 0,
-      rotateX: -85,
-      y: '-10%',
-      scale: 0.95,
-      filter: 'brightness(1.15)',
+      rotateX: -55,
+      y: '-22%',
+      scale: 0.98,
+      filter: 'brightness(1.14)',
     };
     animateStyle = {
       opacity: 1,
@@ -60,39 +63,60 @@ export const SpringDigit: React.FC<SpringDigitProps> = ({
     };
     exitStyle = {
       opacity: 0,
-      rotateX: 85,
-      y: '10%',
-      scale: 0.95,
-      filter: 'brightness(0.7)',
+      rotateX: 55,
+      y: '22%',
+      scale: 0.98,
+      filter: 'brightness(0.84)',
     };
-    transitionEase = [0.22, 1, 0.36, 1];
+    transitionEase = [0.2, 0.9, 0.35, 1]; // Snappy tactile snap with soft damping
+  } else if (isSlide) {
+    // Tactile mechanical tumbler / odometer precision slide
+    initialStyle = {
+      opacity: 0,
+      y: '-60%',
+      filter: 'blur(1px)',
+    };
+    animateStyle = {
+      opacity: 1,
+      y: '0%',
+      filter: 'blur(0px)',
+    };
+    exitStyle = {
+      opacity: 0,
+      y: '60%',
+      filter: 'blur(1px)',
+    };
+    transitionEase = [0.16, 1, 0.3, 1]; // Precision mechanical deceleration
+  } else if (isSlideFade) {
+    // Kinetic floating slide combined with gentle fading
+    initialStyle = { opacity: 0, y: '25%', scale: 0.97 };
+    animateStyle = { opacity: 1, y: '0%', scale: 1 };
+    exitStyle = { opacity: 0, y: '-25%', scale: 0.97 };
+    transitionEase = [0.2, 1, 0.35, 1];
   } else if (transitionType === 'crossfade') {
     // Pure in-place dissolve fade without vertical translation
     initialStyle = { opacity: 0 };
     animateStyle = { opacity: 1 };
     exitStyle = { opacity: 0 };
     transitionEase = [0.25, 1, 0.5, 1];
-  } else if (transitionType === 'slide-fade') {
-    // Kinetic slide combined with fading
-    initialStyle = { opacity: 0, y: '16%', scale: 0.98 };
-    animateStyle = { opacity: 1, y: '0%', scale: 1 };
-    exitStyle = { opacity: 0, y: '-16%', scale: 0.98 };
-    transitionEase = [0.16, 1, 0.3, 1];
   }
 
   return (
     <span
       id={id}
-      className={`relative inline-block align-baseline ${isFlip ? 'overflow-visible' : 'overflow-hidden'} ${className}`}
+      className={`relative inline-grid grid-cols-1 grid-rows-1 items-baseline select-none ${
+        isFlip ? 'overflow-visible' : 'overflow-hidden'
+      } ${className}`}
       style={{
         verticalAlign: 'baseline',
-        perspective: isFlip ? '800px' : undefined,
+        perspective: isFlip ? '1200px' : undefined,
         transformStyle: isFlip ? 'preserve-3d' : undefined,
       }}
     >
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence initial={false}>
         <motion.span
           key={digit}
+          className="col-start-1 row-start-1 inline-block will-change-transform will-change-[opacity,filter] select-none text-center"
           initial={initialStyle}
           animate={animateStyle}
           exit={exitStyle}
@@ -109,7 +133,6 @@ export const SpringDigit: React.FC<SpringDigitProps> = ({
                 }
               : undefined
           }
-          className="inline-block will-change-transform will-change-[opacity,filter] select-none"
         >
           {digit}
         </motion.span>

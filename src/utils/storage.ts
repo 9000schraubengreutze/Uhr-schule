@@ -80,11 +80,13 @@ export function loadSettings(): ClockSettings {
           : DEFAULT_SETTINGS.particleSpeed,
       digitTransition:
         parsed.digitTransition === 'flip' ||
+        parsed.digitTransition === 'slide' ||
         parsed.digitTransition === 'crossfade' ||
         parsed.digitTransition === 'slide-fade' ||
-        parsed.digitTransition === 'none' ||
-        parsed.digitTransition === 'fade'
+        parsed.digitTransition === 'none'
           ? parsed.digitTransition
+          : parsed.digitTransition === 'fade' && parsed._digitTransitionCustomized
+          ? 'fade'
           : DEFAULT_SETTINGS.digitTransition,
       digitFadeDuration:
         typeof parsed.digitFadeDuration === 'number'

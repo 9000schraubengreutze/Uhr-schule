@@ -38,7 +38,7 @@ export interface ChatRole {
   shortDesc: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
-  defaultModel: 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
+  defaultModel: 'gemini-3.8-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
   systemInstruction: string;
   samplePrompts: string[];
 }
@@ -50,7 +50,7 @@ export const CHAT_ROLES: ChatRole[] = [
     shortDesc: 'Universeller KI-Assistent für Recherche, Analysen, Texte & Wissen',
     icon: Sparkles,
     color: '#3b82f6',
-    defaultModel: 'gemini-3.5-flash',
+    defaultModel: 'gemini-3.8-flash',
     systemInstruction:
       'Du bist ein professioneller, vielseitiger und hochkompetenter KI-Assistent auf Basis neuester Google Gemini Modelle. Du unterstützt den Nutzer präzise, faktenbasiert, lösungsorientiert und strukturiert bei allen erdenklichen Aufgaben: Von Recherchen, Analysen, professionellen Texten und E-Mails über logische und technische Fragestellungen bis hin zu Allgemeinwissen und Problemlösungen. Antworte in klarem, professionellem Deutsch (oder der Sprache der Nutzeranfrage), gut gegliedert mit Markdown-Formatierung.',
     samplePrompts: [
@@ -96,7 +96,7 @@ export const CHAT_ROLES: ChatRole[] = [
     shortDesc: 'Ideenfindung, Schreibberatung, Formulierungen & Entwürfe',
     icon: Brain,
     color: '#10b981',
-    defaultModel: 'gemini-3.5-flash',
+    defaultModel: 'gemini-3.8-flash',
     systemInstruction:
       'Du bist ein inspirierender, stilsicherer Schreib- und Kreativpartner. Hilf dem Nutzer beim Brainstorming innovativer Ideen, beim Verfassen ausdrucksstarker Texte, Präsentationskonzepte und ansprechender Formulierungen.',
     samplePrompts: [
@@ -111,7 +111,7 @@ export const CHAT_ROLES: ChatRole[] = [
     shortDesc: 'Eigene System-Instruction für die Gemini-KI definieren',
     icon: Sliders,
     color: '#ec4899',
-    defaultModel: 'gemini-3.5-flash',
+    defaultModel: 'gemini-3.8-flash',
     systemInstruction: 'Du bist ein professioneller, nützlicher KI-Assistent. Befolge die Anweisungen des Benutzers genau.',
     samplePrompts: [
       'Beantworte meine Frage nach deinen benutzerdefinierten Richtlinien.',
@@ -172,7 +172,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
     }
   });
 
-  // Model selection: 'auto' | 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite'
+  // Model selection: 'auto' | 'gemini-3.8-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite'
   const [selectedModel, setSelectedModel] = useState<string>('auto');
   const [inputPrompt, setInputPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -282,7 +282,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
 
     if (isFast) return 'gemini-3.1-flash-lite';
 
-    return 'gemini-3.5-flash';
+    return 'gemini-3.8-flash';
   };
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -323,9 +323,23 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Fehler beim Abrufen der Gemini-Antwort');
+      const contentType = res.headers.get('content-type') || '';
+      let data: any = null;
+
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.warn('Non-JSON response received from server:', text);
+        throw new Error(
+          !res.ok
+            ? `Der Server meldet Status ${res.status}. Bitte versuche es in wenigen Augenblicken erneut.`
+            : 'Unerwartete Serverantwort erhalten.'
+        );
+      }
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Fehler beim Abrufen der Gemini-Antwort');
       }
 
       const assistantMsg: ChatMessage = {
@@ -479,7 +493,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             <div className="hidden sm:flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-800 text-[11px]">
               {[
                 { id: 'auto', label: 'Auto' },
-                { id: 'gemini-3.5-flash', label: '3.5 Flash' },
+                { id: 'gemini-3.8-flash', label: '3.8 Flash' },
                 { id: 'gemini-3.1-pro-preview', label: '3.1 Pro' },
                 { id: 'gemini-3.1-flash-lite', label: '3.1 Lite' },
               ].map((m) => (
@@ -499,7 +513,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                       ? 'gemini-3.1-pro-preview für komplexe Aufgaben'
                       : m.id === 'gemini-3.1-flash-lite'
                       ? 'gemini-3.1-flash-lite für schnelle Aufgaben'
-                      : 'gemini-3.5-flash für allgemeine Aufgaben'
+                      : 'gemini-3.8-flash für allgemeine Aufgaben'
                   }
                 >
                   {m.label}
@@ -666,7 +680,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             <div className="sm:hidden pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
               <span className="text-slate-400">Gemini Modell:</span>
               <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px]">
-                {['auto', 'gemini-3.5-flash', 'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite'].map((m) => (
+                {['auto', 'gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite'].map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -819,7 +833,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                           <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-400">
                             <div className="flex items-center gap-1.5">
                               <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono">
-                                {msg.modelUsed || 'gemini-3.5-flash'}
+                                {msg.modelUsed || 'gemini-3.8-flash'}
                               </span>
                               <span>
                                 {new Date(msg.timestamp).toLocaleTimeString([], {

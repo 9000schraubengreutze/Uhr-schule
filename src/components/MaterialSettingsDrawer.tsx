@@ -1199,14 +1199,15 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   />
                 </div>
 
-                {/* Fließendes Ziffern-Fading (Sekundentakt) */}
+                {/* Taktile Ziffernwechsel-Animation (Flip & Slide) */}
                 <DigitTransitionControl
-                  transitionType={settings.digitTransition ?? 'fade'}
-                  durationMs={settings.digitFadeDuration ?? 360}
+                  transitionType={settings.digitTransition ?? 'flip'}
+                  durationMs={settings.digitFadeDuration ?? 340}
                   onChangeTransition={(type) =>
                     onUpdateSettings((prev) => ({
                       ...prev,
                       digitTransition: type,
+                      _digitTransitionCustomized: true,
                     }))
                   }
                   onChangeDuration={(dur) =>

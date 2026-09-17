@@ -420,6 +420,8 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
               <span className="text-sky-400 font-medium">
                 {settings.digitTransition === 'flip'
                   ? '3D-Flip'
+                  : settings.digitTransition === 'slide'
+                  ? 'Slide'
                   : settings.digitTransition === 'fade'
                   ? 'Sanfter Fade'
                   : settings.digitTransition === 'slide-fade'
@@ -429,10 +431,11 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
                   : 'Aus'}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {[
-                { id: 'flip' as const, label: '3D-Flip', desc: 'Dynamisch' },
-                { id: 'fade' as const, label: 'Sanfter Fade', desc: 'Fließend' },
+                { id: 'flip' as const, label: 'Flip', desc: '3D-Taktil' },
+                { id: 'slide' as const, label: 'Slide', desc: 'Rolle' },
+                { id: 'fade' as const, label: 'Fade', desc: 'Fließend' },
                 { id: 'none' as const, label: 'Aus', desc: 'Sofort' },
               ].map((anim) => {
                 const isSelected = settings.digitTransition === anim.id;
@@ -444,9 +447,10 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
                       onUpdateSettings((prev) => ({
                         ...prev,
                         digitTransition: anim.id,
+                        _digitTransitionCustomized: true,
                       }))
                     }
-                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center flex flex-col items-center justify-center ${
+                    className={`py-1.5 px-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center flex flex-col items-center justify-center ${
                       isSelected
                         ? 'bg-sky-600 text-white shadow-sm ring-1 ring-sky-400/50'
                         : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'

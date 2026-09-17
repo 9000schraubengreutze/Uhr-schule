@@ -5,7 +5,7 @@ export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
-export type DigitTransition = 'flip' | 'fade' | 'crossfade' | 'slide-fade' | 'none';
+export type DigitTransition = 'flip' | 'slide' | 'slide-fade' | 'fade' | 'crossfade' | 'none';
 
 export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
 
@@ -101,8 +101,9 @@ export interface ClockSettings {
   clockScale: number; // 70 to 140 percent
   enableBreathingAnimation: boolean;
   enableGlow: boolean; // Ambient neon / soft backlight glow
-  digitTransition: DigitTransition; // 'fade' | 'crossfade' | 'slide-fade' | 'none'
-  digitFadeDuration: number; // 150 to 800 ms (default 360ms)
+  digitTransition: DigitTransition; // 'flip' | 'slide' | 'slide-fade' | 'fade' | 'crossfade' | 'none'
+  digitFadeDuration: number; // 150 to 800 ms (default 340ms)
+  _digitTransitionCustomized?: boolean;
   hasCustomImage: boolean;
 
   // === UHR (Digitale Uhr-Funktionen) ===

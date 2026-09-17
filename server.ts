@@ -401,7 +401,7 @@ Aspect Ratio: "${aspectRatio}"
 Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid JSON.`;
 
       let response: any = null;
-      const modelCandidates = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+      const modelCandidates = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
 
       for (const modelName of modelCandidates) {
         try {
@@ -477,19 +477,20 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
       const ai = getGeminiClient();
 
       // Resolve model:
-      // gemini-3.1-pro-preview for particularly complex tasks
-      // gemini-3.5-flash for general tasks
-      // gemini-3.1-flash-lite for tasks that should happen fast
-      let selectedModel = 'gemini-3.5-flash';
+      // gemini-3.8-flash for general high-performance text tasks
+      // gemini-3.1-flash-lite for instant fast responses
+      // gemini-3.1-pro-preview for deep coding/reasoning
+      let selectedModel = 'gemini-3.8-flash';
 
-      if (model && ['gemini-3.1-pro-preview', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'].includes(model)) {
+      const validModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-flash-latest'];
+      if (model && validModels.includes(model)) {
         selectedModel = model;
       } else if (taskComplexity === 'complex') {
-        selectedModel = 'gemini-3.1-pro-preview';
+        selectedModel = 'gemini-3.8-flash';
       } else if (taskComplexity === 'fast') {
         selectedModel = 'gemini-3.1-flash-lite';
       } else {
-        selectedModel = 'gemini-3.5-flash';
+        selectedModel = 'gemini-3.8-flash';
       }
 
       // Format messages into Gemini contents structure
@@ -503,11 +504,12 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
         config.systemInstruction = systemInstruction.trim();
       }
 
-      // Try primary model, fallback if preview model alias is temporarily unavailable
+      // Primary model candidates in preferred order
       const fallbackList = [
         selectedModel,
-        'gemini-3.5-flash',
         'gemini-3.8-flash',
+        'gemini-3.1-flash-lite',
+        'gemini-flash-latest',
       ];
 
       // Remove duplicate models in fallback list
@@ -545,8 +547,23 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
       });
     } catch (error: any) {
       console.error('Gemini chat error:', error);
-      const errorMessage = error?.message || 'Unerwarteter Fehler im Gemini Chat.';
-      return res.status(500).json({ error: errorMessage });
+      
+      let rawMsg = String(error?.message || error || '');
+      let friendlyError = 'Der Gemini KI-Assistent konnte deine Anfrage gerade nicht verarbeiten.';
+
+      if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('quota') || rawMsg.includes('429')) {
+        friendlyError = 'Das Gemini API-Kontingent ist für den Moment erreicht (Rate-Limit). Bitte warte kurz oder versuche es gleich noch einmal.';
+      } else if (rawMsg.includes('Kein GEMINI_API_KEY')) {
+        friendlyError = 'Kein Gemini API-Schlüssel hinterlegt. Bitte konfiguriere deinen API-Key in den AI Studio Einstellungen.';
+      } else if (rawMsg) {
+        friendlyError = `Gemini-Rückmeldung: ${rawMsg}`;
+      }
+
+      return res.status(500).json({ 
+        success: false, 
+        error: friendlyError,
+        rawError: rawMsg 
+      });
     }
   });
 

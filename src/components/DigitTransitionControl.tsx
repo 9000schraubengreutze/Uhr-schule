@@ -22,9 +22,21 @@ const TRANSITION_OPTIONS: {
 }[] = [
   {
     id: 'flip',
-    label: 'Sanfter Flip',
-    badge: '3D-Klappeffekt',
-    desc: 'Mechanisch-dynamischer 3D-Flip mit Tiefenperspektive beim Ziffernwechsel',
+    label: 'Taktiler 3D-Flip',
+    badge: 'Split-Flap',
+    desc: 'Subtiler 3D-Klappeffekt mit Tiefenperspektive und realistischer Lichtdynamik',
+  },
+  {
+    id: 'slide',
+    label: 'Taktiler Slide',
+    badge: 'Präzisions-Rolle',
+    desc: 'Geschmeidiges vertikales Gleiten im Stil mechanischer Präzisionszähler',
+  },
+  {
+    id: 'slide-fade',
+    label: 'Gleiten & Fade',
+    badge: 'Dynamisch',
+    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit sanftem Fading',
   },
   {
     id: 'fade',
@@ -39,12 +51,6 @@ const TRANSITION_OPTIONS: {
     desc: 'Reines Überblenden an Ort und Stelle ohne jede Positionsverschiebung',
   },
   {
-    id: 'slide-fade',
-    label: 'Gleiten & Fade',
-    badge: 'Dynamisch',
-    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit sanftem Fading',
-  },
-  {
     id: 'none',
     label: 'Direkt (Aus)',
     badge: 'Sofort',
@@ -53,8 +59,8 @@ const TRANSITION_OPTIONS: {
 ];
 
 export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
-  transitionType = 'fade',
-  durationMs = 360,
+  transitionType = 'flip',
+  durationMs = 340,
   onChangeTransition,
   onChangeDuration,
   showFeedback,
@@ -86,14 +92,14 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
   const handleStepDuration = (delta: number) => {
     const next = Math.max(150, Math.min(600, durationMs + delta));
     handleDurationChange(next);
-    showFeedback?.(`Fading-Dauer: ${next}ms`);
+    showFeedback?.(`Animations-Dauer: ${next}ms`);
   };
 
   const handleReset = () => {
-    onChangeTransition('fade');
-    onChangeDuration(360);
+    onChangeTransition('flip');
+    onChangeDuration(340);
     if (vibrationEnabled) triggerHaptic(12);
-    showFeedback?.('Ziffern-Fading auf Standard (Subtil, 360ms) zurückgesetzt');
+    showFeedback?.('Ziffern-Animation auf Standard (Taktiler 3D-Flip, 340ms) zurückgesetzt');
   };
 
   const currentOption =
@@ -113,11 +119,11 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-200">
-                Fließendes Ziffern-Fading (Sekundentakt)
+                Taktile Ziffernwechsel-Animation (Flip & Slide)
               </span>
             </div>
             <span className="text-[11px] text-slate-400 block">
-              Sanfte Ein- & Ausblend-Animation beim Ziffernwechsel der Uhr
+              Subtile, hochwertige Flip- & Slide-Animationen beim Ziffernwechsel
             </span>
           </div>
         </div>
@@ -126,11 +132,11 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
           <span className="font-mono text-xs font-bold text-sky-300 bg-sky-500/15 border border-sky-500/30 px-2 py-0.5 rounded-lg shadow-inner">
             {transitionType === 'none' ? 'AUS' : `${durationMs}ms`}
           </span>
-          {(transitionType !== 'fade' || durationMs !== 360) && (
+          {(transitionType !== 'flip' || durationMs !== 340) && (
             <button
               type="button"
               onClick={handleReset}
-              title="Auf Standard (Subtiles Fading, 360ms) zurücksetzen"
+              title="Auf Standard (Taktiler 3D-Flip, 340ms) zurücksetzen"
               className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-700/60"
             >
               <RotateCcw className="w-3 h-3" />
@@ -166,7 +172,7 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
       </div>
 
       {/* Style Option Buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
         {TRANSITION_OPTIONS.map((option) => {
           const isSelected = transitionType === option.id;
           return (
