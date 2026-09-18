@@ -108,10 +108,51 @@ export function playIncorrectSound(): void {
 /**
  * Trigger device vibration if available and allowed
  */
-export function triggerHaptic(pattern: number | number[] | boolean = 15): void {
+export type HapticType =
+  | 'light'
+  | 'medium'
+  | 'heavy'
+  | 'selection'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | number
+  | number[]
+  | boolean;
+
+export function triggerHaptic(pattern: HapticType = 15): void {
   try {
     if (pattern === false) return;
-    const actualPattern = typeof pattern === 'boolean' ? 15 : pattern;
+    let actualPattern: number | number[] = 15;
+    if (typeof pattern === 'string') {
+      switch (pattern) {
+        case 'light':
+        case 'selection':
+          actualPattern = 10;
+          break;
+        case 'medium':
+          actualPattern = 20;
+          break;
+        case 'heavy':
+          actualPattern = 40;
+          break;
+        case 'success':
+          actualPattern = [12, 40, 18];
+          break;
+        case 'warning':
+          actualPattern = [30, 40, 30];
+          break;
+        case 'error':
+          actualPattern = [50, 40, 50, 40, 50];
+          break;
+        default:
+          actualPattern = 15;
+      }
+    } else if (typeof pattern === 'boolean') {
+      actualPattern = 15;
+    } else {
+      actualPattern = pattern;
+    }
     if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
       navigator.vibrate(actualPattern);
     }

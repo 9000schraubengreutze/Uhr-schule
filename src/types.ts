@@ -1,6 +1,6 @@
 export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school' | 'serif' | 'sans';
 export type ClockWeight = '300' | '400' | '600' | '800';
-export type BgType = 'color' | 'gradient' | 'image';
+export type BgType = 'color' | 'gradient' | 'image' | 'video';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
@@ -20,9 +20,29 @@ export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubb
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
+  | 'pomodoro'
   | 'einstellungen'
   | 'hilfe'
   | 'rechtliches';
+
+export type PomodoroPhase = 'work' | 'shortBreak' | 'longBreak';
+export type PomodoroSoundType = 'chime' | 'bell' | 'gong' | 'digital' | 'none';
+
+export interface PomodoroConfig {
+  enabled: boolean; // whether Pomodoro feature is active
+  workDuration: number; // in minutes (default 25)
+  shortBreakDuration: number; // in minutes (default 5)
+  longBreakDuration: number; // in minutes (default 15)
+  longBreakInterval: number; // work sessions before long break (default 4)
+  autoStartBreaks: boolean; // automatically start break when work session finishes
+  autoStartWork: boolean; // automatically start next work session when break finishes
+  autoZenModeDuringWork: boolean; // automatically activate Zen mode during work sessions
+  exitZenModeOnBreak: boolean; // automatically exit Zen mode when break starts
+  silenceInZenMode: boolean; // silence audio alerts and notifications when Zen mode is active
+  soundAlert: PomodoroSoundType; // alert sound type
+  soundVolume: number; // 0 to 1
+  showWidgetOnClock: boolean; // display floating pill/status on clock
+}
 
 export interface CustomGradient {
   color1: string;
@@ -122,6 +142,15 @@ export interface ClockSettings {
   digitFadeDuration: number; // 150 to 800 ms (default 340ms)
   _digitTransitionCustomized?: boolean;
   hasCustomImage: boolean;
+  activeWallpaperId?: string; // ID of selected wallpaper from library or preset
+  activeWallpaperUrl?: string; // Active wallpaper background image URL
+  activeWallpaperType?: 'image' | 'video'; // Media format of active wallpaper
+  activeVideoUrl?: string; // Direct MP4/WebM video URL when bgType is 'video' or active wallpaper is video
+  videoPlaybackSpeed?: number; // Playback rate (0.5 to 2.0, default 1.0)
+  videoMuted?: boolean; // Browser autoplay compliance (default true)
+  videoLoop?: boolean; // Loop video continuously (default true)
+  wallpaperEngineAutoParticles?: boolean; // Automatically activate matching atmospheric particle effect (default true)
+  wallpaperEngineAutoColors?: boolean; // Automatically apply complementary clock & accent colors (default false)
 
   // === UHR (Digitale Uhr-Funktionen) ===
   is24Hour: boolean; // 24-hour vs 12-hour AM/PM format
@@ -165,4 +194,7 @@ export interface ClockSettings {
   schoolSimulationMode: 'live' | 'lesson' | 'break_1' | 'break_2';
   showSchoolBadge: boolean; // Display school timetable / break status in quick controls & clock
   teacherOverrideActive: boolean; // Temporary teacher unlock
+
+  // === POMODORO-TIMER & ZEN-MODUS INTEGRATION ===
+  pomodoro: PomodoroConfig;
 }

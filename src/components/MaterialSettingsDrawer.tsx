@@ -23,6 +23,8 @@ import { GlowEffectControl } from './GlowEffectControl';
 import { EntranceAnimationControl } from './EntranceAnimationControl';
 import { ZenScheduleCard } from './ZenScheduleCard';
 import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
+import { PomodoroSettingsSection } from './PomodoroSettingsSection';
+import { PomodoroController } from '../hooks/usePomodoro';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -67,6 +69,12 @@ import {
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 import { SavedWallpaperItem } from '../types';
 import { getSavedWallpapers, setActiveWallpaper, deleteSavedWallpaper } from '../utils/storage';
+import {
+  CURATED_WALLPAPERS,
+  WALLPAPER_CATEGORIES,
+  WallpaperCategory,
+  WallpaperItem,
+} from '../data/wallpapers';
 
 interface MaterialSettingsDrawerProps {
   isOpen: boolean;
@@ -74,6 +82,7 @@ interface MaterialSettingsDrawerProps {
   onOpenGames?: () => void;
   onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
+  onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
   statusResult?: SchoolStatusResult;
@@ -91,6 +100,8 @@ interface MaterialSettingsDrawerProps {
   onTriggerSync?: () => void;
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
+  pomodoro?: PomodoroController;
+  initialTab?: SettingsTab;
 }
 
 interface NavItem {
@@ -103,6 +114,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'darstellung', label: 'Darstellung', icon: Palette },
   { id: 'uhr', label: 'Uhr', icon: Clock },
+  { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
   { id: 'einstellungen', label: 'Einstellungen', icon: Sliders },
   { id: 'hilfe', label: 'Hilfe', icon: HelpCircle },
   { id: 'rechtliches', label: 'Rechtliches', icon: Scale },
@@ -114,6 +126,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onOpenGames,
   onOpenStopwatch,
   onOpenTimetable,
+  onOpenWallpapers,
   onOpenGeminiBg,
   onOpenChat,
   statusResult,
@@ -131,13 +144,44 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onTriggerSync,
   isZenMode,
   onToggleZenMode,
+  pomodoro,
+  initialTab = 'darstellung',
 }) => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('darstellung');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'darstellung');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [saveToast, setSaveToast] = useState<string | null>(null);
   const [savedWallpapers, setSavedWallpapers] = useState<SavedWallpaperItem[]>([]);
   const [isLoadingWallpapers, setIsLoadingWallpapers] = useState(false);
+  const [drawerWallpaperCategory, setDrawerWallpaperCategory] = useState<WallpaperCategory>('all');
+
+  const handleSelectCuratedWallpaper = (wp: WallpaperItem) => {
+    triggerHaptic('success');
+    onUpdateSettings((prev) => {
+      const next: ClockSettings = {
+        ...prev,
+        bgType: 'image',
+        hasCustomImage: true,
+        activeWallpaperId: wp.id,
+        activeWallpaperUrl: wp.url,
+      };
+      if (prev.wallpaperEngineAutoParticles !== false && wp.recommendedParticle) {
+        next.particleEffect = wp.recommendedParticle;
+      }
+      if (prev.wallpaperEngineAutoColors) {
+        next.clockColor = wp.recommendedClockColor;
+        next.accentColor = wp.recommendedAccentColor;
+      }
+      return next;
+    });
+    showFeedback(`Wallpaper "${wp.title}" aktiviert!`);
+  };
 
   const loadWallpapers = useCallback(async () => {
     setIsLoadingWallpapers(true);
@@ -335,6 +379,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'uhr' as SettingsTab, title: 'Zusätzliche Zeitzonen (Weltuhr)', desc: 'Weltzeit-Uhren (z. B. New York, Tokio, London) unter der Hauptuhr' },
       { tab: 'uhr' as SettingsTab, title: 'Zen-Modus Zeitplan (Automatischer Timer)', desc: 'Zen-Modus automatisch zu bestimmten Uhrzeiten (z. B. 22:00 bis 07:00) aktivieren und deaktivieren' },
       { tab: 'darstellung' as SettingsTab, title: 'Zen-Modus Zeitplan', desc: 'Automatischer Timer für aufgeräumten Vollbild-Modus' },
+      { tab: 'pomodoro' as SettingsTab, title: 'Pomodoro-Timer (Fokus & Pause)', desc: 'Intervall-Arbeitstimer (25/5/15 Minuten) mit automatischer Pausensteuerung' },
+      { tab: 'pomodoro' as SettingsTab, title: 'Zen-Modus Stummschaltung', desc: 'Benachrichtigungen, Signaltöne und Popups im Zen-Modus stummschalten (Do Not Disturb)' },
+      { tab: 'pomodoro' as SettingsTab, title: 'Automatischer Zen-Modus bei Fokus', desc: 'Ablenkungsfreien Zen-Modus bei Arbeitsbeginn automatisch aktivieren' },
+      { tab: 'pomodoro' as SettingsTab, title: 'Pomodoro Signalton & Lautstärke', desc: 'Akustischer Phasenwechsel-Gong, Glockenspiel oder Klangschale' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
@@ -683,7 +731,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     {[
                       { id: 'gradient', label: 'Farbverlauf' },
                       { id: 'color', label: 'Einfarbig' },
-                      { id: 'image', label: 'Eigenes Bild' },
+                      { id: 'image', label: 'Wallpapers' },
                     ].map((mode) => (
                       <button
                         key={mode.id}
@@ -700,6 +748,38 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                         {mode.label}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Wallpaper Engine Featured Banner */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-blue-950/40 to-indigo-950/50 border border-cyan-500/40 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-white block">
+                            Wallpaper Engine Galerie
+                          </span>
+                          <span className="text-[10px] text-cyan-200/80">
+                            {CURATED_WALLPAPERS.length}+ 4K Hintergründe nach Kategorien & Partikel
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                        4K Engine
+                      </span>
+                    </div>
+                    {onOpenWallpapers && (
+                      <button
+                        type="button"
+                        onClick={onOpenWallpapers}
+                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-cyan-500/25"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Kategorisierte Wallpaper-Galerie öffnen</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Gemini AI Wallpaper Generator Banner */}
@@ -785,12 +865,153 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
 
                   {/* Image Upload & Saved Wallpapers */}
                   {settings.bgType === 'image' && (
-                    <div className="pt-2 border-t border-slate-800/80 space-y-3.5">
-                      <div className="flex items-center justify-between">
+                    <div className="pt-2 border-t border-slate-800/80 space-y-4">
+                      {/* Wallpaper Engine 4K Curated Section */}
+                      <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                              Wallpaper Engine ({CURATED_WALLPAPERS.length} 4K Motive)
+                            </span>
+                          </div>
+                          {onOpenWallpapers && (
+                            <button
+                              type="button"
+                              onClick={onOpenWallpapers}
+                              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold cursor-pointer transition-colors"
+                            >
+                              <span>Vollbild-Galerie</span>
+                              <Sparkles className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Category Filter Chips */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                          {WALLPAPER_CATEGORIES.map((cat) => {
+                            const isSelected = drawerWallpaperCategory === cat.id;
+                            return (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => setDrawerWallpaperCategory(cat.id)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm shadow-cyan-500/30'
+                                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 border border-slate-700/50'
+                                }`}
+                              >
+                                {cat.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Curated Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+                          {CURATED_WALLPAPERS.filter(
+                            (w) =>
+                              drawerWallpaperCategory === 'all' ||
+                              w.category === drawerWallpaperCategory
+                          ).map((wp) => {
+                            const isActive =
+                              settings.activeWallpaperId === wp.id ||
+                              (currentWallpaperUrl && wp.url === currentWallpaperUrl);
+                            return (
+                              <div
+                                key={wp.id}
+                                onClick={() => handleSelectCuratedWallpaper(wp)}
+                                className={`group relative rounded-xl overflow-hidden border aspect-video cursor-pointer transition-all ${
+                                  isActive
+                                    ? 'border-cyan-400 ring-2 ring-cyan-400/50 shadow-md scale-[1.02]'
+                                    : 'border-slate-800 hover:border-slate-600 bg-slate-950/60'
+                                }`}
+                                title={`${wp.title} (${wp.resolution})`}
+                              >
+                                <img
+                                  src={wp.url}
+                                  alt={wp.title}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+
+                                <div className="absolute top-1.5 left-1.5 z-10">
+                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-cyan-300 border border-cyan-500/30 shadow-sm">
+                                    {wp.resolution}
+                                  </span>
+                                </div>
+
+                                {isActive && (
+                                  <div className="absolute top-1.5 right-1.5 z-10">
+                                    <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-400 text-slate-950 shadow-md">
+                                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                      <span>Aktiv</span>
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="absolute bottom-1 left-1.5 right-1.5 z-10 pointer-events-none">
+                                  <p className="text-[10px] font-medium text-white line-clamp-1 drop-shadow-sm">
+                                    {wp.title}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Smart Engine Automation Toggles */}
+                        <div className="pt-2 border-t border-slate-800/60 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs text-slate-300 font-medium block">
+                                Auto-Partikel
+                              </span>
+                              <span className="text-[10px] text-slate-500 block">
+                                Passt Partikeleffekt automatisch ans Wallpaper an
+                              </span>
+                            </div>
+                            <MaterialSwitch
+                              checked={settings.wallpaperEngineAutoParticles ?? true}
+                              onChange={(checked) =>
+                                onUpdateSettings((p) => ({
+                                  ...p,
+                                  wallpaperEngineAutoParticles: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs text-slate-300 font-medium block">
+                                Farben harmonisieren
+                              </span>
+                              <span className="text-[10px] text-slate-500 block">
+                                Stimmt Ziffern- und Akzentfarbe auf das Motiv ab
+                              </span>
+                            </div>
+                            <MaterialSwitch
+                              checked={settings.wallpaperEngineAutoColors ?? false}
+                              onChange={(checked) =>
+                                onUpdateSettings((p) => ({
+                                  ...p,
+                                  wallpaperEngineAutoColors: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Saved Wallpapers & Custom Uploads */}
+                      <div className="flex items-center justify-between pt-1">
                         <div className="flex items-center gap-2">
                           <ImageIcon className="w-4 h-4 text-blue-400" />
                           <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                            Gespeicherte Wallpapers ({savedWallpapers.length})
+                            Eigene Wallpapers & KI ({savedWallpapers.length})
                           </span>
                         </div>
                         {settings.hasCustomImage && onRemoveImage && (
@@ -1543,6 +1764,35 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   vibrationEnabled={settings.vibrationEnabled}
                 />
 
+                {/* Pomodoro Fokus-Timer Quick Card in Uhr-Tab */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/30 via-slate-900/60 to-indigo-950/30 border border-rose-500/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center">
+                      <Timer className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        Pomodoro Fokus-Timer & Zen-Modus
+                      </span>
+                      <span className="text-[11px] text-slate-400 block">
+                        {pomodoro?.isRunning
+                          ? `Läuft: ${Math.floor((pomodoro?.timeLeft || 0) / 60)}m übrig • Zen-Modus synchronisiert`
+                          : `${settings.pomodoro?.workDuration || 25} Min. Fokus mit automatischer Zen-Stummschaltung`}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (settings.vibrationEnabled) triggerHaptic(12);
+                      setActiveTab('pomodoro');
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md shrink-0 active:scale-95"
+                  >
+                    Öffnen
+                  </button>
+                </div>
+
                 {/* Display & Layout Options */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-2 divide-y divide-slate-800/60">
                   <MaterialSwitch
@@ -1748,6 +1998,33 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     className="mt-3"
                   />
                 </div>
+              </motion.div>
+            )}
+
+            {/* === POMODORO (Fokus-Timer & Zen-Modus Integration) === */}
+            {activeTab === 'pomodoro' && (
+              <motion.div
+                key="tab-pomodoro"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                {pomodoro ? (
+                  <PomodoroSettingsSection
+                    settings={settings}
+                    onUpdateSettings={onUpdateSettings}
+                    pomodoro={pomodoro}
+                    isZenMode={Boolean(isZenMode)}
+                    onToggleZenMode={onToggleZenMode || (() => {})}
+                    showFeedback={showFeedback}
+                  />
+                ) : (
+                  <div className="p-6 text-center text-slate-400">
+                    Pomodoro-Controller wird geladen...
+                  </div>
+                )}
               </motion.div>
             )}
 

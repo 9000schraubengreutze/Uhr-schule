@@ -170,6 +170,26 @@ export function loadSettings(): ClockSettings {
         typeof parsed.digitFadeDuration === 'number'
           ? Math.max(150, Math.min(800, parsed.digitFadeDuration))
           : DEFAULT_SETTINGS.digitFadeDuration,
+      hasCustomImage:
+        typeof parsed.hasCustomImage === 'boolean'
+          ? parsed.hasCustomImage
+          : DEFAULT_SETTINGS.hasCustomImage,
+      activeWallpaperId:
+        typeof parsed.activeWallpaperId === 'string'
+          ? parsed.activeWallpaperId
+          : undefined,
+      activeWallpaperUrl:
+        typeof parsed.activeWallpaperUrl === 'string'
+          ? parsed.activeWallpaperUrl
+          : undefined,
+      wallpaperEngineAutoParticles:
+        typeof parsed.wallpaperEngineAutoParticles === 'boolean'
+          ? parsed.wallpaperEngineAutoParticles
+          : DEFAULT_SETTINGS.wallpaperEngineAutoParticles,
+      wallpaperEngineAutoColors:
+        typeof parsed.wallpaperEngineAutoColors === 'boolean'
+          ? parsed.wallpaperEngineAutoColors
+          : DEFAULT_SETTINGS.wallpaperEngineAutoColors,
       // Standardmäßig stumm: soundEnabled ist standardmäßig false, es sei denn, der Nutzer hat Töne explizit aktiviert
       soundEnabled:
         typeof parsed.soundEnabled === 'boolean'
@@ -192,6 +212,32 @@ export function loadSettings(): ClockSettings {
         ...DEFAULT_SETTINGS.customGradient,
         ...(parsed.customGradient || {}),
       },
+      pomodoro: parsed.pomodoro && typeof parsed.pomodoro === 'object'
+        ? {
+            ...DEFAULT_SETTINGS.pomodoro,
+            ...parsed.pomodoro,
+            workDuration:
+              typeof parsed.pomodoro.workDuration === 'number'
+                ? Math.max(1, Math.min(120, Math.round(parsed.pomodoro.workDuration)))
+                : DEFAULT_SETTINGS.pomodoro.workDuration,
+            shortBreakDuration:
+              typeof parsed.pomodoro.shortBreakDuration === 'number'
+                ? Math.max(1, Math.min(60, Math.round(parsed.pomodoro.shortBreakDuration)))
+                : DEFAULT_SETTINGS.pomodoro.shortBreakDuration,
+            longBreakDuration:
+              typeof parsed.pomodoro.longBreakDuration === 'number'
+                ? Math.max(1, Math.min(90, Math.round(parsed.pomodoro.longBreakDuration)))
+                : DEFAULT_SETTINGS.pomodoro.longBreakDuration,
+            longBreakInterval:
+              typeof parsed.pomodoro.longBreakInterval === 'number'
+                ? Math.max(1, Math.min(12, Math.round(parsed.pomodoro.longBreakInterval)))
+                : DEFAULT_SETTINGS.pomodoro.longBreakInterval,
+            soundVolume:
+              typeof parsed.pomodoro.soundVolume === 'number'
+                ? Math.max(0, Math.min(1, parsed.pomodoro.soundVolume))
+                : DEFAULT_SETTINGS.pomodoro.soundVolume,
+          }
+        : DEFAULT_SETTINGS.pomodoro,
     };
   } catch (err) {
     console.warn('Failed to parse saved settings, using defaults', err);

@@ -22,7 +22,11 @@ interface QuickControlsProps {
   onOpenSettings: () => void;
   onOpenGames?: () => void;
   onOpenStopwatch?: () => void;
+  onOpenPomodoro?: () => void;
+  pomodoroRunning?: boolean;
+  pomodoroTimeFormatted?: string;
   onOpenTimetable?: () => void;
+  onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
   statusResult?: SchoolStatusResult;
@@ -40,7 +44,11 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenSettings,
   onOpenGames,
   onOpenStopwatch,
+  onOpenPomodoro,
+  pomodoroRunning = false,
+  pomodoroTimeFormatted,
   onOpenTimetable,
+  onOpenWallpapers,
   onOpenGeminiBg,
   onOpenChat,
   statusResult,
@@ -177,9 +185,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenTimetable}
               title="Stundenplan HO 2 (Frau Schmitz) öffnen"
               aria-label="Stundenplan öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-amber-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(251,191,36,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12" />
+              <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-115 group-hover:-rotate-12" />
               <span className="hidden sm:inline">Stundenplan</span>
             </button>
           )}
@@ -192,10 +200,39 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenStopwatch}
               title="Stoppuhr öffnen (Taste: W)"
               aria-label="Stoppuhr öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-sky-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(56,189,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Timer className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12 group-hover:text-sky-300" />
+              <Timer className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-sky-300" />
               <span>Stoppuhr</span>
+            </button>
+          )}
+
+          {/* Pomodoro Fokus-Timer Button */}
+          {onOpenPomodoro && (
+            <button
+              id="open-pomodoro-btn"
+              type="button"
+              onClick={onOpenPomodoro}
+              title="Pomodoro Fokus-Timer (Taste: P)"
+              aria-label="Pomodoro Fokus-Timer öffnen"
+              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 ${
+                pomodoroRunning
+                  ? 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 border-rose-400/40 shadow-[0_0_12px_rgba(244,63,94,0.35)]'
+                  : 'text-slate-300 hover:text-white border-transparent hover:border-amber-400/30 hover:bg-white/[0.16]'
+              }`}
+            >
+              <Timer
+                className={`w-3.5 h-3.5 ${
+                  pomodoroRunning
+                    ? 'text-rose-400 animate-pulse'
+                    : 'text-amber-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-amber-300'
+                }`}
+              />
+              <span>
+                {pomodoroRunning && pomodoroTimeFormatted
+                  ? pomodoroTimeFormatted
+                  : 'Pomodoro'}
+              </span>
             </button>
           )}
 
@@ -213,7 +250,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                   : `Unterrichtszeit: Games gesperrt. Nächste Pause: ${statusResult?.nextBreak?.start || '10:30'} Uhr`
               }
               aria-label="Pausen-Spiele öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-emerald-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(52,211,153,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
               {!isGameAllowed ? (
                 <>
@@ -239,6 +276,21 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           {/* Divider */}
           <div className="w-px h-4 bg-white/10 mx-0.5" />
 
+          {/* Wallpaper Engine Button */}
+          {onOpenWallpapers && (
+            <button
+              id="open-wallpapers-btn"
+              type="button"
+              onClick={onOpenWallpapers}
+              title="Wallpaper Engine: Kategorisierte 4K-Hintergründe & Partikel (Taste: H)"
+              aria-label="Wallpaper Engine Galerie öffnen"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.18] hover:shadow-[0_4px_16px_rgba(56,189,248,0.35),0_0_12px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 transition-all duration-300 group-hover:scale-125 group-hover:rotate-12 group-hover:text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+              <span>Wallpapers</span>
+            </button>
+          )}
+
           {/* Gemini Bild-Studio Button */}
           {onOpenGeminiBg && (
             <button
@@ -247,9 +299,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenGeminiBg}
               title="Gemini Bild-Studio: Bilder generieren & bearbeiten (Taste: B)"
               aria-label="Gemini Bild-Studio öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-blue-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(96,165,250,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Wand2 className="w-3.5 h-3.5 text-blue-400 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-300" />
+              <Wand2 className="w-3.5 h-3.5 text-blue-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-blue-300" />
               <span className="hidden md:inline">Bild-Studio</span>
             </button>
           )}
@@ -262,9 +314,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenChat}
               title="Gemini KI-Chat öffnen (Taste: C)"
               aria-label="Gemini KI-Chat öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(129,140,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:text-indigo-300" />
+              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-indigo-300" />
               <span className="hidden sm:inline">KI-Chat</span>
             </button>
           )}
@@ -279,9 +331,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             onClick={onOpenSettings}
             title="Einstellungen öffnen (Taste: S)"
             aria-label="Einstellungen öffnen"
-            className="group relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 hover:shadow-[0_4px_14px_rgba(0,0,0,0.35),0_0_15px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            className="group relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 border border-transparent hover:border-white/30 hover:shadow-[0_6px_22px_rgba(0,0,0,0.45),0_0_18px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 hover:scale-[1.04] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-90 group-hover:scale-110 transition-all duration-500 ease-out" />
+            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-90 group-hover:scale-115 transition-all duration-500 ease-out" />
             <span>Einstellungen</span>
           </button>
 
@@ -296,7 +348,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                 : 'Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)'
             }
             aria-label="Zen-Modus aktivieren"
-            className="group relative p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            className="group relative p-1.5 rounded-full text-slate-400 hover:text-white border border-transparent hover:border-white/20 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
             <EyeOff className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
             {zenScheduleEnabled && (

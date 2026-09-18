@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef, type CSSProperties } from 'react';
-import { ClockSettings, ColorScheme } from './types';
+import { ClockSettings, ColorScheme, SettingsTab } from './types';
 import {
   loadSettings,
   saveSettings,
@@ -18,15 +18,19 @@ import { SmoothBackground } from './components/SmoothBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { MobileBatteryIndicator } from './components/MobileBatteryIndicator';
+import { PomodoroFloatingWidget } from './components/PomodoroFloatingWidget';
+import { usePomodoro } from './hooks/usePomodoro';
 import { GamesModal } from './games/GamesModal';
 import { StopwatchModal } from './components/StopwatchModal';
 import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
+import { WallpaperEngineModal } from './components/WallpaperEngineModal';
 import { isTimeInZenSchedule } from './utils/zenSchedule';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isWallpapersOpen, setIsWallpapersOpen] = useState(false);
   const [isGamesOpen, setIsGamesOpen] = useState(false);
   const [isStopwatchOpen, setIsStopwatchOpen] = useState(false);
   const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
@@ -35,6 +39,15 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [isClockColorPickerOpen, setIsClockColorPickerOpen] = useState(false);
+  const [settingsDrawerTab, setSettingsDrawerTab] = useState<SettingsTab>('darstellung');
+
+  // Pomodoro timer hook with automatic Zen Mode synchronization
+  const pomodoro = usePomodoro({
+    settings,
+    onUpdateSettings: setSettings,
+    isZenMode,
+    onSetZenMode: setIsZenMode,
+  });
 
   // Online Atomic Clock synchronization state
   const [atomicState, setAtomicState] = useState<AtomicTimeState>({
@@ -202,6 +215,7 @@ export default function App() {
       }
       if (e.key === 'Escape') {
         if (isChatOpen) setIsChatOpen(false);
+        else if (isWallpapersOpen) setIsWallpapersOpen(false);
         else if (isGeminiBgOpen) setIsGeminiBgOpen(false);
         else if (isGamesOpen) setIsGamesOpen(false);
         else if (isStopwatchOpen) setIsStopwatchOpen(false);
@@ -210,6 +224,8 @@ export default function App() {
         toggleFullscreen();
       } else if (e.key === 's' || e.key === 'S') {
         setIsSettingsOpen((prev) => !prev);
+      } else if (e.key === 'h' || e.key === 'H') {
+        setIsWallpapersOpen((prev) => !prev);
       } else if (e.key === 'g' || e.key === 'G') {
         setIsGamesOpen((prev) => !prev);
       } else if (e.key === 'w' || e.key === 'W') {
@@ -218,13 +234,16 @@ export default function App() {
         setIsGeminiBgOpen((prev) => !prev);
       } else if (e.key === 'c' || e.key === 'C') {
         setIsChatOpen((prev) => !prev);
+      } else if (e.key === 'p' || e.key === 'P') {
+        setSettingsDrawerTab('pomodoro');
+        setIsSettingsOpen(true);
       } else if (e.key === 'z' || e.key === 'Z') {
         setIsZenMode((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
+  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -372,9 +391,10 @@ export default function App() {
       };
     }
 
-    if (settings.bgType === 'image' && customImageUrl) {
+    const activeImg = customImageUrl || settings.activeWallpaperUrl;
+    if (settings.bgType === 'image' && activeImg) {
       return {
-        backgroundImage: `url("${customImageUrl}")`,
+        backgroundImage: `url("${activeImg}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -386,7 +406,7 @@ export default function App() {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     };
-  }, [settings.bgType, settings.bgColor, customImageUrl, resolvedBgGradient]);
+  }, [settings.bgType, settings.bgColor, customImageUrl, settings.activeWallpaperUrl, resolvedBgGradient]);
 
   return (
     <div
@@ -430,13 +450,23 @@ export default function App() {
 
       {/* Quick Access Material 3 Controls at Bottom */}
       <QuickControls
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={() => {
+          setSettingsDrawerTab('darstellung');
+          setIsSettingsOpen(true);
+        }}
         onOpenGames={() => setIsGamesOpen(true)}
         onOpenStopwatch={() => setIsStopwatchOpen(true)}
+        onOpenPomodoro={() => {
+          setSettingsDrawerTab('pomodoro');
+          setIsSettingsOpen(true);
+        }}
+        pomodoroRunning={pomodoro.isRunning}
+        pomodoroTimeFormatted={`${Math.floor(pomodoro.timeLeft / 60)}:${String(pomodoro.timeLeft % 60).padStart(2, '0')}`}
+        onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
         backdropBlur={settings.backdropBlurIntensity}
-        anyModalOpen={isSettingsOpen || isGamesOpen || isStopwatchOpen || isGeminiBgOpen || isChatOpen}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isStopwatchOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
@@ -457,6 +487,18 @@ export default function App() {
         isZenMode={isZenMode}
       />
 
+      {/* Pomodoro Timer Floating Status Widget on Main Clock */}
+      <PomodoroFloatingWidget
+        pomodoro={pomodoro}
+        settings={settings}
+        isZenMode={isZenMode}
+        onOpenPomodoroSettings={() => {
+          setSettingsDrawerTab('pomodoro');
+          setIsSettingsOpen(true);
+        }}
+        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20"
+      />
+
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
       <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4 pb-16 sm:pb-20">
         <DigitalClock
@@ -468,6 +510,7 @@ export default function App() {
           isSettingsOpen={isSettingsOpen}
           isAnyMenuOpen={
             isSettingsOpen ||
+            isWallpapersOpen ||
             isGamesOpen ||
             isStopwatchOpen ||
             isGeminiBgOpen ||
@@ -476,6 +519,19 @@ export default function App() {
           }
         />
       </main>
+
+      {/* Wallpaper Engine Categorized Gallery Modal */}
+      <WallpaperEngineModal
+        isOpen={isWallpapersOpen}
+        onClose={() => setIsWallpapersOpen(false)}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        onOpenGeminiBg={() => {
+          setIsWallpapersOpen(false);
+          setIsGeminiBgOpen(true);
+        }}
+        backdropBlur={settings.backdropBlurIntensity}
+      />
 
       {/* Gemini AI Background & Image Studio Modal (Create & Edit using gemini-3.1-flash-image-preview) */}
       <GeminiBackgroundModal
@@ -516,6 +572,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         onOpenGames={() => setIsGamesOpen(true)}
         onOpenStopwatch={() => setIsStopwatchOpen(true)}
+        onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
         settings={settings}
@@ -529,6 +586,8 @@ export default function App() {
         onTriggerSync={performSync}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
+        pomodoro={pomodoro}
+        initialTab={settingsDrawerTab}
       />
     </div>
   );

@@ -1,4 +1,20 @@
-import { ClockSettings, GradientPreset, CuratedTheme } from '../types';
+import { ClockSettings, GradientPreset, CuratedTheme, PomodoroConfig } from '../types';
+
+export const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
+  enabled: true,
+  workDuration: 25,
+  shortBreakDuration: 5,
+  longBreakDuration: 15,
+  longBreakInterval: 4,
+  autoStartBreaks: true,
+  autoStartWork: false,
+  autoZenModeDuringWork: true,
+  exitZenModeOnBreak: true,
+  silenceInZenMode: true,
+  soundAlert: 'chime',
+  soundVolume: 0.75,
+  showWidgetOnClock: true,
+};
 
 export const DEFAULT_SETTINGS: ClockSettings = {
   // DARSTELLUNG
@@ -42,6 +58,10 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   digitTransition: 'flip', // Subtle tactile 3D flip animation
   digitFadeDuration: 340, // 340ms tactile duration
   hasCustomImage: false,
+  activeWallpaperId: undefined,
+  activeWallpaperUrl: undefined,
+  wallpaperEngineAutoParticles: true,
+  wallpaperEngineAutoColors: false,
 
   // UHR (Digitale Uhr-Funktionen)
   is24Hour: true,
@@ -89,6 +109,9 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   schoolSimulationMode: 'live',
   showSchoolBadge: true,
   teacherOverrideActive: false,
+
+  // POMODORO-TIMER & ZEN-MODUS INTEGRATION
+  pomodoro: DEFAULT_POMODORO_CONFIG,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [
