@@ -7,6 +7,14 @@ export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
 export type DigitTransition = 'flip' | 'slide' | 'slide-fade' | 'fade' | 'crossfade' | 'none';
 
+export type EntranceAnimationType =
+  | 'slide-up'
+  | 'slide-down'
+  | 'fade-in'
+  | 'rotate'
+  | 'zoom-in'
+  | 'flip';
+
 export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
 
 export type SettingsTab =
@@ -101,8 +109,11 @@ export interface ClockSettings {
   clockScale: number; // 70 to 140 percent
   autoScaleFontSize: boolean; // Dynamically scale font size based on window/viewport to fill the view optimally
   enableBreathingAnimation: boolean;
-  enableEntranceAnimation: boolean; // Smooth CSS entrance animation when toggling Zen mode or returning from settings
-  entranceAnimationType: 'slide-up' | 'fade-in'; // 'slide-up' (Slide-up & Fade) | 'fade-in' (Fade-in only)
+  enableEntranceAnimation: boolean; // Smooth CSS entrance animation when waking screen, exiting menus, or toggling Zen mode
+  entranceAnimationType: EntranceAnimationType; // 'slide-up' | 'slide-down' | 'fade-in' | 'rotate' | 'zoom-in' | 'flip'
+  entranceWakeScreenEnabled?: boolean; // Trigger entrance animation upon screen wake or returning to window
+  entranceMenuExitEnabled?: boolean; // Trigger entrance animation when closing menus/drawers
+  entranceZenToggleEnabled?: boolean; // Trigger entrance animation when toggling Zen mode
   enableGlow: boolean; // Ambient neon / soft backlight glow radiating from behind digits
   glowIntensity: number; // 0 to 100 percent (color intensity)
   glowSpread: number; // 10 to 120 px (glow spread radius radiating behind digits)
@@ -142,7 +153,7 @@ export interface ClockSettings {
 
   // === EINSTELLUNGEN (Allgemeine Optionen) ===
   appLanguage: 'de' | 'en';
-  soundEnabled: boolean; // Subtle second tick audio
+  soundEnabled: boolean; // Subtle second tick audio (standardmäßig deaktiviert / stumm)
   vibrationEnabled: boolean; // Haptic feedback on mobile
   useAtomicSync: boolean; // Use online atomic clock (NTP) instead of device clock
   showSyncBadge: boolean; // Display sync indicator on the main screen

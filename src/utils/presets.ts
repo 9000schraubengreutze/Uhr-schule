@@ -33,6 +33,9 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   enableBreathingAnimation: true,
   enableEntranceAnimation: true,
   entranceAnimationType: 'slide-up',
+  entranceWakeScreenEnabled: true,
+  entranceMenuExitEnabled: true,
+  entranceZenToggleEnabled: true,
   enableGlow: true,
   glowIntensity: 55, // 0 to 100% color intensity
   glowSpread: 45, // 10 to 120px radiating spread radius

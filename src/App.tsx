@@ -466,6 +466,14 @@ export default function App() {
           onColorPickerOpenChange={setIsClockColorPickerOpen}
           isZenMode={isZenMode}
           isSettingsOpen={isSettingsOpen}
+          isAnyMenuOpen={
+            isSettingsOpen ||
+            isGamesOpen ||
+            isStopwatchOpen ||
+            isGeminiBgOpen ||
+            isChatOpen ||
+            isClockColorPickerOpen
+          }
         />
       </main>
 

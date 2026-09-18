@@ -321,7 +321,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Typografie-Sets (Mono-space, Serif, Sans-Serif)', desc: 'Vordefinierte Typografie-Kombinationen für den visuellen Stil der Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftart & Schriftstärke', desc: 'Outfit, Inter, Monospace Digital, Serif, Schulbuch' },
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
-      { tab: 'darstellung' as SettingsTab, title: 'Eingangsanimation (Zen / Einstellungen)', desc: 'Sanftes Hereingleiten & Einblenden der Digitaluhr beim Umschalten des Zen-Modus oder Schließen der Einstellungen' },
+      { tab: 'darstellung' as SettingsTab, title: 'Uhr-Eingangsanimationen (Screen-Wake & Menü-Exit)', desc: 'Übergangseffekte (Slide Up/Down, Pure Fade, Rotate, Focus Zoom, 3D Flip) beim Aufwecken des Bildschirms oder Schließen von Menüs' },
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
       { tab: 'darstellung' as SettingsTab, title: 'Ziffern-Fading & Übergang', desc: 'Fließende Ein- und Ausblend-Animation beim Sekundentakt der Uhrzeit (Subtil, Crossfade, Gleiten)' },
@@ -1238,10 +1238,13 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   vibrationEnabled={settings.vibrationEnabled}
                 />
 
-                {/* CSS-basierte Eingangsanimation (Zen-Modus & Einstellungen) */}
+                {/* CSS-basierte Eingangsanimation (Screen-Wake, Menü-Exit & Zen-Modus) */}
                 <EntranceAnimationControl
                   enabled={settings.enableEntranceAnimation ?? true}
                   animationType={settings.entranceAnimationType ?? 'slide-up'}
+                  wakeScreenEnabled={settings.entranceWakeScreenEnabled ?? true}
+                  menuExitEnabled={settings.entranceMenuExitEnabled ?? true}
+                  zenToggleEnabled={settings.entranceZenToggleEnabled ?? true}
                   onToggleEnabled={(enabled) =>
                     onUpdateSettings((prev) => ({
                       ...prev,
@@ -1252,6 +1255,24 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     onUpdateSettings((prev) => ({
                       ...prev,
                       entranceAnimationType: type,
+                    }))
+                  }
+                  onToggleWakeScreen={(enabled) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      entranceWakeScreenEnabled: enabled,
+                    }))
+                  }
+                  onToggleMenuExit={(enabled) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      entranceMenuExitEnabled: enabled,
+                    }))
+                  }
+                  onToggleZenToggle={(enabled) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      entranceZenToggleEnabled: enabled,
                     }))
                   }
                   showFeedback={showFeedback}
@@ -1775,12 +1796,17 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     </div>
                   </div>
 
-                  {/* Ton an/aus */}
+                  {/* Ton an/aus (Standard: Aus) */}
                   <MaterialSwitch
                     label="Töne & Audioeffekte"
-                    description="Dezentes akustisches Ticken im Sekundentakt"
+                    description="Dezentes akustisches Ticken im Sekundentakt (Standard: Aus)"
                     checked={settings.soundEnabled}
-                    onChange={(v) => onUpdateSettings((p) => ({ ...p, soundEnabled: v }))}
+                    onChange={(v) => {
+                      try {
+                        localStorage.setItem('webclock_sound_explicit_choice_v1', 'true');
+                      } catch {}
+                      onUpdateSettings((p) => ({ ...p, soundEnabled: v }));
+                    }}
                   />
 
                   {/* Vibration */}

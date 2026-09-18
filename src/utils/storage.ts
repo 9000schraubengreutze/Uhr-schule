@@ -120,9 +120,26 @@ export function loadSettings(): ClockSettings {
           ? parsed.enableEntranceAnimation
           : DEFAULT_SETTINGS.enableEntranceAnimation,
       entranceAnimationType:
-        parsed.entranceAnimationType === 'slide-up' || parsed.entranceAnimationType === 'fade-in'
+        parsed.entranceAnimationType === 'slide-up' ||
+        parsed.entranceAnimationType === 'slide-down' ||
+        parsed.entranceAnimationType === 'fade-in' ||
+        parsed.entranceAnimationType === 'rotate' ||
+        parsed.entranceAnimationType === 'zoom-in' ||
+        parsed.entranceAnimationType === 'flip'
           ? parsed.entranceAnimationType
           : DEFAULT_SETTINGS.entranceAnimationType,
+      entranceWakeScreenEnabled:
+        typeof parsed.entranceWakeScreenEnabled === 'boolean'
+          ? parsed.entranceWakeScreenEnabled
+          : DEFAULT_SETTINGS.entranceWakeScreenEnabled,
+      entranceMenuExitEnabled:
+        typeof parsed.entranceMenuExitEnabled === 'boolean'
+          ? parsed.entranceMenuExitEnabled
+          : DEFAULT_SETTINGS.entranceMenuExitEnabled,
+      entranceZenToggleEnabled:
+        typeof parsed.entranceZenToggleEnabled === 'boolean'
+          ? parsed.entranceZenToggleEnabled
+          : DEFAULT_SETTINGS.entranceZenToggleEnabled,
       enableGlow:
         typeof parsed.enableGlow === 'boolean'
           ? parsed.enableGlow
@@ -153,6 +170,13 @@ export function loadSettings(): ClockSettings {
         typeof parsed.digitFadeDuration === 'number'
           ? Math.max(150, Math.min(800, parsed.digitFadeDuration))
           : DEFAULT_SETTINGS.digitFadeDuration,
+      // Standardmäßig stumm: soundEnabled ist standardmäßig false, es sei denn, der Nutzer hat Töne explizit aktiviert
+      soundEnabled:
+        typeof parsed.soundEnabled === 'boolean'
+          ? (typeof window !== 'undefined' && localStorage.getItem('webclock_sound_explicit_choice_v1') === 'true'
+              ? parsed.soundEnabled
+              : false)
+          : false,
       clockFont:
         parsed.clockFont === 'inter' ||
         parsed.clockFont === 'mono' ||
@@ -205,6 +229,7 @@ export function resetAllSettings(): ClockSettings {
   try {
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(USER_DEFAULT_KEY);
+    localStorage.removeItem('webclock_sound_explicit_choice_v1');
   } catch {
     // Ignored
   }

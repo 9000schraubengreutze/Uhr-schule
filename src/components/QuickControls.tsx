@@ -127,9 +127,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               : 'Minimalismus-Modus beenden & Menüband wieder per Hover aktivieren (Taste: Z)'
           }
           aria-label="Minimalismus-Modus beenden"
-          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/50 hover:bg-slate-900/90 backdrop-blur-xl border border-white/10 text-slate-400 hover:text-white transition-all duration-300 shadow-lg active:scale-95 cursor-pointer flex items-center gap-1.5 group"
+          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/60 hover:bg-slate-900/95 backdrop-blur-xl border border-white/10 hover:border-white/25 text-slate-400 hover:text-white transition-all duration-300 shadow-lg hover:shadow-[0_8px_25px_rgba(0,0,0,0.5),0_0_18px_rgba(255,255,255,0.12)] hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 cursor-pointer flex items-center gap-1.5 group"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
           {zenScheduleEnabled && zenScheduleActive && (
             <span className="hidden group-hover:inline text-[11px] font-medium text-indigo-300 pr-1 transition-all">
               Plan aktiv
@@ -167,7 +167,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             backdropFilter: `blur(${backdropBlur}px)`,
             WebkitBackdropFilter: `blur(${backdropBlur}px)`,
           }}
-          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 max-w-[calc(100vw-1.5rem)] overflow-x-auto scrollbar-none rounded-full bg-slate-950/55 hover:bg-slate-950/75 border border-white/10 shadow-2xl shadow-black/50 transition-all duration-300"
+          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 max-w-[calc(100vw-1.5rem)] overflow-x-auto scrollbar-none rounded-full bg-slate-950/60 hover:bg-slate-950/80 border border-white/10 hover:border-white/20 shadow-2xl shadow-black/60 hover:shadow-[0_20px_45px_rgba(0,0,0,0.7),0_0_24px_rgba(255,255,255,0.06)] transition-all duration-300"
         >
           {/* Optional Stundenplan */}
           {onOpenTimetable && (
@@ -177,9 +177,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenTimetable}
               title="Stundenplan HO 2 (Frau Schmitz) öffnen"
               aria-label="Stundenplan öffnen"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+              <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12" />
               <span className="hidden sm:inline">Stundenplan</span>
             </button>
           )}
@@ -192,9 +192,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenStopwatch}
               title="Stoppuhr öffnen (Taste: W)"
               aria-label="Stoppuhr öffnen"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Timer className="w-3.5 h-3.5 text-sky-400" />
+              <Timer className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12 group-hover:text-sky-300" />
               <span>Stoppuhr</span>
             </button>
           )}
@@ -213,23 +213,23 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                   : `Unterrichtszeit: Games gesperrt. Nächste Pause: ${statusResult?.nextBreak?.start || '10:30'} Uhr`
               }
               aria-label="Pausen-Spiele öffnen"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
               {!isGameAllowed ? (
                 <>
-                  <Lock className="w-3.5 h-3.5 text-rose-400" />
+                  <Lock className="w-3.5 h-3.5 text-rose-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
                   <span>Games</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                 </>
               ) : isBreak ? (
                 <>
-                  <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse transition-transform duration-200 group-hover:scale-110" />
                   <span className="text-emerald-300">Games</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                 </>
               ) : (
                 <>
-                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
                   <span>Games</span>
                 </>
               )}
@@ -247,9 +247,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenGeminiBg}
               title="Gemini Bild-Studio: Bilder generieren & bearbeiten (Taste: B)"
               aria-label="Gemini Bild-Studio öffnen"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Wand2 className="w-3.5 h-3.5 text-blue-400" />
+              <Wand2 className="w-3.5 h-3.5 text-blue-400 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-300" />
               <span className="hidden md:inline">Bild-Studio</span>
             </button>
           )}
@@ -262,9 +262,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenChat}
               title="Gemini KI-Chat öffnen (Taste: C)"
               aria-label="Gemini KI-Chat öffnen"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400" />
+              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:text-indigo-300" />
               <span className="hidden sm:inline">KI-Chat</span>
             </button>
           )}
@@ -272,16 +272,16 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
           {/* Divider */}
           <div className="w-px h-4 bg-white/10 mx-0.5" />
 
-          {/* Einstellungen Button - refined subtle glass accent */}
+          {/* Einstellungen Button - refined subtle glass accent with hover lift & spin */}
           <button
             id="open-settings-btn"
             type="button"
             onClick={onOpenSettings}
             title="Einstellungen öffnen (Taste: S)"
             aria-label="Einstellungen öffnen"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 active:scale-95 transition-all duration-150 cursor-pointer group"
+            className="group relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 hover:shadow-[0_4px_14px_rgba(0,0,0,0.35),0_0_15px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-45 transition-transform duration-300" />
+            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-90 group-hover:scale-110 transition-all duration-500 ease-out" />
             <span>Einstellungen</span>
           </button>
 
@@ -296,9 +296,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                 : 'Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)'
             }
             aria-label="Zen-Modus aktivieren"
-            className="relative p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="group relative p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/[0.14] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
-            <EyeOff className="w-3.5 h-3.5" />
+            <EyeOff className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
             {zenScheduleEnabled && (
               <span
                 className={`absolute 0.5 top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${

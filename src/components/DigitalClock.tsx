@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, useAnimation } from 'motion/react';
 import { Coffee, GraduationCap, Lock, Palette } from 'lucide-react';
 import { ClockSettings } from '../types';
@@ -19,6 +19,7 @@ interface DigitalClockProps {
   onColorPickerOpenChange?: (isOpen: boolean) => void;
   isZenMode?: boolean;
   isSettingsOpen?: boolean;
+  isAnyMenuOpen?: boolean;
 }
 
 export const DigitalClock: React.FC<DigitalClockProps> = ({
@@ -30,6 +31,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   onColorPickerOpenChange,
   isZenMode,
   isSettingsOpen,
+  isAnyMenuOpen,
 }) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
@@ -63,13 +65,66 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const timeDisplayRef = useRef<HTMLDivElement>(null);
 
-  // CSS-based entrance animation states (triggered on Zen mode toggle or returning from settings)
+  // CSS-based entrance animation states (triggered on screen wake, menu exits, or Zen mode toggle)
   const [entranceKey, setEntranceKey] = useState(0);
   const [isEntranceActive, setIsEntranceActive] = useState(true);
   const prevZenModeRef = useRef<boolean | undefined>(undefined);
-  const prevSettingsOpenRef = useRef<boolean | undefined>(undefined);
+  const prevMenuOpenRef = useRef<boolean | undefined>(undefined);
 
-  // Trigger entrance when user toggles Zen mode
+  const triggerEntranceAnimation = useCallback(() => {
+    if (settings.enableEntranceAnimation === false) return;
+    setEntranceKey((k) => k + 1);
+    setIsEntranceActive(true);
+  }, [settings.enableEntranceAnimation]);
+
+  // 1. Trigger entrance when user wakes the screen / returns to window / tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        settings.enableEntranceAnimation !== false &&
+        settings.entranceWakeScreenEnabled !== false
+      ) {
+        triggerEntranceAnimation();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      if (
+        settings.enableEntranceAnimation !== false &&
+        settings.entranceWakeScreenEnabled !== false
+      ) {
+        triggerEntranceAnimation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [settings.enableEntranceAnimation, settings.entranceWakeScreenEnabled, triggerEntranceAnimation]);
+
+  // 2. Trigger entrance when user exits any menu (settings drawer, games, stopwatch, chat, bg studio)
+  const menuCurrentlyOpen = Boolean(isAnyMenuOpen ?? isSettingsOpen);
+  useEffect(() => {
+    if (prevMenuOpenRef.current === undefined) {
+      prevMenuOpenRef.current = menuCurrentlyOpen;
+      return;
+    }
+    if (prevMenuOpenRef.current === true && !menuCurrentlyOpen) {
+      if (
+        settings.enableEntranceAnimation !== false &&
+        settings.entranceMenuExitEnabled !== false
+      ) {
+        triggerEntranceAnimation();
+      }
+    }
+    prevMenuOpenRef.current = menuCurrentlyOpen;
+  }, [menuCurrentlyOpen, settings.enableEntranceAnimation, settings.entranceMenuExitEnabled, triggerEntranceAnimation]);
+
+  // 3. Trigger entrance when user toggles Zen mode
   useEffect(() => {
     if (prevZenModeRef.current === undefined) {
       prevZenModeRef.current = isZenMode;
@@ -77,47 +132,46 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
     }
     if (prevZenModeRef.current !== isZenMode) {
       prevZenModeRef.current = isZenMode;
-      if (settings.enableEntranceAnimation !== false) {
-        setEntranceKey((k) => k + 1);
-        setIsEntranceActive(true);
+      if (
+        settings.enableEntranceAnimation !== false &&
+        settings.entranceZenToggleEnabled !== false
+      ) {
+        triggerEntranceAnimation();
       }
     }
-  }, [isZenMode, settings.enableEntranceAnimation]);
+  }, [isZenMode, settings.enableEntranceAnimation, settings.entranceZenToggleEnabled, triggerEntranceAnimation]);
 
-  // Trigger entrance when user returns from settings (isSettingsOpen transitions true -> false)
-  useEffect(() => {
-    if (prevSettingsOpenRef.current === undefined) {
-      prevSettingsOpenRef.current = isSettingsOpen;
-      return;
-    }
-    if (prevSettingsOpenRef.current === true && !isSettingsOpen) {
-      if (settings.enableEntranceAnimation !== false) {
-        setEntranceKey((k) => k + 1);
-        setIsEntranceActive(true);
-      }
-    }
-    prevSettingsOpenRef.current = isSettingsOpen;
-  }, [isSettingsOpen, settings.enableEntranceAnimation]);
-
-  // Listen for custom event trigger (e.g. settings drawer preview or external control)
+  // 4. Listen for custom event trigger (e.g. settings drawer preview or external control)
   useEffect(() => {
     const handleEntranceTrigger = () => {
       if (settings.enableEntranceAnimation !== false) {
-        setEntranceKey((k) => k + 1);
-        setIsEntranceActive(true);
+        triggerEntranceAnimation();
       }
     };
     window.addEventListener('trigger-clock-entrance', handleEntranceTrigger);
     return () => window.removeEventListener('trigger-clock-entrance', handleEntranceTrigger);
-  }, [settings.enableEntranceAnimation]);
+  }, [settings.enableEntranceAnimation, triggerEntranceAnimation]);
 
   const isEntranceEnabled = settings.enableEntranceAnimation !== false;
-  const entranceClass =
-    isEntranceEnabled && isEntranceActive
-      ? settings.entranceAnimationType === 'fade-in'
-        ? 'animate-clock-fade-in'
-        : 'animate-clock-slide-up'
-      : '';
+  const getEntranceClass = () => {
+    if (!isEntranceEnabled || !isEntranceActive) return '';
+    switch (settings.entranceAnimationType) {
+      case 'slide-down':
+        return 'animate-clock-slide-down';
+      case 'fade-in':
+        return 'animate-clock-fade-in';
+      case 'rotate':
+        return 'animate-clock-rotate';
+      case 'zoom-in':
+        return 'animate-clock-zoom';
+      case 'flip':
+        return 'animate-clock-flip';
+      case 'slide-up':
+      default:
+        return 'animate-clock-slide-up';
+    }
+  };
+  const entranceClass = getEntranceClass();
 
   const isAutoScaling = settings.autoScaleFontSize ?? true;
 
@@ -521,7 +575,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
         onAnimationEnd={() => setIsEntranceActive(false)}
         className={`w-full flex flex-col items-center justify-center transition-all duration-300 ${entranceClass} ${
           settings.showCardContainer
-            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-700/50 shadow-2xl'
+            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-700/50 shadow-2xl hover:border-slate-600/70 hover:shadow-[0_25px_60px_rgba(0,0,0,0.65),0_0_35px_rgba(255,255,255,0.04)] hover:-translate-y-0.5'
             : ''
         }`}
         style={
@@ -552,8 +606,9 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             style={{
               fontSize: isAutoScaling ? `${autoFontSizePx}px` : undefined,
               color: 'var(--clock-color, ' + settings.clockColor + ')',
+              transform: isHovered ? 'scale(1.008)' : 'scale(1)',
               ...glowStyle,
-              transition: 'color 400ms ease, filter 400ms ease',
+              transition: 'color 400ms ease, filter 400ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             {/* Ambient Radiating Backlight Glow Layer (radiating from behind the digits) */}
@@ -562,8 +617,9 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 aria-hidden="true"
                 className="pointer-events-none absolute -inset-x-8 sm:-inset-x-12 -inset-y-6 sm:-inset-y-8 -z-10 flex items-center justify-center select-none overflow-visible will-change-transform"
                 style={{
-                  opacity: Math.min(1, glowIntensityFactor * 1.15),
-                  transition: 'opacity 300ms ease, filter 300ms ease',
+                  opacity: Math.min(1, glowIntensityFactor * (isHovered ? 1.3 : 1.15)),
+                  transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+                  transition: 'opacity 300ms ease, filter 300ms ease, transform 300ms ease',
                 }}
               >
                 {/* Primary wide diffused radiating aura */}
@@ -611,7 +667,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               title="Stunden: Klicken zum Ändern der Farbe"
               className={`${
                 isAutoScaling ? 'text-[1em]' : 'text-[clamp(4.5rem,19vw,14rem)]'
-              } inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1`}
+              } inline-flex items-baseline select-none transition-all duration-200 ease-out hover:brightness-125 hover:scale-[1.03] hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] active:scale-[0.97] rounded-2xl px-1.5`}
               style={{
                 color: hoursColor,
                 textShadow: hoursGlowShadow,
@@ -640,7 +696,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               title="Klicken, um Ziffernfarbe zu ändern"
               className={`${
                 isAutoScaling ? 'text-[0.84em] px-[0.06em]' : 'text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2'
-              } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all`}
+              } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-150 hover:scale-115 active:scale-90 transition-all duration-150 cursor-pointer`}
               style={{
                 color: colonColor,
                 textShadow: colonGlowShadow,
@@ -659,7 +715,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               title="Minuten: Klicken zum Ändern der Farbe"
               className={`${
                 isAutoScaling ? 'text-[1em]' : 'text-[clamp(4.5rem,19vw,14rem)]'
-              } inline-flex items-baseline select-none transition-all duration-200 hover:brightness-125 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-1`}
+              } inline-flex items-baseline select-none transition-all duration-200 ease-out hover:brightness-125 hover:scale-[1.03] hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] active:scale-[0.97] rounded-2xl px-1.5`}
               style={{
                 color: minutesColor,
                 textShadow: minutesGlowShadow,
@@ -690,7 +746,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   title="Klicken, um Ziffernfarbe zu ändern"
                   className={`${
                     isAutoScaling ? 'text-[0.84em] px-[0.06em]' : 'text-[clamp(3.8rem,16vw,12rem)] px-1 sm:px-2'
-                  } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-125 transition-all`}
+                  } relative -top-[0.04em] font-normal select-none inline-block will-change-transform will-change-[filter,opacity] hover:brightness-150 hover:scale-115 active:scale-90 transition-all duration-150 cursor-pointer`}
                   style={{
                     color: colonColor,
                     textShadow: colonGlowShadow,
@@ -708,7 +764,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   title="Sekunden: Klicken zum Ändern der Farbe"
                   className={`${
                     isAutoScaling ? 'text-[0.82em]' : 'text-[clamp(3.4rem,14.5vw,11rem)]'
-                  } inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 hover:brightness-125 hover:scale-[1.03] active:scale-[0.98] rounded-2xl px-1`}
+                  } inline-flex items-baseline opacity-90 select-none will-change-transform transition-all duration-200 ease-out hover:brightness-125 hover:scale-[1.04] hover:bg-white/[0.04] hover:shadow-[0_0_20px_rgba(255,255,255,0.08)] active:scale-[0.97] rounded-2xl px-1.5`}
                   style={{
                     color: secondsColor,
                     textShadow: secondsGlowShadow,
@@ -735,7 +791,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                   isAutoScaling
                     ? 'ml-[0.22em] text-[0.2em] py-[0.2em] px-[0.45em]'
                     : 'ml-3 sm:ml-5 text-[clamp(1rem,3vw,2rem)] py-1.5 px-3 sm:px-4'
-                } tracking-wider font-bold uppercase self-center rounded-2xl border border-white/20 bg-white/10 shadow-md transition-all select-none`}
+                } tracking-wider font-bold uppercase self-center rounded-2xl border border-white/20 bg-white/10 shadow-md hover:bg-white/20 hover:scale-105 hover:border-white/35 active:scale-95 transition-all duration-200 cursor-pointer select-none`}
                 style={{
                   backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
                   WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
@@ -748,9 +804,9 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
 
           {/* Quick Hover Action Chip for Changing Color */}
           <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 mt-2 rounded-full text-xs font-medium border shadow-lg transition-all duration-300 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 mt-2.5 rounded-full text-xs font-medium border shadow-lg transition-all duration-200 ease-out cursor-pointer active:scale-95 ${
               isHovered
-                ? 'opacity-100 translate-y-0 bg-slate-900/80 border-slate-700/80 text-slate-200 hover:bg-slate-800 hover:text-white'
+                ? 'opacity-100 translate-y-0 bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-blue-500/50 text-slate-200 hover:text-white hover:scale-105 hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)]'
                 : 'opacity-0 -translate-y-1 pointer-events-none'
             }`}
             style={{
