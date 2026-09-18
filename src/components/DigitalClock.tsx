@@ -46,6 +46,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [colorPickerScope, setColorPickerScope] = useState<ColorScope>('all');
   const [isHovered, setIsHovered] = useState(false);
+  const [isContainerHovered, setIsContainerHovered] = useState(false);
 
   const openColorPicker = (scope: ColorScope) => {
     setColorPickerScope(scope);
@@ -556,7 +557,9 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
     <div
       ref={containerRef}
       id="digital-clock-centerpiece"
-      className={`flex flex-col items-center justify-center text-center select-none w-full ${
+      onMouseEnter={() => setIsContainerHovered(true)}
+      onMouseLeave={() => setIsContainerHovered(false)}
+      className={`group/clock relative flex flex-col items-center justify-center text-center select-none w-full ${
         isAutoScaling
           ? settings.showCardContainer
             ? 'max-w-7xl mx-auto px-3 sm:px-6'
@@ -569,22 +572,56 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
         transition: 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
+      {/* Subtle Ambient Hover Glow Layer behind the entire clock container */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-4 sm:-inset-8 -z-10 rounded-[44px] overflow-visible transition-all duration-500 ease-out select-none will-change-transform"
+        style={{
+          opacity: isContainerHovered ? 1 : 0,
+          transform: isContainerHovered ? 'scale(1.015)' : 'scale(0.98)',
+          background: `radial-gradient(ellipse 75% 65% at 50% 50%, ${colorWithAlpha(
+            primaryGlowColor,
+            settings.showCardContainer ? 0.22 : 0.26
+          )} 0%, ${colorWithAlpha(
+            primaryGlowColor,
+            settings.showCardContainer ? 0.08 : 0.1
+          )} 48%, transparent 80%)`,
+          filter: 'blur(36px)',
+        }}
+      />
+
       <div
         key={entranceKey}
         id="clock-display-entrance-wrapper"
         onAnimationEnd={() => setIsEntranceActive(false)}
         className={`w-full flex flex-col items-center justify-center transition-all duration-300 ${entranceClass} ${
           settings.showCardContainer
-            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-700/50 shadow-2xl hover:border-slate-600/70 hover:shadow-[0_25px_60px_rgba(0,0,0,0.65),0_0_35px_rgba(255,255,255,0.04)] hover:-translate-y-0.5'
-            : ''
+            ? 'p-8 sm:p-12 rounded-3xl bg-slate-900/60 border shadow-2xl hover:-translate-y-0.5'
+            : 'hover:-translate-y-0.5'
         }`}
         style={
           settings.showCardContainer
             ? {
                 backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
                 WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+                borderColor: isContainerHovered
+                  ? colorWithAlpha(primaryGlowColor, 0.45)
+                  : 'rgba(51, 65, 85, 0.5)',
+                boxShadow: isContainerHovered
+                  ? `0 30px 65px rgba(0,0,0,0.65), 0 0 35px ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.22
+                    )}, 0 0 14px ${colorWithAlpha(
+                      primaryGlowColor,
+                      0.14
+                    )}, inset 0 0 24px ${colorWithAlpha(primaryGlowColor, 0.06)}`
+                  : '0 25px 50px -12px rgba(0,0,0,0.5)',
+                transition:
+                  'border-color 300ms ease, box-shadow 350ms ease, backdrop-filter 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
               }
-            : undefined
+            : {
+                transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+              }
         }
       >
         <motion.div
