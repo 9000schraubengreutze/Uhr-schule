@@ -1,6 +1,6 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Vollbild-Uhr mit Pomodoro Fokus-Timer, Zen-Modus Benachrichtigungs-Stummschaltung, Wallpaper Engine Hintergrund-Galerie, Atomuhr-Synchronisation und anpassbaren Themes.",
+  "description": "Moderne digitale Vollbild-Uhr mit Zen-Modus, Wallpaper Engine Hintergrund-Galerie, Atomuhr-Synchronisation und anpassbaren Themes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

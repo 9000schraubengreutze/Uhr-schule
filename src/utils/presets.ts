@@ -1,19 +1,19 @@
 import { ClockSettings, GradientPreset, CuratedTheme, PomodoroConfig } from '../types';
 
 export const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
-  enabled: true,
+  enabled: false,
   workDuration: 25,
   shortBreakDuration: 5,
   longBreakDuration: 15,
   longBreakInterval: 4,
-  autoStartBreaks: true,
+  autoStartBreaks: false,
   autoStartWork: false,
-  autoZenModeDuringWork: true,
-  exitZenModeOnBreak: true,
-  silenceInZenMode: true,
-  soundAlert: 'chime',
-  soundVolume: 0.75,
-  showWidgetOnClock: true,
+  autoZenModeDuringWork: false,
+  exitZenModeOnBreak: false,
+  silenceInZenMode: false,
+  soundAlert: 'none',
+  soundVolume: 0,
+  showWidgetOnClock: false,
 };
 
 export const DEFAULT_SETTINGS: ClockSettings = {

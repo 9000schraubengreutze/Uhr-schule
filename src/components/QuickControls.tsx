@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Settings,
   Gamepad2,
-  Timer,
   Lock,
   GraduationCap,
   Coffee,
@@ -21,10 +20,6 @@ import { SchoolStatusResult } from '../utils/timetable';
 interface QuickControlsProps {
   onOpenSettings: () => void;
   onOpenGames?: () => void;
-  onOpenStopwatch?: () => void;
-  onOpenPomodoro?: () => void;
-  pomodoroRunning?: boolean;
-  pomodoroTimeFormatted?: string;
   onOpenTimetable?: () => void;
   onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
@@ -43,10 +38,6 @@ interface QuickControlsProps {
 export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenSettings,
   onOpenGames,
-  onOpenStopwatch,
-  onOpenPomodoro,
-  pomodoroRunning = false,
-  pomodoroTimeFormatted,
   onOpenTimetable,
   onOpenWallpapers,
   onOpenGeminiBg,
@@ -189,50 +180,6 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             >
               <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-115 group-hover:-rotate-12" />
               <span className="hidden sm:inline">Stundenplan</span>
-            </button>
-          )}
-
-          {/* Stoppuhr Button */}
-          {onOpenStopwatch && (
-            <button
-              id="open-stopwatch-btn"
-              type="button"
-              onClick={onOpenStopwatch}
-              title="Stoppuhr öffnen (Taste: W)"
-              aria-label="Stoppuhr öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-sky-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(56,189,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
-            >
-              <Timer className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-sky-300" />
-              <span>Stoppuhr</span>
-            </button>
-          )}
-
-          {/* Pomodoro Fokus-Timer Button */}
-          {onOpenPomodoro && (
-            <button
-              id="open-pomodoro-btn"
-              type="button"
-              onClick={onOpenPomodoro}
-              title="Pomodoro Fokus-Timer (Taste: P)"
-              aria-label="Pomodoro Fokus-Timer öffnen"
-              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 ${
-                pomodoroRunning
-                  ? 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 border-rose-400/40 shadow-[0_0_12px_rgba(244,63,94,0.35)]'
-                  : 'text-slate-300 hover:text-white border-transparent hover:border-amber-400/30 hover:bg-white/[0.16]'
-              }`}
-            >
-              <Timer
-                className={`w-3.5 h-3.5 ${
-                  pomodoroRunning
-                    ? 'text-rose-400 animate-pulse'
-                    : 'text-amber-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-amber-300'
-                }`}
-              />
-              <span>
-                {pomodoroRunning && pomodoroTimeFormatted
-                  ? pomodoroTimeFormatted
-                  : 'Pomodoro'}
-              </span>
             </button>
           )}
 

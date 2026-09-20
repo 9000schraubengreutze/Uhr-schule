@@ -23,8 +23,6 @@ import { GlowEffectControl } from './GlowEffectControl';
 import { EntranceAnimationControl } from './EntranceAnimationControl';
 import { ZenScheduleCard } from './ZenScheduleCard';
 import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
-import { PomodoroSettingsSection } from './PomodoroSettingsSection';
-import { PomodoroController } from '../hooks/usePomodoro';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -54,7 +52,6 @@ import {
   Globe,
   Gamepad2,
   Calendar,
-  Timer,
   FileDown,
   FileUp,
   GraduationCap,
@@ -80,7 +77,6 @@ interface MaterialSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenGames?: () => void;
-  onOpenStopwatch?: () => void;
   onOpenTimetable?: () => void;
   onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
@@ -100,7 +96,6 @@ interface MaterialSettingsDrawerProps {
   onTriggerSync?: () => void;
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
-  pomodoro?: PomodoroController;
   initialTab?: SettingsTab;
 }
 
@@ -114,7 +109,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'darstellung', label: 'Darstellung', icon: Palette },
   { id: 'uhr', label: 'Uhr', icon: Clock },
-  { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
   { id: 'einstellungen', label: 'Einstellungen', icon: Sliders },
   { id: 'hilfe', label: 'Hilfe', icon: HelpCircle },
   { id: 'rechtliches', label: 'Rechtliches', icon: Scale },
@@ -124,7 +118,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   isOpen,
   onClose,
   onOpenGames,
-  onOpenStopwatch,
   onOpenTimetable,
   onOpenWallpapers,
   onOpenGeminiBg,
@@ -144,7 +137,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onTriggerSync,
   isZenMode,
   onToggleZenMode,
-  pomodoro,
   initialTab = 'darstellung',
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'darstellung');
@@ -375,14 +367,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Design exportieren (JSON)', desc: 'Aktuelle Farben, Schriftarten und Einstellungen als JSON-Datei speichern & teilen' },
       { tab: 'darstellung' as SettingsTab, title: 'Design importieren (JSON)', desc: 'Gespeichertes Design aus JSON-Datei laden' },
       { tab: 'uhr' as SettingsTab, title: 'Online-Atomuhr (NTP)', desc: 'Zeitsynchronisation mit Atomuhr-Servern' },
-      { tab: 'uhr' as SettingsTab, title: 'Stoppuhr', desc: 'Präzise Stoppuhr mit Rundenzeiten und Pausieren' },
       { tab: 'uhr' as SettingsTab, title: 'Zusätzliche Zeitzonen (Weltuhr)', desc: 'Weltzeit-Uhren (z. B. New York, Tokio, London) unter der Hauptuhr' },
       { tab: 'uhr' as SettingsTab, title: 'Zen-Modus Zeitplan (Automatischer Timer)', desc: 'Zen-Modus automatisch zu bestimmten Uhrzeiten (z. B. 22:00 bis 07:00) aktivieren und deaktivieren' },
       { tab: 'darstellung' as SettingsTab, title: 'Zen-Modus Zeitplan', desc: 'Automatischer Timer für aufgeräumten Vollbild-Modus' },
-      { tab: 'pomodoro' as SettingsTab, title: 'Pomodoro-Timer (Fokus & Pause)', desc: 'Intervall-Arbeitstimer (25/5/15 Minuten) mit automatischer Pausensteuerung' },
-      { tab: 'pomodoro' as SettingsTab, title: 'Zen-Modus Stummschaltung', desc: 'Benachrichtigungen, Signaltöne und Popups im Zen-Modus stummschalten (Do Not Disturb)' },
-      { tab: 'pomodoro' as SettingsTab, title: 'Automatischer Zen-Modus bei Fokus', desc: 'Ablenkungsfreien Zen-Modus bei Arbeitsbeginn automatisch aktivieren' },
-      { tab: 'pomodoro' as SettingsTab, title: 'Pomodoro Signalton & Lautstärke', desc: 'Akustischer Phasenwechsel-Gong, Glockenspiel oder Klangschale' },
       { tab: 'uhr' as SettingsTab, title: '24-Stunden-Format', desc: 'Umschalten zwischen 24h und 12h AM/PM' },
       { tab: 'uhr' as SettingsTab, title: 'Sekunden anzeigen', desc: 'Sekundenziffern ein- oder ausblenden' },
       { tab: 'uhr' as SettingsTab, title: 'Datum anzeigen', desc: 'Vollständiges Datum unter der Uhr' },
@@ -1705,33 +1692,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                 </div>
 
-                {/* Stoppuhr Quick-Launch Card */}
-                {onOpenStopwatch && (
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/50 to-slate-900/70 border border-blue-500/30 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                        <Timer className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-200">Stoppuhr</h4>
-                        <p className="text-[11px] text-slate-400">
-                          Präzise Rundenzeiten, Pausieren & Tastatursteuerung
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        onOpenStopwatch();
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
-                    >
-                      Öffnen
-                    </button>
-                  </div>
-                )}
-
                 {/* Zusätzliche Zeitzonen (Weltuhr unter Hauptuhr) */}
                 <TimeZonesSettingsSection
                   settings={settings}
@@ -1763,35 +1723,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   showFeedback={showFeedback}
                   vibrationEnabled={settings.vibrationEnabled}
                 />
-
-                {/* Pomodoro Fokus-Timer Quick Card in Uhr-Tab */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/30 via-slate-900/60 to-indigo-950/30 border border-rose-500/20 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center">
-                      <Timer className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-white block">
-                        Pomodoro Fokus-Timer & Zen-Modus
-                      </span>
-                      <span className="text-[11px] text-slate-400 block">
-                        {pomodoro?.isRunning
-                          ? `Läuft: ${Math.floor((pomodoro?.timeLeft || 0) / 60)}m übrig • Zen-Modus synchronisiert`
-                          : `${settings.pomodoro?.workDuration || 25} Min. Fokus mit automatischer Zen-Stummschaltung`}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (settings.vibrationEnabled) triggerHaptic(12);
-                      setActiveTab('pomodoro');
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md shrink-0 active:scale-95"
-                  >
-                    Öffnen
-                  </button>
-                </div>
 
                 {/* Display & Layout Options */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-2 divide-y divide-slate-800/60">
@@ -1998,33 +1929,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     className="mt-3"
                   />
                 </div>
-              </motion.div>
-            )}
-
-            {/* === POMODORO (Fokus-Timer & Zen-Modus Integration) === */}
-            {activeTab === 'pomodoro' && (
-              <motion.div
-                key="tab-pomodoro"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                {pomodoro ? (
-                  <PomodoroSettingsSection
-                    settings={settings}
-                    onUpdateSettings={onUpdateSettings}
-                    pomodoro={pomodoro}
-                    isZenMode={Boolean(isZenMode)}
-                    onToggleZenMode={onToggleZenMode || (() => {})}
-                    showFeedback={showFeedback}
-                  />
-                ) : (
-                  <div className="p-6 text-center text-slate-400">
-                    Pomodoro-Controller wird geladen...
-                  </div>
-                )}
               </motion.div>
             )}
 
@@ -2407,11 +2311,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                   <div className="space-y-1.5 text-xs">
                     {[
-                      { key: 'W', desc: 'Stoppuhr öffnen / schließen' },
                       { key: 'G', desc: 'Pausen-Spiele (Games) öffnen' },
                       { key: 'F', desc: 'Vollbildmodus umschalten' },
                       { key: 'S', desc: 'Einstellungen / Menü öffnen oder schließen' },
-                      { key: 'Esc', desc: 'Menü, Stoppuhr oder Spiel schließen' },
+                      { key: 'Esc', desc: 'Menü oder Spiel schließen' },
                       { key: 'Doppelklick', desc: 'Vollbildmodus starten / beenden' },
                     ].map((hk) => (
                       <div

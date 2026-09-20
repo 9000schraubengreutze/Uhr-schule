@@ -18,10 +18,7 @@ import { SmoothBackground } from './components/SmoothBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { MobileBatteryIndicator } from './components/MobileBatteryIndicator';
-import { PomodoroFloatingWidget } from './components/PomodoroFloatingWidget';
-import { usePomodoro } from './hooks/usePomodoro';
 import { GamesModal } from './games/GamesModal';
-import { StopwatchModal } from './components/StopwatchModal';
 import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
 import { WallpaperEngineModal } from './components/WallpaperEngineModal';
@@ -32,7 +29,6 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWallpapersOpen, setIsWallpapersOpen] = useState(false);
   const [isGamesOpen, setIsGamesOpen] = useState(false);
-  const [isStopwatchOpen, setIsStopwatchOpen] = useState(false);
   const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
@@ -40,14 +36,6 @@ export default function App() {
   const [isZenMode, setIsZenMode] = useState(false);
   const [isClockColorPickerOpen, setIsClockColorPickerOpen] = useState(false);
   const [settingsDrawerTab, setSettingsDrawerTab] = useState<SettingsTab>('darstellung');
-
-  // Pomodoro timer hook with automatic Zen Mode synchronization
-  const pomodoro = usePomodoro({
-    settings,
-    onUpdateSettings: setSettings,
-    isZenMode,
-    onSetZenMode: setIsZenMode,
-  });
 
   // Online Atomic Clock synchronization state
   const [atomicState, setAtomicState] = useState<AtomicTimeState>({
@@ -218,7 +206,6 @@ export default function App() {
         else if (isWallpapersOpen) setIsWallpapersOpen(false);
         else if (isGeminiBgOpen) setIsGeminiBgOpen(false);
         else if (isGamesOpen) setIsGamesOpen(false);
-        else if (isStopwatchOpen) setIsStopwatchOpen(false);
         else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
@@ -228,22 +215,17 @@ export default function App() {
         setIsWallpapersOpen((prev) => !prev);
       } else if (e.key === 'g' || e.key === 'G') {
         setIsGamesOpen((prev) => !prev);
-      } else if (e.key === 'w' || e.key === 'W') {
-        setIsStopwatchOpen((prev) => !prev);
       } else if (e.key === 'b' || e.key === 'B') {
         setIsGeminiBgOpen((prev) => !prev);
       } else if (e.key === 'c' || e.key === 'C') {
         setIsChatOpen((prev) => !prev);
-      } else if (e.key === 'p' || e.key === 'P') {
-        setSettingsDrawerTab('pomodoro');
-        setIsSettingsOpen(true);
       } else if (e.key === 'z' || e.key === 'Z') {
         setIsZenMode((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isStopwatchOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
+  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -455,18 +437,11 @@ export default function App() {
           setIsSettingsOpen(true);
         }}
         onOpenGames={() => setIsGamesOpen(true)}
-        onOpenStopwatch={() => setIsStopwatchOpen(true)}
-        onOpenPomodoro={() => {
-          setSettingsDrawerTab('pomodoro');
-          setIsSettingsOpen(true);
-        }}
-        pomodoroRunning={pomodoro.isRunning}
-        pomodoroTimeFormatted={`${Math.floor(pomodoro.timeLeft / 60)}:${String(pomodoro.timeLeft % 60).padStart(2, '0')}`}
         onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
         backdropBlur={settings.backdropBlurIntensity}
-        anyModalOpen={isSettingsOpen || isGamesOpen || isStopwatchOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
@@ -487,18 +462,6 @@ export default function App() {
         isZenMode={isZenMode}
       />
 
-      {/* Pomodoro Timer Floating Status Widget on Main Clock */}
-      <PomodoroFloatingWidget
-        pomodoro={pomodoro}
-        settings={settings}
-        isZenMode={isZenMode}
-        onOpenPomodoroSettings={() => {
-          setSettingsDrawerTab('pomodoro');
-          setIsSettingsOpen(true);
-        }}
-        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20"
-      />
-
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
       <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4 pb-16 sm:pb-20">
         <DigitalClock
@@ -512,7 +475,6 @@ export default function App() {
             isSettingsOpen ||
             isWallpapersOpen ||
             isGamesOpen ||
-            isStopwatchOpen ||
             isGeminiBgOpen ||
             isChatOpen ||
             isClockColorPickerOpen
@@ -552,13 +514,6 @@ export default function App() {
         accentColor={settings.accentColor}
       />
 
-      {/* Stopwatch Modal with Lap Tracking & Pause/Resume */}
-      <StopwatchModal
-        isOpen={isStopwatchOpen}
-        onClose={() => setIsStopwatchOpen(false)}
-        settings={settings}
-      />
-
       {/* Games Arcade Modal */}
       <GamesModal
         isOpen={isGamesOpen}
@@ -571,7 +526,6 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onOpenGames={() => setIsGamesOpen(true)}
-        onOpenStopwatch={() => setIsStopwatchOpen(true)}
         onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
@@ -586,7 +540,6 @@ export default function App() {
         onTriggerSync={performSync}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
-        pomodoro={pomodoro}
         initialTab={settingsDrawerTab}
       />
     </div>

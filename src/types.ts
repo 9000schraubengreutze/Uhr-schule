@@ -20,7 +20,6 @@ export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubb
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
-  | 'pomodoro'
   | 'einstellungen'
   | 'hilfe'
   | 'rechtliches';
