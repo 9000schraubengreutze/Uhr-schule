@@ -20,9 +20,26 @@ export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubb
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
+  | 'audio'
   | 'einstellungen'
   | 'hilfe'
   | 'rechtliches';
+
+export type AmbientSoundType =
+  | 'none'
+  | 'rain'
+  | 'forest'
+  | 'white_noise'
+  | 'pink_noise'
+  | 'waves'
+  | 'fireplace';
+
+export interface AmbientSoundConfig {
+  activeSound: AmbientSoundType;
+  volume: number; // 0.05 to 1.0 (default 0.4)
+  isPlaying: boolean;
+  autoPlayOnStart: boolean; // remember and resume ambient sound on app start
+}
 
 export type PomodoroPhase = 'work' | 'shortBreak' | 'longBreak';
 export type PomodoroSoundType = 'chime' | 'bell' | 'gong' | 'digital' | 'none';
@@ -196,4 +213,7 @@ export interface ClockSettings {
 
   // === POMODORO-TIMER & ZEN-MODUS INTEGRATION ===
   pomodoro: PomodoroConfig;
+
+  // === ATMOSPHÄRISCHE HINTERGRUND-GERÄUSCHE (AUDIO-TAB) ===
+  ambientSound: AmbientSoundConfig;
 }

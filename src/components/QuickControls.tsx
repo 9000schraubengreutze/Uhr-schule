@@ -14,6 +14,7 @@ import {
   Minimize2,
   Clock,
   Moon,
+  Volume2,
 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
@@ -33,6 +34,9 @@ interface QuickControlsProps {
   zenScheduleEnabled?: boolean;
   zenScheduleActive?: boolean;
   zenScheduleRange?: string;
+  onOpenAudioTab?: () => void;
+  isAmbientPlaying?: boolean;
+  activeAmbientTitle?: string;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -51,6 +55,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   zenScheduleEnabled = false,
   zenScheduleActive = false,
   zenScheduleRange,
+  onOpenAudioTab,
+  isAmbientPlaying = false,
+  activeAmbientTitle,
 }) => {
   // Hidden by default: only display when user hovers over the top trigger area
   const [isHovered, setIsHovered] = useState(false);
@@ -265,6 +272,40 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             >
               <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-indigo-300" />
               <span className="hidden sm:inline">KI-Chat</span>
+            </button>
+          )}
+
+          {/* Audio Soundscapes Button */}
+          {onOpenAudioTab && (
+            <button
+              id="open-audio-tab-btn"
+              type="button"
+              onClick={onOpenAudioTab}
+              title={
+                isAmbientPlaying
+                  ? `Atmosphärisches Audio aktiv: ${activeAmbientTitle || 'Klang aktiv'}. Klicken zum Einstellen.`
+                  : 'Beruhigende Hintergrundgeräusche & Audio-Einstellungen'
+              }
+              aria-label="Audio-Einstellungen & Hintergrundgeräusche"
+              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer ${
+                isAmbientPlaying
+                  ? 'text-cyan-200 bg-cyan-500/20 border-cyan-400/40 shadow-[0_0_14px_rgba(34,211,238,0.3)]'
+                  : 'text-slate-300 hover:text-white border-transparent hover:border-cyan-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(34,211,238,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95'
+              }`}
+            >
+              <Volume2
+                className={`w-3.5 h-3.5 transition-all duration-200 ${
+                  isAmbientPlaying
+                    ? 'text-cyan-300 animate-pulse'
+                    : 'text-cyan-400 group-hover:scale-115'
+                }`}
+              />
+              <span className="hidden sm:inline">
+                {isAmbientPlaying ? 'Audio aktiv' : 'Audio'}
+              </span>
+              {isAmbientPlaying && (
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              )}
             </button>
           )}
 

@@ -238,6 +238,32 @@ export function loadSettings(): ClockSettings {
                 : DEFAULT_SETTINGS.pomodoro.soundVolume,
           }
         : DEFAULT_SETTINGS.pomodoro,
+      ambientSound: parsed.ambientSound && typeof parsed.ambientSound === 'object'
+        ? {
+            activeSound:
+              parsed.ambientSound.activeSound === 'none' ||
+              parsed.ambientSound.activeSound === 'rain' ||
+              parsed.ambientSound.activeSound === 'forest' ||
+              parsed.ambientSound.activeSound === 'white_noise' ||
+              parsed.ambientSound.activeSound === 'pink_noise' ||
+              parsed.ambientSound.activeSound === 'waves' ||
+              parsed.ambientSound.activeSound === 'fireplace'
+                ? parsed.ambientSound.activeSound
+                : DEFAULT_SETTINGS.ambientSound.activeSound,
+            volume:
+              typeof parsed.ambientSound.volume === 'number'
+                ? Math.max(0.05, Math.min(1.0, parsed.ambientSound.volume))
+                : DEFAULT_SETTINGS.ambientSound.volume,
+            isPlaying:
+              typeof parsed.ambientSound.isPlaying === 'boolean'
+                ? parsed.ambientSound.isPlaying
+                : false,
+            autoPlayOnStart:
+              typeof parsed.ambientSound.autoPlayOnStart === 'boolean'
+                ? parsed.ambientSound.autoPlayOnStart
+                : false,
+          }
+        : DEFAULT_SETTINGS.ambientSound,
     };
   } catch (err) {
     console.warn('Failed to parse saved settings, using defaults', err);

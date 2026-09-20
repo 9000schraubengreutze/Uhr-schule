@@ -23,6 +23,12 @@ import { GeminiBackgroundModal } from './components/GeminiBackgroundModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
 import { WallpaperEngineModal } from './components/WallpaperEngineModal';
 import { isTimeInZenSchedule } from './utils/zenSchedule';
+import {
+  playAmbientSound,
+  stopAmbientSound,
+  setAmbientVolume,
+} from './utils/ambientSound';
+import { AmbientSoundType } from './types';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
@@ -106,6 +112,71 @@ export default function App() {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
+
+  // Synchronize ambient sound playback and volume with settings
+  const ambientRef = useRef(settings.ambientSound);
+  useEffect(() => {
+    ambientRef.current = settings.ambientSound;
+  }, [settings.ambientSound]);
+
+  // Handle ambient sound playback when settings.ambientSound change
+  useEffect(() => {
+    const ambient = settings.ambientSound;
+    if (!ambient) return;
+
+    if (ambient.isPlaying && ambient.activeSound !== 'none') {
+      playAmbientSound(ambient.activeSound, ambient.volume ?? 0.35);
+    } else {
+      stopAmbientSound();
+    }
+  }, [settings.ambientSound?.isPlaying, settings.ambientSound?.activeSound]);
+
+  // Smoothly update volume when ambient volume slider moves
+  useEffect(() => {
+    const vol = settings.ambientSound?.volume;
+    if (typeof vol === 'number') {
+      setAmbientVolume(vol);
+    }
+  }, [settings.ambientSound?.volume]);
+
+  // Stop ambient sound on unmount
+  useEffect(() => {
+    return () => {
+      stopAmbientSound();
+    };
+  }, []);
+
+  const handleTogglePlayAmbient = useCallback((type: AmbientSoundType) => {
+    setSettings((prev) => {
+      const current = prev.ambientSound || {
+        activeSound: 'none',
+        volume: 0.35,
+        isPlaying: false,
+        autoPlayOnStart: false,
+      };
+
+      if (type === 'none') {
+        return {
+          ...prev,
+          ambientSound: {
+            ...current,
+            activeSound: 'none',
+            isPlaying: false,
+          },
+        };
+      }
+
+      const isSameAndPlaying = current.activeSound === type && current.isPlaying;
+      return {
+        ...prev,
+        ambientSound: {
+          ...current,
+          activeSound: type,
+          isPlaying: !isSameAndPlaying,
+        },
+      };
+    });
+  }, []);
 
   // Track fullscreen changes
   useEffect(() => {
@@ -219,6 +290,9 @@ export default function App() {
         setIsGeminiBgOpen((prev) => !prev);
       } else if (e.key === 'c' || e.key === 'C') {
         setIsChatOpen((prev) => !prev);
+      } else if (e.key === 'a' || e.key === 'A') {
+        setSettingsDrawerTab('audio');
+        setIsSettingsOpen(true);
       } else if (e.key === 'z' || e.key === 'Z') {
         setIsZenMode((prev) => !prev);
       }
@@ -440,6 +514,28 @@ export default function App() {
         onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
+        onOpenAudioTab={() => {
+          setSettingsDrawerTab('audio');
+          setIsSettingsOpen(true);
+        }}
+        isAmbientPlaying={Boolean(
+          settings.ambientSound?.isPlaying && settings.ambientSound?.activeSound !== 'none'
+        )}
+        activeAmbientTitle={
+          settings.ambientSound?.activeSound === 'rain'
+            ? 'Regen'
+            : settings.ambientSound?.activeSound === 'forest'
+            ? 'Wald'
+            : settings.ambientSound?.activeSound === 'white_noise'
+            ? 'Weißes Rauschen'
+            : settings.ambientSound?.activeSound === 'pink_noise'
+            ? 'Rosa Rauschen'
+            : settings.ambientSound?.activeSound === 'waves'
+            ? 'Meeresrauschen'
+            : settings.ambientSound?.activeSound === 'fireplace'
+            ? 'Kaminfeuer'
+            : undefined
+        }
         backdropBlur={settings.backdropBlurIntensity}
         anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen}
         isZenMode={isZenMode}
@@ -541,6 +637,7 @@ export default function App() {
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         initialTab={settingsDrawerTab}
+        onTogglePlayAmbient={handleTogglePlayAmbient}
       />
     </div>
   );

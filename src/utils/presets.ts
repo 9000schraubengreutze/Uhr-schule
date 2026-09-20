@@ -1,4 +1,11 @@
-import { ClockSettings, GradientPreset, CuratedTheme, PomodoroConfig } from '../types';
+import { ClockSettings, GradientPreset, CuratedTheme, PomodoroConfig, AmbientSoundConfig } from '../types';
+
+export const DEFAULT_AMBIENT_SOUND_CONFIG: AmbientSoundConfig = {
+  activeSound: 'none',
+  volume: 0.35,
+  isPlaying: false,
+  autoPlayOnStart: false,
+};
 
 export const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
   enabled: false,
@@ -112,6 +119,9 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 
   // POMODORO-TIMER & ZEN-MODUS INTEGRATION
   pomodoro: DEFAULT_POMODORO_CONFIG,
+
+  // ATMOSPHÄRISCHE HINTERGRUND-GERÄUSCHE (AUDIO-TAB)
+  ambientSound: DEFAULT_AMBIENT_SOUND_CONFIG,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [

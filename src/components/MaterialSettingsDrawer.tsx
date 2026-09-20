@@ -23,12 +23,14 @@ import { GlowEffectControl } from './GlowEffectControl';
 import { EntranceAnimationControl } from './EntranceAnimationControl';
 import { ZenScheduleCard } from './ZenScheduleCard';
 import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
+import { AudioSettingsTab } from './AudioSettingsTab';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
   Search,
   Palette,
   Clock,
+  Volume2,
   Sliders,
   HelpCircle,
   Scale,
@@ -97,6 +99,7 @@ interface MaterialSettingsDrawerProps {
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
   initialTab?: SettingsTab;
+  onTogglePlayAmbient?: (type: any) => void;
 }
 
 interface NavItem {
@@ -109,6 +112,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'darstellung', label: 'Darstellung', icon: Palette },
   { id: 'uhr', label: 'Uhr', icon: Clock },
+  { id: 'audio', label: 'Audio', icon: Volume2 },
   { id: 'einstellungen', label: 'Einstellungen', icon: Sliders },
   { id: 'hilfe', label: 'Hilfe', icon: HelpCircle },
   { id: 'rechtliches', label: 'Rechtliches', icon: Scale },
@@ -138,6 +142,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   isZenMode,
   onToggleZenMode,
   initialTab = 'darstellung',
+  onTogglePlayAmbient,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'darstellung');
 
@@ -380,6 +385,15 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'uhr' as SettingsTab, title: 'Doppelpunkt-Pulsieren & Ticken (:)', desc: 'Subtile Animation und Intensität des Doppelpunkts im Sekundentakt (Pulsieren, Glühen, Sprung, Blinken)' },
       { tab: 'uhr' as SettingsTab, title: 'Rahmenkarte (Container)', desc: 'Gläserner Oberflächen-Hintergrund' },
       { tab: 'uhr' as SettingsTab, title: 'Glas-Unschärfe (Backdrop Blur)', desc: 'Intensität des Unschärfe-Filters (0px bis 40px) für Uhrenelemente' },
+      { tab: 'audio' as SettingsTab, title: 'Hintergrundgeräusche (Audio)', desc: 'Beruhigende Klänge: Regen, Wald & Vögel, Meeresrauschen, Kaminfeuer, weißes Rauschen, rosa Rauschen' },
+      { tab: 'audio' as SettingsTab, title: 'Regengeräusche (Rain)', desc: 'Beruhigendes Sommerregen-Prasseln auf Blättern & Fenstern' },
+      { tab: 'audio' as SettingsTab, title: 'Wald & Vogelgezwitscher (Forest)', desc: 'Sanfter Waldwind mit dezenten Natur-Vogelstimmen' },
+      { tab: 'audio' as SettingsTab, title: 'Weißes Rauschen (White Noise)', desc: 'Gleichmäßiges Klangspektrum zur Konzentration und Maskierung von Störgeräuschen' },
+      { tab: 'audio' as SettingsTab, title: 'Rosa Rauschen (Pink Noise)', desc: 'Tieffrequentes sanftes 1/f-Rauschen zur Meditation & Tiefenentspannung' },
+      { tab: 'audio' as SettingsTab, title: 'Meeresrauschen (Waves)', desc: 'Ozeanwellen im ruhigen Atem-Rhythmus' },
+      { tab: 'audio' as SettingsTab, title: 'Kaminfeuer (Fireplace)', desc: 'Knistern von Holz und Glut' },
+      { tab: 'audio' as SettingsTab, title: 'Audio-Lautstärke', desc: 'Lautstärkeregler für beruhigende Hintergrundklänge' },
+      { tab: 'audio' as SettingsTab, title: 'Automatische Klang-Wiedergabe', desc: 'Klanglandschaft beim Starten der WebClock automatisch fortsetzen' },
       { tab: 'einstellungen' as SettingsTab, title: 'App-Sprache', desc: 'Deutsch oder Englisch' },
       { tab: 'einstellungen' as SettingsTab, title: 'Töne (Sekundenticken)', desc: 'Akustisches Ticken im Sekundentakt' },
       { tab: 'einstellungen' as SettingsTab, title: 'Haptisches Feedback', desc: 'Vibration auf Touchscreens' },
@@ -1963,7 +1977,54 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
               </motion.div>
             )}
 
-            {/* === 3. EINSTELLUNGEN (Allgemeine Optionen) === */}
+            {/* === 3. AUDIO (Beruhigende Hintergrundgeräusche & Soundeffekte) === */}
+            {activeTab === 'audio' && (
+              <motion.div
+                key="tab-audio"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                <AudioSettingsTab
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  showFeedback={showFeedback}
+                  onTogglePlayAmbient={(type) => {
+                    if (onTogglePlayAmbient) {
+                      onTogglePlayAmbient(type);
+                    } else {
+                      // Fallback: update local settings directly
+                      onUpdateSettings((prev) => {
+                        const current = prev.ambientSound || {
+                          activeSound: 'none',
+                          volume: 0.35,
+                          isPlaying: false,
+                          autoPlayOnStart: false,
+                        };
+                        const nextIsPlaying =
+                          type === 'none'
+                            ? false
+                            : current.activeSound === type && current.isPlaying
+                            ? false
+                            : true;
+                        return {
+                          ...prev,
+                          ambientSound: {
+                            ...current,
+                            activeSound: type,
+                            isPlaying: nextIsPlaying,
+                          },
+                        };
+                      });
+                    }
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {/* === 4. EINSTELLUNGEN (Allgemeine Optionen) === */}
             {activeTab === 'einstellungen' && (
               <motion.div
                 key="tab-einstellungen"
@@ -2342,6 +2403,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   </div>
                   <div className="space-y-1.5 text-xs">
                     {[
+                      { key: 'A', desc: 'Audio & Hintergrundgeräusche öffnen' },
                       { key: 'G', desc: 'Pausen-Spiele (Games) öffnen' },
                       { key: 'F', desc: 'Vollbildmodus umschalten' },
                       { key: 'S', desc: 'Einstellungen / Menü öffnen oder schließen' },
