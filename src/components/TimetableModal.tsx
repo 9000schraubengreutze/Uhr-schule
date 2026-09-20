@@ -41,29 +41,32 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
   teacherOverride,
   onToggleTeacherOverride,
 }) => {
-  if (!isOpen) return null;
-
   const currentDay = statusResult.dayIndex;
   const currentPeriod = statusResult.currentPeriod;
   const isBreakActive = statusResult.status === 'break';
 
   return (
     <AnimatePresence>
-      <motion.div
-        key="timetable-modal-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-xl overflow-hidden"
-      >
+      {isOpen && (
         <motion.div
-          key="timetable-modal-content"
-          initial={{ scale: 0.95, opacity: 0, y: 15 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 15 }}
+          key="timetable-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-5xl max-h-[90vh] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-xl overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
+          <motion.div
+            key="timetable-modal-content"
+            initial={{ scale: 0.95, opacity: 0, y: 15 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 15 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            className="relative w-full max-w-5xl max-h-[90vh] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10"
+          >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-slate-900/80">
             <div className="flex items-center gap-3">
@@ -489,6 +492,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
           </div>
         </motion.div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 };

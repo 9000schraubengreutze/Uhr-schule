@@ -12,6 +12,8 @@ interface DigitTransitionControlProps {
   showFeedback?: (msg: string) => void;
   vibrationEnabled?: boolean;
   className?: string;
+  title?: string;
+  description?: string;
 }
 
 const TRANSITION_OPTIONS: {
@@ -22,27 +24,27 @@ const TRANSITION_OPTIONS: {
 }[] = [
   {
     id: 'flip',
-    label: 'Taktiler 3D-Flip',
+    label: 'Flipping (3D)',
     badge: 'Split-Flap',
-    desc: 'Subtiler 3D-Klappeffekt mit Tiefenperspektive und realistischer Lichtdynamik',
+    desc: 'Taktiler 3D-Klappeffekt mit Tiefenperspektive und realistischer Lichtdynamik',
   },
   {
     id: 'slide',
-    label: 'Taktiler Slide',
-    badge: 'Präzisions-Rolle',
+    label: 'Sanftes Gleiten',
+    badge: 'Präzisions-Slide',
     desc: 'Geschmeidiges vertikales Gleiten im Stil mechanischer Präzisionszähler',
   },
   {
     id: 'slide-fade',
     label: 'Gleiten & Fade',
-    badge: 'Dynamisch',
-    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit sanftem Fading',
+    badge: 'Kinetisch',
+    desc: 'Kinetischer Aufwärts-Gleitimpuls kombiniert mit weichem Ausblenden',
   },
   {
     id: 'fade',
-    label: 'Sanfter Fade',
-    badge: 'Fließend & Weich',
-    desc: 'Geschmeidige Weichzeichner-Überblendung mit organischem Micro-Drift',
+    label: 'Einfaches Ausblenden',
+    badge: 'Sanfter Fade',
+    desc: 'Geschmeidige Weichzeichner-Überblendung mit dezentem Micro-Drift',
   },
   {
     id: 'crossfade',
@@ -52,7 +54,7 @@ const TRANSITION_OPTIONS: {
   },
   {
     id: 'none',
-    label: 'Direkt (Aus)',
+    label: 'Direkt (Ohne)',
     badge: 'Sofort',
     desc: 'Sofortiges Umschalten der Ziffern ohne Übergangseffekt',
   },
@@ -66,6 +68,8 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
   showFeedback,
   vibrationEnabled = false,
   className = '',
+  title = 'Animationstyp (Zeitänderung)',
+  description = 'Wähle, wie die Zeitänderung der Ziffern visualisiert wird (Flipping, sanftes Gleiten oder einfaches Ausblenden)',
 }) => {
   const [demoDigit, setDemoDigit] = useState<number>(0);
 
@@ -80,7 +84,7 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
   const handleSelectType = (type: DigitTransition, label: string) => {
     onChangeTransition(type);
     if (vibrationEnabled) triggerHaptic(10);
-    showFeedback?.(`Ziffern-Übergang: ${label}`);
+    showFeedback?.(`Animationstyp: ${label}`);
   };
 
   const handleDurationChange = (val: number) => {
@@ -99,7 +103,7 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
     onChangeTransition('flip');
     onChangeDuration(340);
     if (vibrationEnabled) triggerHaptic(12);
-    showFeedback?.('Ziffern-Animation auf Standard (Taktiler 3D-Flip, 340ms) zurückgesetzt');
+    showFeedback?.('Animationstyp auf Standard (Flipping 3D, 340ms) zurückgesetzt');
   };
 
   const currentOption =
@@ -119,11 +123,11 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-200">
-                Taktile Ziffernwechsel-Animation (Flip & Slide)
+                {title}
               </span>
             </div>
             <span className="text-[11px] text-slate-400 block">
-              Subtile, hochwertige Flip- & Slide-Animationen beim Ziffernwechsel
+              {description}
             </span>
           </div>
         </div>
@@ -136,7 +140,7 @@ export const DigitTransitionControl: React.FC<DigitTransitionControlProps> = ({
             <button
               type="button"
               onClick={handleReset}
-              title="Auf Standard (Taktiler 3D-Flip, 340ms) zurücksetzen"
+              title="Auf Standard (Flipping 3D, 340ms) zurücksetzen"
               className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-700/60"
             >
               <RotateCcw className="w-3 h-3" />

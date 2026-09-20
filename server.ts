@@ -365,6 +365,83 @@ async function startServer() {
     }
   }
 
+  // Algorithmic Studio Prompt Enhancement Engine (resilient fallback when Gemini models experience 503 spikes or quota limits)
+  function enhancePromptLocally(prompt: string, style: string = 'cinematic', aspectRatio: string = '16:9') {
+    const raw = prompt.trim();
+    const lower = `${raw} ${style}`.toLowerCase();
+
+    let lighting = 'Golden hour lighting with soft atmospheric sunbeams and delicate rim light';
+    let palette = 'Harmonious natural palette with deep dynamic range';
+    let highlights = ['Volumetrisches Licht', '8K Wallpaper', 'Zentraler Freiraum für Uhr', 'Kino-Farbpalette'];
+    let germanSummary = 'Mit atmosphärischer Beleuchtung, Kino-Komposition und optimiertem Freiraum für die Uhranzeige veredelt.';
+
+    if (lower.includes('berg') || lower.includes('mountain') || lower.includes('alpen') || lower.includes('gipfel')) {
+      lighting = 'Ethereal morning alpine glow, warm dawn light sweeping across rugged mountain peaks, soft mist in valleys';
+      palette = 'Granite greys, alpine emerald, crisp golden morning sky';
+      highlights = ['Alpines Morgenlicht', 'Bergpanorama', 'Zentraler Freiraum für Uhr', '8K Texturen'];
+      germanSummary = 'Veredelt mit sanftem Bergglühen, Nebelschleiern im Tal und optimalem Lesebereich für die Zeitanzeige.';
+    } else if (lower.includes('see') || lower.includes('lake') || lower.includes('wasser')) {
+      lighting = 'Glass-smooth water surface reflecting twilight hues, calm ambient warmth, serene dusk reflections';
+      palette = 'Deep azure, soft indigo, pastel evening gradient';
+      highlights = ['Spiegelglatte Wasseroberfläche', 'Abenddämmerung', 'Ruhezone für Ziffern', 'Atmosphärisch'];
+      germanSummary = 'Optimiert mit ruhigen Wasserreflexionen, Dämmerungsstimmung und zentriertem Freiraum für Ziffern.';
+    } else if (lower.includes('weltall') || lower.includes('space') || lower.includes('galaxy') || lower.includes('sterne') || lower.includes('kosmos') || lower.includes('planet')) {
+      lighting = 'Deep cosmic glow from a distant luminous stellar nebula, delicate stardust illumination, subtle violet-blue radiance';
+      palette = 'Deep obsidian dark space, vibrant cosmic purple, cyan stardust';
+      highlights = ['Sternenstaub & Nebel', 'Tiefe Kontraste', 'Perfekt für Leuchtziffern', 'Kosmisches 8K'];
+      germanSummary = 'Veredelt mit kosmischem Sternennebel und tiefem Schwarzwert für perfekten Kontrast zu den Leuchtziffern.';
+    } else if (lower.includes('cyber') || lower.includes('neon') || lower.includes('tokyo') || lower.includes('future') || lower.includes('synthwave')) {
+      lighting = 'Moody night rain ambiance with soft cinematic neon reflections in asphalt puddles, diffused magenta and cyan glow';
+      palette = 'Midnight black, electric cyan, subtle neon magenta';
+      highlights = ['Neon-Reflexionen', 'Regenasphalt', 'Minimalistische Skylines', 'OLED-Kontrast'];
+      germanSummary = 'Veredelt im modernen Cyberpunk-Stil mit dezenten Neonreflexionen und dunklem Ziffernhintergrund.';
+    } else if (lower.includes('aurora') || lower.includes('nordlicht') || lower.includes('polarlicht')) {
+      lighting = 'Spectacular emerald-green and violet Aurora Borealis dancing across a crystalline Arctic night sky';
+      palette = 'Arctic obsidian, glowing emerald, icy violet';
+      highlights = ['Aurora Borealis', 'Sternenklarer Nachthimmel', 'Hoher Kontrast', 'Magisches Licht'];
+      germanSummary = 'Veredelt mit tanzenden Polarlichtern und tiefdunklem Nachthimmel für optimale Ablesbarkeit.';
+    } else if (lower.includes('wald') || lower.includes('forest') || lower.includes('bäume') || lower.includes('baum') || lower.includes('dschungel')) {
+      lighting = 'Volumetric sunbeams piercing through towering pine trees, delicate morning forest fog, tranquil organic warmth';
+      palette = 'Deep pine green, earthy bark tones, golden light rays';
+      highlights = ['Lichtstrahlen durch Baumkronen', 'Morgennebel', 'Natürliche Ruhezone', '8K Detail'];
+      germanSummary = 'Veredelt mit warmen Sonnenstrahlen im Waldnebel und harmonischer Natur-Farbgebung.';
+    } else if (lower.includes('sonnenuntergang') || lower.includes('sunset') || lower.includes('abendrot') || lower.includes('dämmerung')) {
+      lighting = 'Breathtaking golden hour transitioning into deep amber and rose dusk, radiant horizon glow';
+      palette = 'Warm amber, soft coral, twilight violet';
+      highlights = ['Goldene Stunde', 'Sanfter Horizontverlauf', 'Zentraler Uhr-Freiraum', 'Warmes Licht'];
+      germanSummary = 'Veredelt mit sanfter Lichtstimmung zur goldenen Stunde und weichem Farbverlauf.';
+    } else if (lower.includes('meer') || lower.includes('ozean') || lower.includes('ocean') || lower.includes('strand') || lower.includes('beach') || lower.includes('welle')) {
+      lighting = 'Gentle rolling ocean waves bathed in late afternoon golden warmth, sea mist with soft diffused sunlight';
+      palette = 'Aquamarine, deep sapphire, warm shoreline sand';
+      highlights = ['Sanfte Meereswellen', 'Küstendunst', 'Weitwinkel-Perspektive', 'Beruhigend'];
+      germanSummary = 'Veredelt mit meeresblauen Farbverläufen, Brandungsdunst und weiter Horizontperspektive.';
+    } else if (lower.includes('anime') || lower.includes('japan') || lower.includes('manga') || lower.includes('ghibli')) {
+      lighting = 'Artistic anime landscape inspired by Makoto Shinkai, majestic towering cumulus clouds, soft painterly sunlight';
+      palette = 'Cerulean sky, radiant white cloud rims, vivid pastel foliage';
+      highlights = ['Makoto-Shinkai-Stil', 'Malerische Wolkentürme', 'Lebendige Farben', 'Traumhaft'];
+      germanSummary = 'Veredelt im ästhetischen Anime-Landscape-Stil mit malerischen Wolken und sanftem Himmelslicht.';
+    } else if (lower.includes('abstrakt') || lower.includes('abstract') || lower.includes('minimal') || lower.includes('geometrie')) {
+      lighting = 'Minimalist 3D sculptural fluid curves with subtle studio rim lighting, matte metallic finishes';
+      palette = 'Sophisticated monochrome, subtle iridescent highlights';
+      highlights = ['Minimalistische Geometrie', 'Fließende 3D-Formen', 'Zentraler Fokus', 'Klares Design'];
+      germanSummary = 'Veredelt mit eleganter minimalistischer Geometrie und weichen Lichtreflexen.';
+    } else if (lower.includes('schnee') || lower.includes('winter') || lower.includes('eis') || lower.includes('frost')) {
+      lighting = 'Crystalline winter sun glistening over fresh powder snow, soft blue shadows, tranquil frosty air';
+      palette = 'Pure snow white, crisp pale cyan, soft twilight periwinkle';
+      highlights = ['Kristalliner Schnee', 'Sanfte Winterschatten', 'Kühle Klarheit', 'Stille Landschaft'];
+      germanSummary = 'Veredelt mit winterlicher Ruhe, glitzerndem Pulverschnee und klarer Beleuchtung.';
+    }
+
+    const enhancedPrompt = `Masterpiece cinematic wallpaper photograph. Subject: ${raw}. Visual environment: ${lighting}. Palette & mood: ${palette}. Composition: Expansive widescreen framing (${aspectRatio}) with clean, calm negative space in the central third purposefully crafted so digital clock time display remains crystal-clear and legible. Technical specifications: 8K resolution, 35mm photographic lens, deep dynamic range, rich textural fidelity. Negative constraints: Strictly no text, no clock numbers, no letters, no logos, no watermarks, no blur.`;
+
+    return {
+      enhancedPrompt,
+      germanSummary,
+      suggestedStyle: style || 'cinematic',
+      highlights,
+    };
+  }
+
   // Handler for AI-Powered Prompt Enhancement (optimizes user prompts for gorgeous wallpaper creation)
   async function handleEnhancePrompt(req: express.Request, res: express.Response) {
     try {
@@ -374,7 +451,12 @@ async function startServer() {
         return res.status(400).json({ error: 'Bitte gib einen Prompt ein, der veredelt werden soll.' });
       }
 
-      const ai = getGeminiClient();
+      let ai: GoogleGenAI | null = null;
+      try {
+        ai = getGeminiClient();
+      } catch (clientErr: any) {
+        console.warn('Gemini client not initialized for prompt enhancement, using local engine:', clientErr?.message);
+      }
 
       const systemInstruction = `You are a world-class AI prompt engineer and visual art director specializing in creating breathtaking, high-fidelity wallpapers for digital clock displays.
 Your task: Take the user's raw prompt (which may be in German or English, brief or simple) and transform it into an exquisitely detailed, atmospheric, photographic prompt for Gemini image generation.
@@ -403,50 +485,78 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
       let response: any = null;
       const modelCandidates = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
 
-      for (const modelName of modelCandidates) {
-        try {
-          response = await ai.models.generateContent({
-            model: modelName,
-            contents: userMessage,
-            config: {
-              systemInstruction,
-              responseMimeType: 'application/json',
-            },
-          });
-          if (response && response.text) break;
-        } catch (err: any) {
-          console.warn(`Enhance prompt attempt with ${modelName} failed:`, err?.message || err);
+      if (ai) {
+        for (let i = 0; i < modelCandidates.length; i++) {
+          const modelName = modelCandidates[i];
+          try {
+            response = await ai.models.generateContent({
+              model: modelName,
+              contents: userMessage,
+              config: {
+                systemInstruction,
+                responseMimeType: 'application/json',
+              },
+            });
+            if (response && response.text) break;
+          } catch (err: any) {
+            console.warn(`Enhance prompt attempt with ${modelName} failed:`, err?.message || err);
+            // Brief backoff before next model candidate if temporary 503 high demand occurs
+            if (i < modelCandidates.length - 1) {
+              await new Promise((resolve) => setTimeout(resolve, 350));
+            }
+          }
         }
       }
 
-      if (!response || !response.text) {
-        throw new Error('Die Prompt-Veredelung konnte nicht durchgeführt werden.');
+      if (response && response.text) {
+        let parsed: any = {};
+        try {
+          parsed = JSON.parse(response.text.trim());
+        } catch (jsonErr) {
+          console.warn('Failed to parse JSON prompt enhancement, using raw text:', jsonErr);
+          parsed = {
+            enhancedPrompt: response.text.trim(),
+            germanSummary: 'Prompt mit atmosphärischer Beleuchtung und Bilddetails veredelt.',
+            highlights: ['Fotorealistisch', '8K Wallpaper', 'Atmosphärisches Licht'],
+          };
+        }
+
+        return res.json({
+          success: true,
+          originalPrompt: prompt.trim(),
+          enhancedPrompt: parsed.enhancedPrompt || prompt.trim(),
+          germanSummary: parsed.germanSummary || 'Prompt erfolgreich mit KI veredelt.',
+          suggestedStyle: parsed.suggestedStyle || style,
+          highlights: Array.isArray(parsed.highlights) ? parsed.highlights : ['8K Wallpaper', 'Atmosphärisch'],
+          isFallback: false,
+        });
       }
 
-      let parsed: any = {};
-      try {
-        parsed = JSON.parse(response.text.trim());
-      } catch (jsonErr) {
-        console.warn('Failed to parse JSON prompt enhancement, using raw text:', jsonErr);
-        parsed = {
-          enhancedPrompt: response.text.trim(),
-          germanSummary: 'Prompt mit atmosphärischer Beleuchtung und Bilddetails veredelt.',
-          highlights: ['Fotorealistisch', '8K Wallpaper', 'Atmosphärisches Licht'],
-        };
-      }
+      // If Gemini models are experiencing temporary high demand (503), quota limits (429), or offline:
+      console.info('[Gemini Studio] Activating Studio Prompt Enhancement Engine fallback (models in high demand or offline)...');
+      const localResult = enhancePromptLocally(prompt, style, aspectRatio);
 
       return res.json({
         success: true,
         originalPrompt: prompt.trim(),
-        enhancedPrompt: parsed.enhancedPrompt || prompt.trim(),
-        germanSummary: parsed.germanSummary || 'Prompt erfolgreich mit KI veredelt.',
-        suggestedStyle: parsed.suggestedStyle || style,
-        highlights: Array.isArray(parsed.highlights) ? parsed.highlights : ['8K Wallpaper', 'Atmosphärisch'],
+        enhancedPrompt: localResult.enhancedPrompt,
+        germanSummary: localResult.germanSummary,
+        suggestedStyle: localResult.suggestedStyle,
+        highlights: localResult.highlights,
+        isFallback: true,
+        notice: 'Prompt wurde mit der integrierten Studio-Engine veredelt (Gemini-Server temporär stark ausgelastet).',
       });
     } catch (error: any) {
-      console.error('Gemini enhance prompt error:', error);
-      return res.status(500).json({
-        error: error?.message || 'Fehler bei der Prompt-Veredelung.',
+      console.error('Gemini enhance prompt fallback error:', error);
+      const safeResult = enhancePromptLocally(req.body?.prompt || 'Atmospheric Wallpaper', req.body?.style || 'cinematic');
+      return res.json({
+        success: true,
+        originalPrompt: (req.body?.prompt || '').trim(),
+        enhancedPrompt: safeResult.enhancedPrompt,
+        germanSummary: safeResult.germanSummary,
+        suggestedStyle: safeResult.suggestedStyle,
+        highlights: safeResult.highlights,
+        isFallback: true,
       });
     }
   }
@@ -519,7 +629,8 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
       let response: any = null;
       let modelUsed = selectedModel;
 
-      for (const candidateModel of uniqueFallbackList) {
+      for (let i = 0; i < uniqueFallbackList.length; i++) {
+        const candidateModel = uniqueFallbackList[i];
         try {
           response = await ai.models.generateContent({
             model: candidateModel,
@@ -531,6 +642,9 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
         } catch (err: any) {
           lastError = err;
           console.warn(`Chat model ${candidateModel} failed:`, err?.message || err);
+          if (i < uniqueFallbackList.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 350));
+          }
         }
       }
 
@@ -553,6 +667,8 @@ Enhance this prompt into a masterpiece wallpaper prompt. Output strictly valid J
 
       if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('quota') || rawMsg.includes('429')) {
         friendlyError = 'Das Gemini API-Kontingent ist für den Moment erreicht (Rate-Limit). Bitte warte kurz oder versuche es gleich noch einmal.';
+      } else if (rawMsg.includes('503') || rawMsg.includes('high demand') || rawMsg.includes('UNAVAILABLE') || rawMsg.includes('temporarily unavailable')) {
+        friendlyError = 'Die Gemini-Modelle sind im Moment weltweit temporär stark ausgelastet (503). Bitte versuche es in wenigen Sekunden erneut.';
       } else if (rawMsg.includes('Kein GEMINI_API_KEY')) {
         friendlyError = 'Kein Gemini API-Schlüssel hinterlegt. Bitte konfiguriere deinen API-Key in den AI Studio Einstellungen.';
       } else if (rawMsg) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Globe,
@@ -186,8 +187,6 @@ export const AddTimeZoneModal: React.FC<AddTimeZoneModalProps> = ({
     });
   }, [selectedRegion, searchQuery]);
 
-  if (!isOpen) return null;
-
   // Toggle or add city
   const handleToggleCity = (city: (typeof PRESET_WORLD_TIMEZONES)[0]) => {
     const existing = activeTimeZones.find((z) => z.timeZone === city.timeZone);
@@ -247,21 +246,33 @@ export const AddTimeZoneModal: React.FC<AddTimeZoneModalProps> = ({
   };
 
   return (
-    <div
-      id="add-timezone-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-md animate-in fade-in duration-200 select-none"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        id="add-timezone-modal-card"
-        style={{
-          backdropFilter: `blur(${backdropBlur}px)`,
-          WebkitBackdropFilter: `blur(${backdropBlur}px)`,
-        }}
-        className="relative w-full max-w-2xl bg-slate-900/95 border border-white/15 text-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="add-timezone-modal-backdrop"
+          id="add-timezone-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-md select-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
+          <motion.div
+            key="add-timezone-modal-card"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            id="add-timezone-modal-card"
+            style={{
+              backdropFilter: `blur(${backdropBlur}px)`,
+              WebkitBackdropFilter: `blur(${backdropBlur}px)`,
+            }}
+            className="relative w-full max-w-2xl bg-slate-900/95 border border-white/15 text-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/5 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -760,7 +771,9 @@ export const AddTimeZoneModal: React.FC<AddTimeZoneModalProps> = ({
             Fertig
           </button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

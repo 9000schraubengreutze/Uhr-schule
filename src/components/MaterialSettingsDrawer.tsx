@@ -360,7 +360,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Uhr-Eingangsanimationen (Screen-Wake & Menü-Exit)', desc: 'Übergangseffekte (Slide Up/Down, Pure Fade, Rotate, Focus Zoom, 3D Flip) beim Aufwecken des Bildschirms oder Schließen von Menüs' },
       { tab: 'darstellung' as SettingsTab, title: 'Glüheffekt (Glow)', desc: 'Sanftes Ambient-Glühen der Ziffern' },
       { tab: 'darstellung' as SettingsTab, title: 'Puls-Animation', desc: 'Sanftes Atmen der Ziffern im Sekundentakt' },
-      { tab: 'darstellung' as SettingsTab, title: 'Ziffern-Fading & Übergang', desc: 'Fließende Ein- und Ausblend-Animation beim Sekundentakt der Uhrzeit (Subtil, Crossfade, Gleiten)' },
+      { tab: 'darstellung' as SettingsTab, title: 'Animationstyp (Zeitänderung)', desc: 'Wie die Zeitänderung visualisiert wird: Flipping (3D), sanftes Gleiten, Gleiten & Fade, einfaches Ausblenden' },
+      { tab: 'uhr' as SettingsTab, title: 'Animationstyp (Zeitänderung)', desc: 'Flipping, sanftes Gleiten, einfaches Ausblenden oder direktes Umschalten beim Ziffernwechsel' },
+      { tab: 'darstellung' as SettingsTab, title: 'Ziffern-Fading & Übergang', desc: 'Fließende Ein- und Ausblend-Animation beim Sekundentakt der Uhrzeit (Flipping, Gleiten, Fade)' },
       { tab: 'darstellung' as SettingsTab, title: 'Fließende Ziffern-Animation', desc: 'Subtiles Fading, sanftes Überblenden und Animationsgeschwindigkeit beim Zahlenwechsel' },
       { tab: 'darstellung' as SettingsTab, title: 'Hintergrund-Blur (Glassmorphism)', desc: 'Schieberegler für Intensität des Weichzeichnungs-Effekts (0px bis 40px) für alle Glaskarten, Modale und UI-Elemente' },
       { tab: 'darstellung' as SettingsTab, title: 'Themen-Presets', desc: 'Midnight Blue, Cyberpunk, OLED uvm.' },
@@ -395,28 +397,34 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
     );
   }, [searchNormalized]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      id="material-settings-backdrop"
-      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-        id="settings-panel"
-        className="relative w-full max-w-xl h-full bg-slate-950/90 text-slate-100 border-l border-slate-800/80 shadow-2xl flex flex-col select-none overflow-hidden"
-        style={{
-          backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-          WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-        }}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="material-settings-backdrop"
+          id="material-settings-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
+          <motion.div
+            key="material-settings-panel"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
+            id="settings-panel"
+            className="relative w-full max-w-xl h-full bg-slate-950/90 text-slate-100 border-l border-slate-800/80 shadow-2xl flex flex-col select-none overflow-hidden"
+            style={{
+              backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+              WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+            }}
+          >
         {/* Top Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -1487,7 +1495,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   vibrationEnabled={settings.vibrationEnabled}
                 />
 
-                {/* Taktile Ziffernwechsel-Animation (Flip & Slide) */}
+                {/* Animationstyp (Zeitänderung / Ziffernwechsel: Flipping, sanftes Gleiten, einfaches Ausblenden) */}
                 <DigitTransitionControl
                   transitionType={settings.digitTransition ?? 'flip'}
                   durationMs={settings.digitFadeDuration ?? 340}
@@ -1821,6 +1829,29 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       onUpdateSettings((p) => ({ ...p, showBatteryIndicator: v }));
                       showFeedback(v ? 'Akku-Anzeige aktiviert' : 'Akku-Anzeige deaktiviert');
                     }}
+                  />
+
+                  {/* Animationstyp (Zeitänderung / Ziffernwechsel: Flipping, sanftes Gleiten, einfaches Ausblenden) */}
+                  <DigitTransitionControl
+                    transitionType={settings.digitTransition ?? 'flip'}
+                    durationMs={settings.digitFadeDuration ?? 340}
+                    onChangeTransition={(type) =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        digitTransition: type,
+                        _digitTransitionCustomized: true,
+                      }))
+                    }
+                    onChangeDuration={(dur) =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        digitFadeDuration: dur,
+                      }))
+                    }
+                    showFeedback={showFeedback}
+                    vibrationEnabled={settings.vibrationEnabled}
+                    title="Animationstyp (Zeitänderung)"
+                    description="Wähle, wie die Zeitänderung der Ziffern visualisiert wird (z. B. Flipping, sanftes Gleiten oder einfaches Ausblenden)"
                   />
 
                   {/* Colon Separator Animation & Pulse Customization */}
@@ -2415,7 +2446,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

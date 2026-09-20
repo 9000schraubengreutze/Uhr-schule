@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   MessageSquareQuote,
   X,
@@ -432,20 +433,32 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
   const RoleIcon = activeRole.icon;
 
   return (
-    <div
-      id="gemini-chat-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-5 bg-slate-950/75 transition-opacity duration-300"
-      style={{ backdropFilter: `blur(${Math.min(backdropBlur, 24)}px)` }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isLoading) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        id="gemini-chat-modal-container"
-        className="relative w-full max-w-3xl h-[88vh] max-h-[750px] bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100 animate-in fade-in zoom-in-95 duration-200"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="gemini-chat-backdrop"
+          id="gemini-chat-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-5 bg-slate-950/75"
+          style={{ backdropFilter: `blur(${Math.min(backdropBlur, 24)}px)` }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isLoading) {
+              onClose();
+            }
+          }}
+        >
+          <motion.div
+            key="gemini-chat-dialog"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            id="gemini-chat-modal-container"
+            className="relative w-full max-w-3xl h-[88vh] max-h-[750px] bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100"
+          >
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-800 bg-slate-950/50">
           <div className="flex items-center gap-3">
@@ -1028,7 +1041,9 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

@@ -236,30 +236,29 @@ export const GamesModal: React.FC<GamesModalProps> = ({
     setStatsRefreshKey((k) => k + 1);
   };
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
-        key="games-modal-backdrop"
-        id="games-modal-container"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-5 bg-slate-950/85 backdrop-blur-xl overflow-hidden"
-      >
-        {/* Modal Window Container */}
+      {isOpen && (
         <motion.div
-          key="games-modal-dialog"
-          initial={{ opacity: 0, scale: 0.96, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          key="games-modal-backdrop"
+          id="games-modal-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`relative w-full ${
-            activeGameId === 'towerdefense' ? 'max-w-6xl' : 'max-w-4xl'
-          } h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] md:h-[calc(100vh-2.5rem)] max-h-[780px] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10`}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-5 bg-slate-950/85 backdrop-blur-xl overflow-hidden"
         >
+          {/* Modal Window Container */}
+          <motion.div
+            key="games-modal-dialog"
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            className={`relative w-full ${
+              activeGameId === 'towerdefense' ? 'max-w-6xl' : 'max-w-4xl'
+            } h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] md:h-[calc(100vh-2.5rem)] max-h-[780px] bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100 ring-1 ring-white/10`}
+          >
           {/* Header Bar */}
           <div
             className={`flex items-center justify-between gap-2.5 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md shrink-0 transition-all ${
@@ -766,9 +765,10 @@ export const GamesModal: React.FC<GamesModalProps> = ({
           )}
           </motion.div>
         </motion.div>
+      )}
 
-        {/* Optional Auth Modal for account login/management */}
-        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      </AnimatePresence>
+      {/* Optional Auth Modal for account login/management */}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+    </AnimatePresence>
   );
 };

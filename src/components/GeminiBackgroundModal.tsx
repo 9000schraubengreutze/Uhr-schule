@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   X,
@@ -172,7 +173,11 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
           summary: data.germanSummary,
           highlights: data.highlights,
         });
-        showFeedback?.('Prompt erfolgreich mit KI veredelt!');
+        showFeedback?.(
+          data.isFallback
+            ? 'Prompt mit Studio-Engine veredelt!'
+            : 'Prompt erfolgreich mit KI veredelt!'
+        );
       }
     } catch (err: any) {
       console.warn('Enhance prompt error:', err);
@@ -456,20 +461,32 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
   };
 
   return (
-    <div
-      id="gemini-image-studio-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 transition-opacity duration-300"
-      style={{ backdropFilter: `blur(${Math.min(backdropBlur, 24)}px)` }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isLoading) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        id="gemini-image-studio-modal-container"
-        className="relative w-full max-w-3xl max-h-[92vh] bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100 animate-in fade-in zoom-in-95 duration-200"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="gemini-image-studio-backdrop"
+          id="gemini-image-studio-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75"
+          style={{ backdropFilter: `blur(${Math.min(backdropBlur, 24)}px)` }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isLoading) {
+              onClose();
+            }
+          }}
+        >
+          <motion.div
+            key="gemini-image-studio-dialog"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            id="gemini-image-studio-modal-container"
+            className="relative w-full max-w-3xl max-h-[92vh] bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100"
+          >
         {/* Header Bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/50">
           <div className="flex items-center gap-3">
@@ -1193,7 +1210,9 @@ export const GeminiBackgroundModal: React.FC<GeminiBackgroundModalProps> = ({
             Schließen
           </button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

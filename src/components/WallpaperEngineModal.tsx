@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Sparkles,
@@ -193,21 +194,31 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
     }));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      id="wallpaper-engine-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Wallpaper Engine Galerie"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-6xl max-h-[92vh] flex flex-col rounded-3xl bg-slate-950/95 border border-slate-800/80 shadow-2xl shadow-black/80 overflow-hidden text-slate-100 will-change-transform"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="wallpaper-engine-backdrop"
+          id="wallpaper-engine-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Wallpaper Engine Galerie"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md"
+          onClick={onClose}
+        >
+          <motion.div
+            key="wallpaper-engine-dialog"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            className="relative w-full max-w-6xl max-h-[92vh] flex flex-col rounded-3xl bg-slate-950/95 border border-slate-800/80 shadow-2xl shadow-black/80 overflow-hidden text-slate-100 will-change-transform"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header Bar */}
         <header className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-7 py-4 border-b border-slate-800/80 bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -582,7 +593,7 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
             <span>{CURATED_WALLPAPERS.length} Wallpapers verfügbar</span>
           </div>
         </footer>
-      </div>
+      </motion.div>
 
       {/* Fullscreen Lightbox Preview */}
       {previewWallpaper && (
@@ -627,6 +638,8 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
+  )}
+</AnimatePresence>
   );
 };
