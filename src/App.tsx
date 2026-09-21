@@ -502,6 +502,7 @@ export default function App() {
         intensity={settings.particleIntensity}
         color={settings.particleColor}
         speed={settings.particleSpeed}
+        ecoMode={settings.ecoMode}
       />
 
       {/* Quick Access Material 3 Controls at Bottom */}

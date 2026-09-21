@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Plus,
   Minus,
+  Leaf,
 } from 'lucide-react';
 import { ClockSettings, ParticleEffect } from '../types';
 import { PARTICLE_COLOR_PRESETS } from '../utils/presets';
@@ -419,6 +420,33 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Eco-Modus CPU-Status & Quick Toggle */}
+      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2">
+          <Leaf className={`w-3.5 h-3.5 ${settings.ecoMode ? 'text-emerald-400' : 'text-slate-400'}`} />
+          <span className="text-slate-300 text-[11px]">
+            {settings.ecoMode
+              ? 'Eco-Modus aktiv: Partikel auf 30 FPS gedrosselt (Minimaler CPU-Verbrauch)'
+              : 'Flüssiger 60 FPS Partikel-Modus aktiv'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const nextVal = !settings.ecoMode;
+            onUpdateSettings((p) => ({ ...p, ecoMode: nextVal }));
+            showFeedback(nextVal ? 'Eco-Modus aktiviert (geringe CPU-Last)' : 'Eco-Modus deaktiviert (volle 60 FPS)');
+          }}
+          className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer ${
+            settings.ecoMode
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+              : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-slate-200'
+          }`}
+        >
+          {settings.ecoMode ? 'Eco: Ein' : 'Eco: Aus'}
+        </button>
+      </div>
     </div>
   );
 };

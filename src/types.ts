@@ -200,6 +200,7 @@ export interface ClockSettings {
   appLanguage: 'de' | 'en';
   soundEnabled: boolean; // Subtle second tick audio (standardmäßig deaktiviert / stumm)
   vibrationEnabled: boolean; // Haptic feedback on mobile
+  ecoMode?: boolean; // Energiesparmodus: Reduziert CPU/GPU-Last drastisch (niedrigere Bildrate, sparsame Effekte)
   useAtomicSync: boolean; // Use online atomic clock (NTP) instead of device clock
   showSyncBadge: boolean; // Display sync indicator on the main screen
   showBatteryIndicator?: boolean; // Subtle battery level indicator for mobile devices (hidden in fullscreen)

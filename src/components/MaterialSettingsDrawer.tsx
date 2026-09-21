@@ -64,6 +64,8 @@ import {
   MessageSquareQuote,
   Bot,
   Image as ImageIcon,
+  Leaf,
+  Zap,
 } from 'lucide-react';
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 import { SavedWallpaperItem } from '../types';
@@ -2034,6 +2036,45 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
+                {/* Energiespar- & Performance-Modus (CPU-Optimierung) */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-xl border transition-colors ${
+                        settings.ecoMode
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          : 'bg-slate-800/80 text-slate-400 border-slate-700/60'
+                      }`}>
+                        <Leaf className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <span>Eco-Modus (Geringe CPU-Auslastung)</span>
+                          {settings.ecoMode && (
+                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                              Aktiv
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Reduziert Prozessor- und Akkubelastung auf Laptops & Mobilgeräten drastisch
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <MaterialSwitch
+                    label="Niedrige CPU- & Akku-Auslastung erzwingen"
+                    description="Drosselt Hintergrund-Partikel auf 30 FPS, reduziert Partikeldichte und verringert Timer-Zyklen sowie aufwendige CSS-Filter für flüsterleisen Betrieb"
+                    checked={settings.ecoMode ?? false}
+                    onChange={(v) => {
+                      onUpdateSettings((p) => ({ ...p, ecoMode: v }));
+                      showFeedback(v ? 'Eco-Modus aktiviert (CPU geschont)' : 'Eco-Modus deaktiviert');
+                      triggerHaptic(settings.vibrationEnabled);
+                    }}
+                  />
+                </div>
+
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-2 divide-y divide-slate-800/60">
                   {/* Sprache */}
                   <div className="py-3 px-3 flex items-center justify-between">

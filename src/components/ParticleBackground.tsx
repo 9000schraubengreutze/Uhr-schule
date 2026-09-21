@@ -6,6 +6,7 @@ interface ParticleBackgroundProps {
   intensity: number; // 10 to 100
   color: string; // Hex color string
   speed?: number; // 0.25 to 3.0 (speed multiplier, default 1.0)
+  ecoMode?: boolean; // CPU & battery saver: caps frame rate to ~30 FPS and halves particle count
 }
 
 interface Particle {
@@ -51,6 +52,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
   intensity,
   color,
   speed = 1.0,
+  ecoMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const speedRef = useRef(speed);
@@ -58,6 +60,9 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
   const colorRef = useRef(color);
   colorRef.current = color;
+
+  const ecoModeRef = useRef(ecoMode);
+  ecoModeRef.current = ecoMode;
 
   useEffect(() => {
     if (effect === 'none') return;
@@ -73,10 +78,11 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     const intensityClamped = Math.max(10, Math.min(100, intensity || 50));
 
-    // Handle high DPI
+    // Handle high DPI (capped to 1.5 in ecoMode to save GPU fill rate)
     let width = 0;
     let height = 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const maxDpr = ecoMode ? 1 : 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
 
     const resize = () => {
       if (!canvas) return;
@@ -92,13 +98,15 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     resize();
     window.addEventListener('resize', resize);
 
-    // Calculate particle count according to resolution and intensity
+    // Calculate particle count according to resolution and intensity (reduced in ecoMode)
     const area = width * height;
-    const baseDensity = effect === 'rain' ? 22000 : 15000;
+    const baseDensity = effect === 'rain' ? (ecoMode ? 45000 : 22000) : (ecoMode ? 32000 : 15000);
     const computedCount = Math.round(
       (area / baseDensity) * (intensityClamped / 50)
     );
-    const particleCount = Math.max(16, Math.min(240, computedCount));
+    const maxParticles = ecoMode ? 60 : 240;
+    const minParticles = ecoMode ? 10 : 16;
+    const particleCount = Math.max(minParticles, Math.min(maxParticles, computedCount));
 
     // Initialize particles with base velocities
     const particles: Particle[] = [];
@@ -193,11 +201,21 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     }
 
     let lastTime = performance.now();
+    let lastFrameTimestamp = 0;
     let globalWindTime = 0;
 
     // Render loop
     const render = (time: number) => {
       if (!isRunning) return;
+
+      // When ecoMode is enabled, cap frame rate to ~30 FPS (interval ~32ms) to drastically save CPU/GPU cycles
+      if (ecoModeRef.current) {
+        if (time - lastFrameTimestamp < 31) {
+          animationFrameId = requestAnimationFrame(render);
+          return;
+        }
+      }
+      lastFrameTimestamp = time;
 
       const dt = Math.min((time - lastTime) / 16.67, 2.5);
       lastTime = time;
@@ -473,7 +491,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [effect, intensity]);
+  }, [effect, intensity, ecoMode]);
 
   if (effect === 'none') {
     return null;

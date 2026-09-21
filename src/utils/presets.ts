@@ -106,6 +106,7 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   appLanguage: 'de',
   soundEnabled: false,
   vibrationEnabled: true,
+  ecoMode: false,
   useAtomicSync: true,
   showSyncBadge: true,
   showBatteryIndicator: true,

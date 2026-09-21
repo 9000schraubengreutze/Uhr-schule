@@ -82,6 +82,10 @@ export function loadSettings(): ClockSettings {
         typeof parsed.autoScaleFontSize === 'boolean'
           ? parsed.autoScaleFontSize
           : DEFAULT_SETTINGS.autoScaleFontSize,
+      ecoMode:
+        typeof parsed.ecoMode === 'boolean'
+          ? parsed.ecoMode
+          : DEFAULT_SETTINGS.ecoMode,
       zenScheduleEnabled:
         typeof parsed.zenScheduleEnabled === 'boolean'
           ? parsed.zenScheduleEnabled
