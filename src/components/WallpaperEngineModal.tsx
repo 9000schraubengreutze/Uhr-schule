@@ -28,6 +28,8 @@ import {
   WallpaperCategory,
   WallpaperItem,
 } from '../data/wallpapers';
+import { ANIMATED_BACKGROUNDS } from '../data/animatedBackgrounds';
+import { AnimatedBackgroundBrowser } from './AnimatedBackgroundBrowser';
 import { ClockSettings, ParticleEffect } from '../types';
 import { triggerHaptic } from '../utils/audio';
 
@@ -347,6 +349,8 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
               const count =
                 cat.id === 'all'
                   ? CURATED_WALLPAPERS.length
+                  : cat.id === 'animated'
+                  ? ANIMATED_BACKGROUNDS.length
                   : CURATED_WALLPAPERS.filter((w) => w.category === cat.id).length;
 
               return (
@@ -412,7 +416,43 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
 
         {/* Wallpaper Grid Canvas */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 min-h-[360px] max-h-[60vh] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-          {filteredWallpapers.length === 0 ? (
+          {selectedCategory === 'animated' ? (
+            <AnimatedBackgroundBrowser
+              currentEffectId={settings.animatedBgId || 'aurora'}
+              currentSpeed={settings.animatedBgSpeed || 1.0}
+              currentIntensity={settings.animatedBgIntensity || 80}
+              ecoMode={settings.ecoMode}
+              isFullModal={true}
+              onSelectEffect={(def, harmonizeColors) => {
+                triggerHaptic('selection');
+                onUpdateSettings((prev) => {
+                  const next: ClockSettings = {
+                    ...prev,
+                    bgType: 'animated',
+                    animatedBgId: def.id,
+                    hasCustomImage: false,
+                    activeWallpaperId: undefined,
+                    activeWallpaperUrl: undefined,
+                  };
+                  if (autoParticles && def.recommendedParticle) {
+                    next.particleEffect = def.recommendedParticle;
+                  }
+                  if (harmonizeColors || autoColors) {
+                    next.clockColor = def.recommendedClockColor;
+                    next.accentColor = def.recommendedAccentColor;
+                  }
+                  return next;
+                });
+                showFeedback?.(`Animierter Hintergrund "${def.nameDe}" aktiviert!`);
+              }}
+              onUpdateSpeed={(speed) => {
+                onUpdateSettings((prev) => ({ ...prev, animatedBgSpeed: speed }));
+              }}
+              onUpdateIntensity={(intensity) => {
+                onUpdateSettings((prev) => ({ ...prev, animatedBgIntensity: intensity }));
+              }}
+            />
+          ) : filteredWallpapers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
               <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500">
                 <Filter className="w-8 h-8" />

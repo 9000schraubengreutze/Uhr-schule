@@ -2,6 +2,7 @@ import { ParticleEffect } from '../types';
 
 export type WallpaperCategory =
   | 'all'
+  | 'animated'
   | 'scifi'
   | 'nature'
   | 'space'
@@ -20,6 +21,7 @@ export interface WallpaperCategoryMeta {
 
 export const WALLPAPER_CATEGORIES: WallpaperCategoryMeta[] = [
   { id: 'all', name: 'Alle', icon: '🌐', description: 'Die gesamte Wallpaper Engine Bibliothek' },
+  { id: 'animated', name: '✨ Animiert (Live)', icon: '✨', description: 'Echtzeit-animierte 60 FPS GPU-Canvas Hintergründe' },
   { id: 'scifi', name: 'Sci-Fi & Cyber', icon: '⚡', description: 'Futuristische Metropolen, Neon & Hologramme' },
   { id: 'nature', name: 'Natur & Landschaften', icon: '🌲', description: 'Berge, Wälder, Ozeane & Nordlichter' },
   { id: 'space', name: 'Weltall & Kosmos', icon: '🪐', description: 'Galaxien, kosmische Nebel & Sternenstaub' },

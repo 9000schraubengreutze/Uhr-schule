@@ -26,7 +26,7 @@ interface Particle {
   pulsePhase: number;
   basePulseSpeed: number;
   // Unique characteristics for specific particle types
-  particleSubtype: 'crystal' | 'fluffy' | 'speck' | 'mote' | 'fiber' | 'star' | 'bubble';
+  particleSubtype: 'crystal' | 'fluffy' | 'speck' | 'mote' | 'fiber' | 'star' | 'bubble' | 'firefly';
   length?: number;
 }
 
@@ -177,6 +177,13 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
         baseVy = -(0.5 + Math.random() * 1.2);
         baseVx = (Math.random() - 0.5) * 0.35;
         baseAlpha = 0.25 + Math.random() * 0.4;
+      } else if (effect === 'fireflies') {
+        subtype = 'firefly';
+        radius = 2.2 + Math.random() * 2.8;
+        baseVx = (Math.random() - 0.5) * 0.35;
+        baseVy = (Math.random() - 0.5) * 0.3;
+        baseAlpha = 0.35 + Math.random() * 0.5;
+        basePulseSpeed = 0.018 + Math.random() * 0.035;
       }
 
       particles.push({
@@ -461,6 +468,42 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
             Math.PI * 2
           );
           ctx.fillStyle = `${colorPrefix} ${p.alpha * 0.9})`;
+          ctx.fill();
+        } else if (effect === 'fireflies') {
+          // ==================== FIREFLIES (Glühwürmchen) ====================
+          p.driftAngleX += 0.015 * dt * speedFactor;
+          p.driftAngleY += 0.011 * dt * speedFactor;
+          p.pulsePhase += p.basePulseSpeed * dt * speedFactor;
+
+          const wanderX = Math.sin(p.driftAngleX) * 0.65 * speedFactor;
+          const wanderY = Math.cos(p.driftAngleY) * 0.55 * speedFactor;
+          p.x += (p.baseVx * speedFactor + wanderX) * dt;
+          p.y += (p.baseVy * speedFactor + wanderY) * dt;
+
+          if (p.x < -20) p.x = width + 20;
+          else if (p.x > width + 20) p.x = -20;
+          if (p.y < -20) p.y = height + 20;
+          else if (p.y > height + 20) p.y = -20;
+
+          // Bioluminescent warm glow pulse
+          const glowIntensity = Math.pow((Math.sin(p.pulsePhase) + 1) * 0.5, 1.8);
+          const currentAlpha = p.baseAlpha * (0.2 + 0.8 * glowIntensity);
+
+          // Wide diffuse glowing halo
+          const haloRadius = p.radius * 3.8;
+          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloRadius);
+          grad.addColorStop(0, `${colorPrefix} ${currentAlpha * 0.85})`);
+          grad.addColorStop(0.35, `${colorPrefix} ${currentAlpha * 0.4})`);
+          grad.addColorStop(1, `${colorPrefix} 0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, haloRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bright bioluminescent core pip
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, Math.max(0.8, p.radius * 0.55), 0, Math.PI * 2);
+          ctx.fillStyle = `${colorPrefix} ${Math.min(1, currentAlpha * 1.45)})`;
           ctx.fill();
         }
       }

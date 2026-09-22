@@ -1,6 +1,6 @@
 {
   "name": "WebClock",
-  "description": "Moderne digitale Vollbild-Uhr mit Zen-Modus, Wallpaper Engine Hintergrund-Galerie, Atomuhr-Synchronisation und anpassbaren Themes.",
+  "description": "Moderne digitale Vollbild-Uhr mit 14 animierten 60 FPS GPU-Live-Hintergründen, Zen-Modus, Wallpaper Engine Galerie, Atomuhr-Synchronisation und anpassbaren Themes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

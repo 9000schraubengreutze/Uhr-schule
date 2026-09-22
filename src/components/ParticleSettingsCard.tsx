@@ -1,45 +1,25 @@
 import React from 'react';
 import {
   Sparkles,
-  Snowflake,
-  Star,
-  CloudRain,
-  CircleDot,
-  Ban,
-  Gauge,
   Palette,
   Sliders,
-  Check,
   RotateCcw,
   Plus,
   Minus,
   Leaf,
+  Gauge,
+  Check,
 } from 'lucide-react';
 import { ClockSettings, ParticleEffect } from '../types';
 import { PARTICLE_COLOR_PRESETS } from '../utils/presets';
 import { triggerHaptic } from '../utils/audio';
+import { ParticleVisualBrowser } from './ParticleVisualBrowser';
 
 interface ParticleSettingsCardProps {
   settings: ClockSettings;
   onUpdateSettings: React.Dispatch<React.SetStateAction<ClockSettings>>;
   showFeedback: (msg: string) => void;
 }
-
-interface EffectItem {
-  id: ParticleEffect;
-  label: string;
-  desc: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const EFFECTS: EffectItem[] = [
-  { id: 'none', label: 'Keine', desc: 'Deaktiviert', icon: Ban },
-  { id: 'snow', label: 'Schnee', desc: 'Fallende Kristalle', icon: Snowflake },
-  { id: 'dust', label: 'Staub', desc: 'Schwebende Moten', icon: Sparkles },
-  { id: 'stars', label: 'Sterne', desc: 'Funkelndes Glitzern', icon: Star },
-  { id: 'rain', label: 'Regen', desc: 'Sanfte Regenfäden', icon: CloudRain },
-  { id: 'bubbles', label: 'Lichtpunkte', desc: 'Aufsteigende Blasen', icon: CircleDot },
-];
 
 const SPEED_PRESETS = [
   { val: 0.35, label: '0.35x', name: 'Zen' },
@@ -168,32 +148,14 @@ export const ParticleSettingsCard: React.FC<ParticleSettingsCardProps> = ({
         )}
       </div>
 
-      {/* Effect Selector Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        {EFFECTS.map((item) => {
-          const isSelected = currentEffect === item.id;
-          const Icon = item.icon;
-
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleSelectEffect(item.id, item.label)}
-              className={`p-2.5 rounded-xl border flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-amber-500/20 border-amber-500/80 text-amber-300 ring-2 ring-amber-500/30 shadow-md scale-[1.02]'
-                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Icon className="w-5 h-5 mb-1 shrink-0" />
-              <span className="text-xs font-bold truncate max-w-full">{item.label}</span>
-              <span className="text-[9px] opacity-70 truncate max-w-full hidden sm:block">
-                {item.desc}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Visual Grid Browser with Live Animated Previews */}
+      <ParticleVisualBrowser
+        selectedEffect={currentEffect}
+        particleColor={color}
+        onSelectEffect={(eff, label) => handleSelectEffect(eff, label)}
+        isGerman={settings.appLanguage !== 'en'}
+        ecoMode={settings.ecoMode}
+      />
 
       {/* Fine-tuning Controls (when an effect is active) */}
       {currentEffect !== 'none' && (

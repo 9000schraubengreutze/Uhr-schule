@@ -1,6 +1,6 @@
 export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school' | 'serif' | 'sans';
 export type ClockWeight = '300' | '400' | '600' | '800';
-export type BgType = 'color' | 'gradient' | 'image' | 'video';
+export type BgType = 'color' | 'gradient' | 'image' | 'video' | 'animated';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
@@ -15,7 +15,23 @@ export type EntranceAnimationType =
   | 'zoom-in'
   | 'flip';
 
-export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles';
+export type ParticleEffect = 'none' | 'snow' | 'dust' | 'stars' | 'rain' | 'bubbles' | 'fireflies';
+
+export type AnimatedBgId =
+  | 'aurora'
+  | 'synthwave'
+  | 'matrix'
+  | 'nebula'
+  | 'fluid-mesh'
+  | 'ocean-abyss'
+  | 'sunset-waves'
+  | 'mystic-forest'
+  | 'cyber-hex'
+  | 'sakura'
+  | 'quantum-waves'
+  | 'cosmic-vortex'
+  | 'fire-embers'
+  | 'warp-speed';
 
 export type SettingsTab =
   | 'darstellung'
@@ -131,6 +147,11 @@ export interface ClockSettings {
   particleIntensity: number; // 10 to 100 percent
   particleColor: string; // Particle color (hex, e.g. '#ffffff')
   particleSpeed: number; // 0.25 to 3.0 (speed multiplier, default 1.0)
+
+  // Animierte Live-Hintergründe (Canvas-Szenen & Shaders)
+  animatedBgId?: AnimatedBgId;
+  animatedBgSpeed?: number; // 0.25 to 2.5 (default 1.0)
+  animatedBgIntensity?: number; // 20 to 100 percent (default 80)
 
   // Digital Clock Typography & Appearance
   clockColor: string; // Digit text color

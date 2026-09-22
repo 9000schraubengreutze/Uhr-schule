@@ -17,6 +17,7 @@ import { MaterialSwitch } from './ui/MaterialSwitch';
 import { ColorPickerCard } from './ui/ColorPickerCard';
 import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
 import { ParticleSettingsCard } from './ParticleSettingsCard';
+import { AnimatedBackgroundBrowser } from './AnimatedBackgroundBrowser';
 import { BackdropBlurControl } from './BackdropBlurControl';
 import { DigitTransitionControl } from './DigitTransitionControl';
 import { GlowEffectControl } from './GlowEffectControl';
@@ -24,6 +25,7 @@ import { EntranceAnimationControl } from './EntranceAnimationControl';
 import { ZenScheduleCard } from './ZenScheduleCard';
 import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
 import { AudioSettingsTab } from './AudioSettingsTab';
+import { PerformanceInfoOverlay } from './PerformanceInfoOverlay';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -360,7 +362,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Ziffernfarbe', desc: 'Textfarbe der digitalen Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Akzentfarbe', desc: 'Farbe für Glüheffekte und Badges' },
       { tab: 'darstellung' as SettingsTab, title: 'Hintergrund', desc: 'Farbe, Farbverlauf oder eigenes Bild' },
-      { tab: 'darstellung' as SettingsTab, title: 'Animierte Partikeleffekte', desc: 'Schnee, Staub, funkelnde Sterne, Regen, Intensität und Partikelfarbe' },
+      { tab: 'darstellung' as SettingsTab, title: 'Animierte Partikeleffekte (Visueller Katalog)', desc: 'Starfield, Rainfall, Fireflies (Glühwürmchen), Floating Dust, Snowfall, Licht-Aura, Intensität, Tempo & Farbe' },
       { tab: 'darstellung' as SettingsTab, title: 'Typografie-Sets (Mono-space, Serif, Sans-Serif)', desc: 'Vordefinierte Typografie-Kombinationen für den visuellen Stil der Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftart & Schriftstärke', desc: 'Outfit, Inter, Monospace Digital, Serif, Schulbuch' },
       { tab: 'darstellung' as SettingsTab, title: 'Größen-Skalierung', desc: 'Uhr vergrößern oder verkleinern' },
@@ -398,6 +400,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'audio' as SettingsTab, title: 'Automatische Klang-Wiedergabe', desc: 'Klanglandschaft beim Starten der WebClock automatisch fortsetzen' },
       { tab: 'einstellungen' as SettingsTab, title: 'App-Sprache', desc: 'Deutsch oder Englisch' },
       { tab: 'einstellungen' as SettingsTab, title: 'Töne (Sekundenticken)', desc: 'Akustisches Ticken im Sekundentakt' },
+      { tab: 'einstellungen' as SettingsTab, title: 'Eco-Modus (Geringe CPU-Auslastung)', desc: 'Drosselt Hintergrund-Partikel auf 30 FPS und spart Akku' },
+      { tab: 'einstellungen' as SettingsTab, title: 'Performance-Info (Render FPS & CPU-Impact)', desc: 'Live-Anzeige der aktuellen Bildrate (FPS) und Systembelastung aller Partikel und Grafikeffekte' },
+      { tab: 'darstellung' as SettingsTab, title: 'Performance & Partikel FPS', desc: 'Bildrate und Rechenlast der gewählten Partikel im Menü überwachen' },
       { tab: 'einstellungen' as SettingsTab, title: 'Haptisches Feedback', desc: 'Vibration auf Touchscreens' },
       { tab: 'einstellungen' as SettingsTab, title: 'Standardansicht speichern', desc: 'Aktuelles Layout als Standard sichern' },
       { tab: 'einstellungen' as SettingsTab, title: 'Werkseinstellungen', desc: 'Alle Optionen zurücksetzen' },
@@ -738,8 +743,9 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
+                      { id: 'animated', label: '✨ Animiert (Live)' },
                       { id: 'gradient', label: 'Farbverlauf' },
                       { id: 'color', label: 'Einfarbig' },
                       { id: 'image', label: 'Wallpapers' },
@@ -752,7 +758,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                         }
                         className={`p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                           settings.bgType === mode.id
-                            ? 'bg-blue-600/30 border-blue-500 text-blue-200'
+                            ? 'bg-cyan-600/30 border-cyan-500 text-cyan-200 ring-1 ring-cyan-500/40 shadow-sm'
                             : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:bg-slate-800'
                         }`}
                       >
@@ -760,6 +766,45 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       </button>
                     ))}
                   </div>
+
+                  {/* Animated Backgrounds Live Canvas Catalog */}
+                  {settings.bgType === 'animated' && (
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                      <AnimatedBackgroundBrowser
+                        currentEffectId={settings.animatedBgId || 'aurora'}
+                        currentSpeed={settings.animatedBgSpeed || 1.0}
+                        currentIntensity={settings.animatedBgIntensity || 80}
+                        ecoMode={settings.ecoMode}
+                        onSelectEffect={(def, harmonizeColors) => {
+                          triggerHaptic('selection');
+                          onUpdateSettings((prev) => {
+                            const next: ClockSettings = {
+                              ...prev,
+                              bgType: 'animated',
+                              animatedBgId: def.id,
+                              hasCustomImage: false,
+                              activeWallpaperId: undefined,
+                              activeWallpaperUrl: undefined,
+                            };
+                            if (prev.wallpaperEngineAutoParticles !== false && def.recommendedParticle) {
+                              next.particleEffect = def.recommendedParticle;
+                            }
+                            if (harmonizeColors || prev.wallpaperEngineAutoColors) {
+                              next.clockColor = def.recommendedClockColor;
+                              next.accentColor = def.recommendedAccentColor;
+                            }
+                            return next;
+                          });
+                        }}
+                        onUpdateSpeed={(spd) =>
+                          onUpdateSettings((p) => ({ ...p, animatedBgSpeed: spd }))
+                        }
+                        onUpdateIntensity={(inte) =>
+                          onUpdateSettings((p) => ({ ...p, animatedBgIntensity: inte }))
+                        }
+                      />
+                    </div>
+                  )}
 
                   {/* Wallpaper Engine Featured Banner */}
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-blue-950/40 to-indigo-950/50 border border-cyan-500/40 space-y-2.5">
@@ -2549,8 +2594,15 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
             )}
           </AnimatePresence>
         </div>
-          </motion.div>
-        </motion.div>
+
+        {/* Small, Non-Intrusive Performance Info Overlay */}
+        <PerformanceInfoOverlay
+          settings={settings}
+          onUpdateSettings={onUpdateSettings}
+          showFeedback={showFeedback}
+        />
+      </motion.div>
+    </motion.div>
       )}
     </AnimatePresence>
   );

@@ -15,6 +15,7 @@ import { syncWithAtomicClock, AtomicTimeState } from './utils/atomicTime';
 import { DigitalClock } from './components/DigitalClock';
 import { ParticleBackground } from './components/ParticleBackground';
 import { SmoothBackground } from './components/SmoothBackground';
+import { SmoothAnimatedBackground } from './components/SmoothAnimatedBackground';
 import { MaterialSettingsDrawer } from './components/MaterialSettingsDrawer';
 import { QuickControls } from './components/QuickControls';
 import { MobileBatteryIndicator } from './components/MobileBatteryIndicator';
@@ -485,6 +486,17 @@ export default function App() {
         style={backgroundStyle}
         blur={settings.bgBlur}
       />
+
+      {/* Real-time Animated 60 FPS GPU-Canvas Background with subtle CSS cross-fade transitions */}
+      {settings.bgType === 'animated' && (
+        <SmoothAnimatedBackground
+          effectId={settings.animatedBgId || 'aurora'}
+          speed={settings.animatedBgSpeed || 1.0}
+          intensity={settings.animatedBgIntensity || 80}
+          ecoMode={settings.ecoMode}
+          blur={settings.bgBlur}
+        />
+      )}
 
       {/* Dimming / Overlay Layer for maximum readability */}
       <div

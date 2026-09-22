@@ -45,6 +45,11 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   particleColor: '#ffffff',
   particleSpeed: 1.0,
 
+  // Animierte Live-Hintergründe
+  animatedBgId: 'aurora',
+  animatedBgSpeed: 1.0,
+  animatedBgIntensity: 80,
+
   // Typography & Scaling
   clockColor: '#38bdf8',
   accentColor: '#38bdf8',
