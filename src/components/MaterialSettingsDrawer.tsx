@@ -18,6 +18,8 @@ import { ColorPickerCard } from './ui/ColorPickerCard';
 import { TimeZonesSettingsSection } from './TimeZonesSettingsSection';
 import { ParticleSettingsCard } from './ParticleSettingsCard';
 import { AnimatedBackgroundBrowser } from './AnimatedBackgroundBrowser';
+import { SmartLiveWallpaperCard } from './SmartLiveWallpaperCard';
+import { captureLiveBackgroundSnapshot } from '../utils/liveWallpaperHelper';
 import { BackdropBlurControl } from './BackdropBlurControl';
 import { DigitTransitionControl } from './DigitTransitionControl';
 import { GlowEffectControl } from './GlowEffectControl';
@@ -362,6 +364,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
       { tab: 'darstellung' as SettingsTab, title: 'Ziffernfarbe', desc: 'Textfarbe der digitalen Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Akzentfarbe', desc: 'Farbe für Glüheffekte und Badges' },
       { tab: 'darstellung' as SettingsTab, title: 'Hintergrund', desc: 'Farbe, Farbverlauf oder eigenes Bild' },
+      { tab: 'darstellung' as SettingsTab, title: 'Intelligenter Live-Hintergrund (Live als Hintergrundbild)', desc: 'Live-Animationen mit Hintergrundbild kombinieren, GPU-Mischmodi (Screen, Overlay, Soft Light), automatische Farb-Harmonie und Standbild-Capture' },
+      { tab: 'darstellung' as SettingsTab, title: 'Live-Hintergrund als Standbild erfassen (Schnappschuss)', desc: 'Echtzeit-Hintergrund als hochauflösendes Wallpaper-Bild aufnehmen, Farben extrahieren und in Bibliothek sichern' },
       { tab: 'darstellung' as SettingsTab, title: 'Animierte Partikeleffekte (Visueller Katalog)', desc: 'Starfield, Rainfall, Fireflies (Glühwürmchen), Floating Dust, Snowfall, Licht-Aura, Intensität, Tempo & Farbe' },
       { tab: 'darstellung' as SettingsTab, title: 'Typografie-Sets (Mono-space, Serif, Sans-Serif)', desc: 'Vordefinierte Typografie-Kombinationen für den visuellen Stil der Uhr' },
       { tab: 'darstellung' as SettingsTab, title: 'Schriftart & Schriftstärke', desc: 'Outfit, Inter, Monospace Digital, Serif, Schulbuch' },
@@ -796,6 +800,31 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                             return next;
                           });
                         }}
+                        onCaptureAsWallpaper={async (def) => {
+                          triggerHaptic('selection');
+                          const res = await captureLiveBackgroundSnapshot({ effectId: def.id });
+                          onUpdateSettings((prev) => ({
+                            ...prev,
+                            bgType: 'image',
+                            hasCustomImage: true,
+                            activeWallpaperId: res.id,
+                            activeWallpaperUrl: res.objectUrl,
+                            clockColor: res.clockColor,
+                            accentColor: res.accentColor,
+                          }));
+                          loadWallpapers();
+                        }}
+                        onOverlayOnWallpaper={(def) => {
+                          triggerHaptic('selection');
+                          onUpdateSettings((prev) => ({
+                            ...prev,
+                            bgType: 'image',
+                            liveWallpaperOverlayEnabled: true,
+                            liveWallpaperOverlayId: def.id,
+                            clockColor: prev.wallpaperEngineAutoColors ? def.recommendedClockColor : prev.clockColor,
+                            accentColor: prev.wallpaperEngineAutoColors ? def.recommendedAccentColor : prev.accentColor,
+                          }));
+                        }}
                         onUpdateSpeed={(spd) =>
                           onUpdateSettings((p) => ({ ...p, animatedBgSpeed: spd }))
                         }
@@ -922,6 +951,14 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   {/* Image Upload & Saved Wallpapers */}
                   {settings.bgType === 'image' && (
                     <div className="pt-2 border-t border-slate-800/80 space-y-4">
+                      {/* Intelligenter Live-Wallpaper Kombinator */}
+                      <SmartLiveWallpaperCard
+                        settings={settings}
+                        onUpdateSettings={onUpdateSettings}
+                        currentWallpaperUrl={currentWallpaperUrl}
+                        onReloadSavedWallpapers={loadWallpapers}
+                      />
+
                       {/* Wallpaper Engine 4K Curated Section */}
                       <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
                         <div className="flex items-center justify-between">

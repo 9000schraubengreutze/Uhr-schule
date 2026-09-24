@@ -74,6 +74,13 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   activeWallpaperUrl: undefined,
   wallpaperEngineAutoParticles: true,
   wallpaperEngineAutoColors: false,
+  liveWallpaperOverlayEnabled: false,
+  liveWallpaperOverlayId: 'aurora',
+  liveWallpaperBlendMode: 'screen',
+  liveWallpaperOpacity: 70,
+  liveWallpaperSpeed: 1.0,
+  liveWallpaperIntensity: 80,
+  liveWallpaperHarmonizeColors: true,
 
   // UHR (Digitale Uhr-Funktionen)
   is24Hour: true,

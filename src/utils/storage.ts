@@ -44,6 +44,34 @@ export function loadSettings(): ClockSettings {
         typeof parsed.backdropBlurIntensity === 'number'
           ? Math.max(0, Math.min(40, parsed.backdropBlurIntensity))
           : DEFAULT_SETTINGS.backdropBlurIntensity,
+      liveWallpaperOverlayEnabled:
+        typeof parsed.liveWallpaperOverlayEnabled === 'boolean'
+          ? parsed.liveWallpaperOverlayEnabled
+          : DEFAULT_SETTINGS.liveWallpaperOverlayEnabled,
+      liveWallpaperOverlayId:
+        typeof parsed.liveWallpaperOverlayId === 'string'
+          ? parsed.liveWallpaperOverlayId
+          : DEFAULT_SETTINGS.liveWallpaperOverlayId,
+      liveWallpaperBlendMode:
+        ['screen', 'overlay', 'soft-light', 'lighten', 'color-dodge', 'normal'].includes(parsed.liveWallpaperBlendMode)
+          ? parsed.liveWallpaperBlendMode
+          : DEFAULT_SETTINGS.liveWallpaperBlendMode,
+      liveWallpaperOpacity:
+        typeof parsed.liveWallpaperOpacity === 'number'
+          ? Math.max(10, Math.min(100, parsed.liveWallpaperOpacity))
+          : DEFAULT_SETTINGS.liveWallpaperOpacity,
+      liveWallpaperSpeed:
+        typeof parsed.liveWallpaperSpeed === 'number'
+          ? Math.max(0.25, Math.min(2.5, parsed.liveWallpaperSpeed))
+          : DEFAULT_SETTINGS.liveWallpaperSpeed,
+      liveWallpaperIntensity:
+        typeof parsed.liveWallpaperIntensity === 'number'
+          ? Math.max(20, Math.min(100, parsed.liveWallpaperIntensity))
+          : DEFAULT_SETTINGS.liveWallpaperIntensity,
+      liveWallpaperHarmonizeColors:
+        typeof parsed.liveWallpaperHarmonizeColors === 'boolean'
+          ? parsed.liveWallpaperHarmonizeColors
+          : DEFAULT_SETTINGS.liveWallpaperHarmonizeColors,
       timeZone: parsed.timeZone || DEFAULT_SETTINGS.timeZone,
       showAdditionalTimeZones:
         typeof parsed.showAdditionalTimeZones === 'boolean'

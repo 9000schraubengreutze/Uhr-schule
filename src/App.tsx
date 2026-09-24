@@ -498,6 +498,19 @@ export default function App() {
         />
       )}
 
+      {/* Intelligente Live-Hintergrund Synthese: Live-Canvas über Hintergrundbild mit Blend-Mode */}
+      {settings.bgType === 'image' && settings.liveWallpaperOverlayEnabled && (
+        <SmoothAnimatedBackground
+          effectId={settings.liveWallpaperOverlayId || 'aurora'}
+          speed={settings.liveWallpaperSpeed || 1.0}
+          intensity={settings.liveWallpaperIntensity || 80}
+          ecoMode={settings.ecoMode}
+          blur={settings.bgBlur}
+          blendMode={settings.liveWallpaperBlendMode || 'screen'}
+          opacity={(settings.liveWallpaperOpacity ?? 70) / 100}
+        />
+      )}
+
       {/* Dimming / Overlay Layer for maximum readability */}
       <div
         id="clock-overlay-layer"

@@ -7,7 +7,18 @@ import {
 } from '../data/animatedBackgrounds';
 import { AnimatedBgId, ClockSettings } from '../types';
 import { AnimatedBackgroundCanvas } from './AnimatedBackgroundCanvas';
-import { Sparkles, Check, Gauge, Sliders, Palette, Zap } from 'lucide-react';
+import {
+  Sparkles,
+  Check,
+  Gauge,
+  Sliders,
+  Palette,
+  Zap,
+  Camera,
+  Layers,
+  CheckCircle2,
+} from 'lucide-react';
+import { triggerHaptic } from '../utils/audio';
 
 interface AnimatedBackgroundBrowserProps {
   currentEffectId?: AnimatedBgId;
@@ -15,6 +26,8 @@ interface AnimatedBackgroundBrowserProps {
   currentIntensity?: number;
   ecoMode?: boolean;
   onSelectEffect: (def: AnimatedBgDef, harmonizeColors?: boolean) => void;
+  onCaptureAsWallpaper?: (def: AnimatedBgDef) => Promise<void> | void;
+  onOverlayOnWallpaper?: (def: AnimatedBgDef) => void;
   onUpdateSpeed?: (speed: number) => void;
   onUpdateIntensity?: (intensity: number) => void;
   isFullModal?: boolean;
@@ -26,12 +39,16 @@ export const AnimatedBackgroundBrowser: React.FC<AnimatedBackgroundBrowserProps>
   currentIntensity = 80,
   ecoMode = false,
   onSelectEffect,
+  onCaptureAsWallpaper,
+  onOverlayOnWallpaper,
   onUpdateSpeed,
   onUpdateIntensity,
   isFullModal = false,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<AnimatedBgCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [capturingEffectId, setCapturingEffectId] = useState<string | null>(null);
+  const [capturedFeedbackId, setCapturedFeedbackId] = useState<string | null>(null);
 
   const filteredItems = ANIMATED_BACKGROUNDS.filter((item) => {
     const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
@@ -175,33 +192,92 @@ export const AnimatedBackgroundBrowser: React.FC<AnimatedBackgroundBrowserProps>
                   </p>
                 </div>
 
-                {/* Harmonize Clock Color Button */}
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1">
-                    <div
-                      className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
-                      style={{ backgroundColor: item.recommendedClockColor }}
-                      title="Empfohlene Ziffernfarbe"
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
-                      style={{ backgroundColor: item.recommendedAccentColor }}
-                      title="Empfohlene Akzentfarbe"
-                    />
+                {/* Action Buttons: Harmonize Colors, Capture Snapshot as Wallpaper Image, Overlay */}
+                <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
+                        style={{ backgroundColor: item.recommendedClockColor }}
+                        title="Empfohlene Ziffernfarbe"
+                      />
+                      <div
+                        className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
+                        style={{ backgroundColor: item.recommendedAccentColor }}
+                        title="Empfohlene Akzentfarbe"
+                      />
+                      <span className="text-[10px] text-slate-400 hidden sm:inline">Farbtöne</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectEffect(item, true);
+                      }}
+                      className="text-[10px] font-semibold text-cyan-300 hover:text-cyan-200 px-2 py-1 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/60 flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Als Live-Hintergrund aktivieren und Ziffernfarben passend abstimmen"
+                    >
+                      <Palette className="w-3 h-3" />
+                      <span>Farben abstimmen</span>
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectEffect(item, true);
-                    }}
-                    className="text-[10px] font-semibold text-cyan-300 hover:text-cyan-200 px-2 py-1 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/60 flex items-center gap-1 cursor-pointer transition-colors"
-                    title="Wallpaper anwenden und Ziffernfarben passend abstimmen"
-                  >
-                    <Palette className="w-3 h-3" />
-                    <span>Farben abstimmen</span>
-                  </button>
+                  {/* Smart Actions: Capture as Static Wallpaper & Overlay on Image */}
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                    {onCaptureAsWallpaper && (
+                      <button
+                        type="button"
+                        disabled={capturingEffectId === item.id}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setCapturingEffectId(item.id);
+                          triggerHaptic('selection');
+                          try {
+                            await onCaptureAsWallpaper(item);
+                            setCapturedFeedbackId(item.id);
+                            setTimeout(() => setCapturedFeedbackId(null), 2500);
+                          } finally {
+                            setCapturingEffectId(null);
+                          }
+                        }}
+                        className={`text-[10px] font-semibold py-1 px-2 rounded-lg border flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                          capturedFeedbackId === item.id
+                            ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200'
+                            : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/70'
+                        }`}
+                        title="Momentanen Frame als hochauflösendes Hintergrundbild erfassen und in Bibliothek speichern"
+                      >
+                        {capturedFeedbackId === item.id ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>Gespeichert!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-3 h-3 text-cyan-400" />
+                            <span>{capturingEffectId === item.id ? 'Erfasse...' : 'Als Bild erfassen'}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {onOverlayOnWallpaper && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic('selection');
+                          onOverlayOnWallpaper(item);
+                        }}
+                        className="text-[10px] font-semibold py-1 px-2 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 hover:text-indigo-200 border border-indigo-800/60 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        title="Diesen Live-Effekt über dein aktuelles Wallpaper legen"
+                      >
+                        <Layers className="w-3 h-3 text-indigo-400" />
+                        <span>Auf Bild legen</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

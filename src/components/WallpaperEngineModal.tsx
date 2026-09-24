@@ -28,8 +28,13 @@ import {
   WallpaperCategory,
   WallpaperItem,
 } from '../data/wallpapers';
-import { ANIMATED_BACKGROUNDS } from '../data/animatedBackgrounds';
+import { ANIMATED_BACKGROUNDS, AnimatedBgDef } from '../data/animatedBackgrounds';
 import { AnimatedBackgroundBrowser } from './AnimatedBackgroundBrowser';
+import { SmartLiveWallpaperCard } from './SmartLiveWallpaperCard';
+import {
+  captureLiveBackgroundSnapshot,
+  recommendLiveEffectForWallpaper,
+} from '../utils/liveWallpaperHelper';
 import { ClockSettings, ParticleEffect } from '../types';
 import { triggerHaptic } from '../utils/audio';
 
@@ -71,6 +76,7 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
   });
 
   const [previewWallpaper, setPreviewWallpaper] = useState<WallpaperItem | null>(null);
+  const [showLiveEnginePanel, setShowLiveEnginePanel] = useState<boolean>(false);
 
   // Auto-effects flags (synced with settings)
   const autoParticles = settings.wallpaperEngineAutoParticles !== false;
@@ -339,6 +345,57 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
                   }`}
                 />
               </button>
+
+              {/* Smart Live-Wallpaper Switch */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  const nextVal = !settings.liveWallpaperOverlayEnabled;
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    liveWallpaperOverlayEnabled: nextVal,
+                    bgType: nextVal && prev.bgType !== 'image' ? 'image' : prev.bgType,
+                  }));
+                  showFeedback?.(
+                    nextVal
+                      ? 'Live-Hintergrund auf Bild-Wallpaper aktiviert!'
+                      : 'Live-Hintergrund deaktiviert.'
+                  );
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                  settings.liveWallpaperOverlayEnabled
+                    ? 'bg-cyan-600/20 border-cyan-500/40 text-cyan-300 font-medium'
+                    : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-300'
+                }`}
+                title="Legt eine animierte Live-Hintergrundebene mit anpassbarem Mischmodus über dein Wallpaper"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Live-Hintergrund</span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    settings.liveWallpaperOverlayEnabled ? 'bg-cyan-400 animate-pulse' : 'bg-slate-600'
+                  }`}
+                />
+              </button>
+
+              {/* Open Smart Live Synthesizer Panel */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setShowLiveEnginePanel((prev) => !prev);
+                }}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  showLiveEnginePanel
+                    ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-400 shadow-md shadow-cyan-500/20'
+                    : 'bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-300 border-cyan-700/60'
+                }`}
+                title="Öffnet die intelligente Live-Wallpaper Engine mit automatischen Empfehlungen und Standbild-Erfassung"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Live-Engine</span>
+              </button>
             </div>
           </div>
 
@@ -415,7 +472,16 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
         </div>
 
         {/* Wallpaper Grid Canvas */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-7 min-h-[360px] max-h-[60vh] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-7 min-h-[360px] max-h-[60vh] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent space-y-5">
+          {/* Collapsible Smart Live Wallpaper Engine Panel */}
+          {showLiveEnginePanel && (
+            <SmartLiveWallpaperCard
+              settings={settings}
+              onUpdateSettings={onUpdateSettings}
+              showFeedback={showFeedback}
+            />
+          )}
+
           {selectedCategory === 'animated' ? (
             <AnimatedBackgroundBrowser
               currentEffectId={settings.animatedBgId || 'aurora'}
@@ -444,6 +510,36 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
                   return next;
                 });
                 showFeedback?.(`Animierter Hintergrund "${def.nameDe}" aktiviert!`);
+              }}
+              onCaptureAsWallpaper={async (def) => {
+                triggerHaptic('selection');
+                const result = await captureLiveBackgroundSnapshot({
+                  effectId: def.id,
+                });
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  bgType: 'image',
+                  hasCustomImage: true,
+                  activeWallpaperId: result.id,
+                  activeWallpaperUrl: result.objectUrl,
+                  clockColor: result.clockColor,
+                  accentColor: result.accentColor,
+                }));
+                showFeedback?.(
+                  `📸 Live-Hintergrund "${def.nameDe}" als Standbild-Wallpaper gespeichert & aktiviert!`
+                );
+              }}
+              onOverlayOnWallpaper={(def) => {
+                triggerHaptic('selection');
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  bgType: 'image',
+                  liveWallpaperOverlayEnabled: true,
+                  liveWallpaperOverlayId: def.id,
+                  clockColor: autoColors ? def.recommendedClockColor : prev.clockColor,
+                  accentColor: autoColors ? def.recommendedAccentColor : prev.accentColor,
+                }));
+                showFeedback?.(`🖼️ Live-Effekt "${def.nameDe}" auf Wallpaper gelegt!`);
               }}
               onUpdateSpeed={(speed) => {
                 onUpdateSettings((prev) => ({ ...prev, animatedBgSpeed: speed }));
@@ -664,16 +760,46 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
                 <h3 className="text-lg font-bold text-white">{previewWallpaper.title}</h3>
                 <p className="text-xs text-slate-300">{previewWallpaper.description}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  handleApplyWallpaper(previewWallpaper);
-                  setPreviewWallpaper(null);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer shrink-0"
-              >
-                Dieses Wallpaper anwenden
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleApplyWallpaper(previewWallpaper);
+                    const rec = recommendLiveEffectForWallpaper(previewWallpaper);
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      liveWallpaperOverlayEnabled: true,
+                      liveWallpaperOverlayId: rec.effectId,
+                      liveWallpaperBlendMode: rec.blendMode,
+                      liveWallpaperOpacity: rec.opacity,
+                      liveWallpaperSpeed: rec.speed,
+                      liveWallpaperIntensity: rec.intensity,
+                      clockColor: autoColors ? rec.clockColor : prev.clockColor,
+                      accentColor: autoColors ? rec.accentColor : prev.accentColor,
+                    }));
+                    setPreviewWallpaper(null);
+                    showFeedback?.(
+                      `✨ Wallpaper & passender Live-Effekt "${rec.effectDef.nameDe}" aktiviert (${rec.reasonDe})!`
+                    );
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                  title="Wendet das Hintergrundbild mit passendem Live-Effekt & Farb-Harmonie an"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Mit Live-Effekt anwenden</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleApplyWallpaper(previewWallpaper);
+                    setPreviewWallpaper(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition-all cursor-pointer shrink-0"
+                >
+                  Statisch anwenden
+                </button>
+              </div>
             </div>
           </div>
         </div>

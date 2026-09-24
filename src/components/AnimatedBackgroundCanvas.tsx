@@ -889,6 +889,7 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
   return (
     <canvas
       ref={canvasRef}
+      data-effect-id={effectId}
       className={`w-full h-full block ${className}`}
       style={{
         width: '100%',

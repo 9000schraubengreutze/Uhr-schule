@@ -33,6 +33,14 @@ export type AnimatedBgId =
   | 'fire-embers'
   | 'warp-speed';
 
+export type LiveWallpaperBlendMode =
+  | 'screen'
+  | 'overlay'
+  | 'soft-light'
+  | 'lighten'
+  | 'color-dodge'
+  | 'normal';
+
 export type SettingsTab =
   | 'darstellung'
   | 'uhr'
@@ -188,6 +196,15 @@ export interface ClockSettings {
   videoLoop?: boolean; // Loop video continuously (default true)
   wallpaperEngineAutoParticles?: boolean; // Automatically activate matching atmospheric particle effect (default true)
   wallpaperEngineAutoColors?: boolean; // Automatically apply complementary clock & accent colors (default false)
+
+  // Intelligente Live-Hintergrund Kombination (Live-Effekte als Hintergrundbild / auf Wallpapers)
+  liveWallpaperOverlayEnabled?: boolean; // Enable live animated background as dynamic overlay on background image
+  liveWallpaperOverlayId?: AnimatedBgId; // Which live effect to animate over the background image
+  liveWallpaperBlendMode?: LiveWallpaperBlendMode; // CSS mix-blend-mode for the live canvas layer
+  liveWallpaperOpacity?: number; // Opacity of the live layer (10 to 100 percent, default 75)
+  liveWallpaperSpeed?: number; // Speed for live overlay (default 1.0)
+  liveWallpaperIntensity?: number; // Intensity for live overlay (default 80)
+  liveWallpaperHarmonizeColors?: boolean; // Automatically adapt clock colors to the live effect
 
   // === UHR (Digitale Uhr-Funktionen) ===
   is24Hour: boolean; // 24-hour vs 12-hour AM/PM format

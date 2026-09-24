@@ -8,6 +8,8 @@ interface SmoothAnimatedBackgroundProps {
   intensity?: number;
   ecoMode?: boolean;
   blur?: number;
+  blendMode?: React.CSSProperties['mixBlendMode'];
+  opacity?: number; // 0.0 to 1.0 (default 1)
   className?: string;
 }
 
@@ -16,9 +18,7 @@ interface SmoothAnimatedBackgroundProps {
  *
  * Implements a dual-buffer cross-fade transition between different
  * animated background scenes using hardware-accelerated CSS opacity transitions.
- * When the user switches effects, the new canvas smoothly cross-dissolves over
- * 700ms while the outgoing canvas fades out. Once the transition completes,
- * the outgoing canvas unmounts to keep CPU and memory usage minimal.
+ * Supports mixBlendMode and opacity for live layer overlays on static wallpapers.
  */
 export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> = ({
   effectId,
@@ -26,6 +26,8 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
   intensity = 80,
   ecoMode = false,
   blur = 0,
+  blendMode,
+  opacity,
   className = '',
 }) => {
   // Dual-buffer layers for silky-smooth CSS opacity cross-fades
@@ -103,7 +105,9 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
   const containerBlurStyle: React.CSSProperties = {
     filter: blur > 0 ? `blur(${blur}px)` : undefined,
     transform: blur > 0 ? 'scale(1.06)' : 'none',
-    transition: 'filter 700ms ease, transform 700ms ease',
+    transition: 'filter 700ms ease, transform 700ms ease, opacity 500ms ease',
+    mixBlendMode: blendMode || undefined,
+    opacity: typeof opacity === 'number' ? Math.max(0, Math.min(1, opacity)) : 1,
   };
 
   return (
