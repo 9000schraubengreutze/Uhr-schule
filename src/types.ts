@@ -1,11 +1,53 @@
 export type ClockFont = 'outfit' | 'inter' | 'mono' | 'school' | 'serif' | 'sans';
 export type ClockWeight = '300' | '400' | '600' | '800';
-export type BgType = 'color' | 'gradient' | 'image' | 'video' | 'animated';
+export type BgType = 'color' | 'gradient' | 'image' | 'video' | 'animated' | 'web';
 export type ThemeMode = 'dark' | 'light';
 export type ColorScheme = 'light' | 'dark' | 'system';
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type ColonAnimation = 'blink' | 'pulse' | 'glow' | 'bounce' | 'static';
 export type DigitTransition = 'flip' | 'slide' | 'slide-fade' | 'fade' | 'crossfade' | 'none';
+
+export type LivelyTargetFps = 15 | 30 | 60 | 120;
+export type LivelyInteractionType = 'attract' | 'repel' | 'ripple' | 'glow' | 'none';
+
+export interface LivelySettings {
+  isPaused: boolean; // Pause live animation completely (0 CPU)
+  targetFps: LivelyTargetFps; // 15 (Akku), 30 (Eco), 60 (Standard), 120 (Ultra)
+  pauseOnBattery: boolean; // Pause automatically when battery is low / saver mode
+
+  // Mouse & Pointer Reactivity
+  mouseInteraction: boolean; // Interactive reaction to mouse / touch cursor
+  interactionType: LivelyInteractionType; // 'attract' | 'repel' | 'ripple' | 'glow' | 'none'
+  interactionRadius: number; // 40 to 300 px (default 140)
+  interactionStrength: number; // 0.2 to 2.5 (default 1.0)
+
+  // 3D Parallax Tilt (Lively 3D Perspective)
+  enableParallax: boolean; // 3D mouse parallax tilt
+  parallaxStrength: number; // 4 to 35 px (default 16)
+
+  // Visual Customizer Filters
+  hueShift: number; // 0 to 360 deg (default 0)
+  saturation: number; // 0 to 200 % (default 100)
+  brightness: number; // 50 to 150 % (default 100)
+  contrast: number; // 50 to 150 % (default 100)
+  bloomIntensity: number; // 0 to 100 % (default 0)
+
+  // Audio Reactivity
+  audioReactive: boolean; // React to music / sound pulses
+  audioSensitivity: number; // 0.2 to 2.0 (default 1.0)
+}
+
+export interface LivelyCustomWallpaper {
+  id: string;
+  title: string;
+  type: 'video' | 'web' | 'animated';
+  url: string; // Direct file URL, object URL, or web link
+  thumbnailUrl?: string;
+  author?: string;
+  createdAt: number;
+  videoSpeed?: number;
+  videoMuted?: boolean;
+}
 
 export type EntranceAnimationType =
   | 'slide-up'
@@ -206,6 +248,11 @@ export interface ClockSettings {
   liveWallpaperIntensity?: number; // Intensity for live overlay (default 80)
   liveWallpaperHarmonizeColors?: boolean; // Automatically adapt clock colors to the live effect
 
+  // Lively Wallpaper Engine (Interaktivität, 3D-Parallax, Performance-Regeln & Shader)
+  lively: LivelySettings;
+  activeWebUrl?: string; // Direct URL when bgType is 'web'
+  customLiveWallpapers?: LivelyCustomWallpaper[]; // User-imported video, web, or custom live wallpapers
+
   // === UHR (Digitale Uhr-Funktionen) ===
   is24Hour: boolean; // 24-hour vs 12-hour AM/PM format
   showSeconds: boolean; // Toggle seconds display
@@ -255,4 +302,30 @@ export interface ClockSettings {
 
   // === ATMOSPHÄRISCHE HINTERGRUND-GERÄUSCHE (AUDIO-TAB) ===
   ambientSound: AmbientSoundConfig;
+
+  // === BILDSCHIRMSCHONER & OLED SLEEP-MODUS ===
+  screensaver: ScreensaverConfig;
+
+  // === GOOGLE KALENDER INTEGRATION & TERMIN-ALARME ===
+  calendar: CalendarSettings;
+}
+
+export interface CalendarSettings {
+  enabled: boolean; // Kalender-Synchronisation aktiviert
+  alertLeadMinutes: number; // Vorwarnzeit für herannahende Termine in Minuten (z. B. 5, 10, 15, 30 Min.)
+  showOnClock: boolean; // Termin-Alerts & Next-Event-Widget direkt auf der Uhr anzeigen
+  soundAlert: boolean; // Dezenter Signalton bei herannahendem Termin
+}
+
+export type ScreensaverStyle = 'minimal' | 'modern' | 'dots' | 'vertical';
+
+export interface ScreensaverConfig {
+  enabled: boolean; // Automatischer Bildschirmschoner aktiv (Standard: true)
+  timeoutMinutes: number; // Inaktivitätszeit in Minuten bis zum Schlafmodus (Standard: 5)
+  antiBurnInShift: boolean; // Sanfter Pixel-Shift / Orbiting alle 30-45s gegen OLED-Einbrennen
+  brightness: number; // Gedimmte Bildhelligkeit in % (10 - 60%, Standard 25%)
+  showDate: boolean; // Minimalistisches Datum im Schlafzustand anzeigen
+  showBattery: boolean; // Minimalistische Akkuanzeige wenn verfügbar
+  showSeconds: boolean; // Sekunden im Ruhezustand anzeigen (Standard: false)
+  displayStyle: ScreensaverStyle; // 'minimal' | 'modern' | 'dots' | 'vertical'
 }

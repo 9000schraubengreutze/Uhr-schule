@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { AnimatedBgId } from '../types';
+import { AnimatedBgId, LivelySettings } from '../types';
 
 interface AnimatedBackgroundCanvasProps {
   effectId: AnimatedBgId;
@@ -7,6 +7,7 @@ interface AnimatedBackgroundCanvasProps {
   intensity?: number; // 20 to 100 (default 80)
   ecoMode?: boolean;
   isMiniPreview?: boolean;
+  lively?: Partial<LivelySettings>;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
   intensity = 80,
   ecoMode = false,
   isMiniPreview = false,
+  lively,
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -26,6 +28,51 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
 
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
+
+    const isPaused = Boolean(lively?.isPaused);
+    const targetFps = lively?.targetFps ?? (ecoMode ? 30 : 60);
+    const mouseInteraction = !isMiniPreview && (lively?.mouseInteraction ?? true);
+    const interactionType = lively?.interactionType ?? 'attract';
+    const interactionRadius = lively?.interactionRadius ?? 140;
+    const interactionStrength = lively?.interactionStrength ?? 1.0;
+
+    // Pointer state
+    const pointer = {
+      x: -9999,
+      y: -9999,
+      vx: 0,
+      vy: 0,
+      active: false,
+      isDown: false,
+      lastMove: 0,
+    };
+
+    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+      if (!mouseInteraction || !canvas) return;
+      const clientX = 'touches' in e ? e.touches[0]?.clientX ?? -9999 : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0]?.clientY ?? -9999 : (e as MouseEvent).clientY;
+      const rect = canvas.getBoundingClientRect();
+      const nx = clientX - rect.left;
+      const ny = clientY - rect.top;
+      pointer.vx = (nx - pointer.x) * 0.4;
+      pointer.vy = (ny - pointer.y) * 0.4;
+      pointer.x = nx;
+      pointer.y = ny;
+      pointer.active = true;
+      pointer.lastMove = performance.now();
+    };
+
+    const handlePointerDown = () => { pointer.isDown = true; };
+    const handlePointerUp = () => { pointer.isDown = false; };
+    const handlePointerLeave = () => { pointer.active = false; };
+
+    if (!isMiniPreview && typeof window !== 'undefined') {
+      window.addEventListener('mousemove', handlePointerMove, { passive: true });
+      window.addEventListener('touchmove', handlePointerMove, { passive: true });
+      window.addEventListener('mousedown', handlePointerDown, { passive: true });
+      window.addEventListener('mouseup', handlePointerUp, { passive: true });
+      window.addEventListener('mouseleave', handlePointerLeave, { passive: true });
+    }
 
     let animId: number;
     let isRunning = true;
@@ -138,9 +185,23 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
     const render = (currentTime: number) => {
       if (!isRunning) return;
 
+      if (isPaused) {
+        // Paused state (Lively Wallpaper Pause): stop animation loop, consuming 0 CPU
+        return;
+      }
+
       const elapsed = currentTime - lastTime;
-      // Target 30 FPS for ecoMode or mini preview, 60 FPS normal
-      const minInterval = ecoMode || isMiniPreview ? 33 : 16;
+      // Target FPS throttling (Lively Wallpaper Performance Engine)
+      const minInterval = isMiniPreview
+        ? 33
+        : targetFps === 15
+        ? 66.6
+        : targetFps === 30
+        ? 33.3
+        : targetFps === 120
+        ? 8.3
+        : 16.6;
+
       if (elapsed < minInterval) {
         animId = requestAnimationFrame(render);
         return;
@@ -152,6 +213,20 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
       simTime += 0.016 * dt * effSpeed;
 
       const intMult = intensity / 100;
+      const isPointerRecent = pointer.active && currentTime - pointer.lastMove < 2500;
+
+      // Universal mouse glow/ripple aura when interaction is active
+      if (mouseInteraction && isPointerRecent && (interactionType === 'glow' || interactionType === 'ripple')) {
+        const rad = interactionRadius;
+        const auraGrad = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, rad);
+        auraGrad.addColorStop(0, `rgba(56, 189, 248, ${0.16 * interactionStrength})`);
+        auraGrad.addColorStop(0.5, `rgba(168, 85, 247, ${0.08 * interactionStrength})`);
+        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(pointer.x, pointer.y, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // =========================================================================
       // 1. AURORA BOREALIS (Nordlichter)
@@ -209,10 +284,18 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
           ctx.beginPath();
           ctx.moveTo(0, height);
           for (let x = 0; x <= width; x += isMiniPreview ? 12 : 6) {
+            let mouseBend = 0;
+            if (mouseInteraction && isPointerRecent) {
+              const dx = Math.abs(x - pointer.x);
+              if (dx < interactionRadius * 1.6) {
+                const f = (1 - dx / (interactionRadius * 1.6)) * 36 * interactionStrength;
+                mouseBend = interactionType === 'repel' ? f : -f;
+              }
+            }
             const wave1 = Math.sin(x * ribbon.freq + simTime * 0.8 + ribbon.speedOffset);
             const wave2 = Math.cos(x * ribbon.freq * 2.2 - simTime * 0.5);
             const wave3 = Math.sin(x * 0.0008 + simTime * 0.3);
-            const y = ribbon.baseY + (wave1 * 0.6 + wave2 * 0.3 + wave3 * 0.1) * ribbon.amp;
+            const y = ribbon.baseY + (wave1 * 0.6 + wave2 * 0.3 + wave3 * 0.1) * ribbon.amp + mouseBend;
             ctx.lineTo(x, y);
           }
           ctx.lineTo(width, height);
@@ -878,13 +961,20 @@ export const AnimatedBackgroundCanvas: React.FC<AnimatedBackgroundCanvasProps> =
       isRunning = false;
       cancelAnimationFrame(animId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (!isMiniPreview && typeof window !== 'undefined') {
+        window.removeEventListener('mousemove', handlePointerMove);
+        window.removeEventListener('touchmove', handlePointerMove);
+        window.removeEventListener('mousedown', handlePointerDown);
+        window.removeEventListener('mouseup', handlePointerUp);
+        window.removeEventListener('mouseleave', handlePointerLeave);
+      }
       if (resizeObserver) {
         resizeObserver.disconnect();
       } else {
         window.removeEventListener('resize', handleResize);
       }
     };
-  }, [effectId, speed, intensity, ecoMode, isMiniPreview]);
+  }, [effectId, speed, intensity, ecoMode, isMiniPreview, lively]);
 
   return (
     <canvas

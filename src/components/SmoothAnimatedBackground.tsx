@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatedBgId } from '../types';
+import { AnimatedBgId, LivelySettings } from '../types';
 import { AnimatedBackgroundCanvas } from './AnimatedBackgroundCanvas';
 
 interface SmoothAnimatedBackgroundProps {
@@ -10,6 +10,7 @@ interface SmoothAnimatedBackgroundProps {
   blur?: number;
   blendMode?: React.CSSProperties['mixBlendMode'];
   opacity?: number; // 0.0 to 1.0 (default 1)
+  lively?: Partial<LivelySettings>;
   className?: string;
 }
 
@@ -18,7 +19,7 @@ interface SmoothAnimatedBackgroundProps {
  *
  * Implements a dual-buffer cross-fade transition between different
  * animated background scenes using hardware-accelerated CSS opacity transitions.
- * Supports mixBlendMode and opacity for live layer overlays on static wallpapers.
+ * Supports Lively Wallpaper 3D parallax tilt, custom visual filters, and mixBlendMode.
  */
 export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> = ({
   effectId,
@@ -28,16 +29,43 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
   blur = 0,
   blendMode,
   opacity,
+  lively,
   className = '',
 }) => {
   // Dual-buffer layers for silky-smooth CSS opacity cross-fades
   const [layerA, setLayerA] = useState<AnimatedBgId | null>(effectId);
   const [layerB, setLayerB] = useState<AnimatedBgId | null>(null);
   const [activeLayer, setActiveLayer] = useState<'A' | 'B'>('A');
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const prevEffectRef = useRef<AnimatedBgId>(effectId);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const enableParallax = Boolean(lively?.enableParallax ?? true);
+  const parallaxStrength = lively?.parallaxStrength ?? 16;
+
+  // Lively 3D Mouse Parallax Tilt
+  useEffect(() => {
+    if (!enableParallax || typeof window === 'undefined') {
+      setTilt({ x: 0, y: 0 });
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const halfW = window.innerWidth / 2;
+      const halfH = window.innerHeight / 2;
+      const normX = (e.clientX - halfW) / halfW;
+      const normY = (e.clientY - halfH) / halfH;
+      setTilt({
+        x: -normY * (parallaxStrength * 0.35),
+        y: normX * (parallaxStrength * 0.35),
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [enableParallax, parallaxStrength]);
 
   useEffect(() => {
     // If effectId has not changed, do nothing
@@ -102,10 +130,33 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
     };
   }, []);
 
+  // Compute visual shader filters (Lively Post-Processing)
+  const filterParts: string[] = [];
+  if (blur > 0) filterParts.push(`blur(${blur}px)`);
+  if (lively?.hueShift) filterParts.push(`hue-rotate(${lively.hueShift}deg)`);
+  if (typeof lively?.saturation === 'number' && lively.saturation !== 100) {
+    filterParts.push(`saturate(${lively.saturation}%)`);
+  }
+  if (typeof lively?.brightness === 'number' && lively.brightness !== 100) {
+    filterParts.push(`brightness(${lively.brightness}%)`);
+  }
+  if (typeof lively?.contrast === 'number' && lively.contrast !== 100) {
+    filterParts.push(`contrast(${lively.contrast}%)`);
+  }
+  if (lively?.bloomIntensity && lively.bloomIntensity > 0) {
+    filterParts.push(`drop-shadow(0 0 ${lively.bloomIntensity * 0.25}px rgba(56, 189, 248, 0.35))`);
+  }
+
   const containerBlurStyle: React.CSSProperties = {
-    filter: blur > 0 ? `blur(${blur}px)` : undefined,
-    transform: blur > 0 ? 'scale(1.06)' : 'none',
-    transition: 'filter 700ms ease, transform 700ms ease, opacity 500ms ease',
+    filter: filterParts.length > 0 ? filterParts.join(' ') : undefined,
+    transform: enableParallax
+      ? `perspective(1200px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1.06)`
+      : blur > 0
+      ? 'scale(1.06)'
+      : 'none',
+    transition: enableParallax
+      ? 'transform 120ms ease-out, filter 500ms ease, opacity 500ms ease'
+      : 'filter 700ms ease, transform 700ms ease, opacity 500ms ease',
     mixBlendMode: blendMode || undefined,
     opacity: typeof opacity === 'number' ? Math.max(0, Math.min(1, opacity)) : 1,
   };
@@ -130,6 +181,7 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
             speed={speed}
             intensity={intensity}
             ecoMode={ecoMode}
+            lively={lively}
           />
         </div>
       )}
@@ -148,9 +200,11 @@ export const SmoothAnimatedBackground: React.FC<SmoothAnimatedBackgroundProps> =
             speed={speed}
             intensity={intensity}
             ecoMode={ecoMode}
+            lively={lively}
           />
         </div>
       )}
     </div>
   );
 };
+

@@ -15,6 +15,8 @@ import {
   Clock,
   Moon,
   Volume2,
+  Calendar,
+  Bell,
 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
@@ -25,6 +27,9 @@ interface QuickControlsProps {
   onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
+  onOpenCalendar?: () => void;
+  isCalendarConnected?: boolean;
+  approachingEventCount?: number;
   statusResult?: SchoolStatusResult;
   backdropBlur?: number;
   anyModalOpen?: boolean;
@@ -37,6 +42,7 @@ interface QuickControlsProps {
   onOpenAudioTab?: () => void;
   isAmbientPlaying?: boolean;
   activeAmbientTitle?: string;
+  onActivateScreensaver?: () => void;
 }
 
 export const QuickControls: React.FC<QuickControlsProps> = ({
@@ -46,6 +52,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenWallpapers,
   onOpenGeminiBg,
   onOpenChat,
+  onOpenCalendar,
+  isCalendarConnected = false,
+  approachingEventCount = 0,
   statusResult,
   backdropBlur = 16,
   anyModalOpen = false,
@@ -58,6 +67,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenAudioTab,
   isAmbientPlaying = false,
   activeAmbientTitle,
+  onActivateScreensaver,
 }) => {
   // Hidden by default: only display when user hovers over the top trigger area
   const [isHovered, setIsHovered] = useState(false);
@@ -309,6 +319,43 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             </button>
           )}
 
+          {/* Google Calendar Button */}
+          {onOpenCalendar && (
+            <button
+              id="open-calendar-btn"
+              type="button"
+              onClick={onOpenCalendar}
+              title={
+                approachingEventCount > 0
+                  ? `Google Kalender: ${approachingEventCount} anstehender Termin! Klicken zum Öffnen (Taste: K)`
+                  : isCalendarConnected
+                  ? 'Google Kalender & Termine (Taste: K)'
+                  : 'Google Kalender verknüpfen (Taste: K)'
+              }
+              aria-label="Google Kalender öffnen"
+              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer ${
+                approachingEventCount > 0
+                  ? 'text-amber-200 bg-amber-500/25 border-amber-400/50 shadow-[0_0_16px_rgba(245,158,11,0.35)] animate-pulse'
+                  : isCalendarConnected
+                  ? 'text-indigo-200 bg-indigo-500/20 border-indigo-400/35 hover:bg-indigo-500/30'
+                  : 'text-slate-300 hover:text-white border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16]'
+              }`}
+            >
+              {approachingEventCount > 0 ? (
+                <Bell className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
+              ) : (
+                <Calendar className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115" />
+              )}
+              <span className="hidden sm:inline">Kalender</span>
+              {approachingEventCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              )}
+              {isCalendarConnected && approachingEventCount === 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              )}
+            </button>
+          )}
+
           {/* Divider */}
           <div className="w-px h-4 bg-white/10 mx-0.5" />
 
@@ -348,6 +395,20 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               />
             )}
           </button>
+
+          {/* OLED Sleep / Bildschirmschoner Button */}
+          {onActivateScreensaver && (
+            <button
+              id="quick-screensaver-btn"
+              type="button"
+              onClick={onActivateScreensaver}
+              title="OLED Sleep-Modus / Bildschirmschoner aktivieren (Anti-Burn-In)"
+              aria-label="OLED Sleep-Modus aktivieren"
+              className="group relative p-1.5 rounded-full text-indigo-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(99,102,241,0.25)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            >
+              <Moon className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12" />
+            </button>
+          )}
         </nav>
       </footer>
     </>

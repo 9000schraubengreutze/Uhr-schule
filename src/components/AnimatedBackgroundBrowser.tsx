@@ -28,6 +28,7 @@ interface AnimatedBackgroundBrowserProps {
   onSelectEffect: (def: AnimatedBgDef, harmonizeColors?: boolean) => void;
   onCaptureAsWallpaper?: (def: AnimatedBgDef) => Promise<void> | void;
   onOverlayOnWallpaper?: (def: AnimatedBgDef) => void;
+  onOpenCustomizer?: () => void;
   onUpdateSpeed?: (speed: number) => void;
   onUpdateIntensity?: (intensity: number) => void;
   isFullModal?: boolean;
@@ -41,6 +42,7 @@ export const AnimatedBackgroundBrowser: React.FC<AnimatedBackgroundBrowserProps>
   onSelectEffect,
   onCaptureAsWallpaper,
   onOverlayOnWallpaper,
+  onOpenCustomizer,
   onUpdateSpeed,
   onUpdateIntensity,
   isFullModal = false,
@@ -294,9 +296,25 @@ export const AnimatedBackgroundBrowser: React.FC<AnimatedBackgroundBrowserProps>
               Animations-Steuerung
             </span>
           </div>
-          <span className="text-[11px] text-cyan-300 font-mono font-medium">
-            {currentSpeed}x Speed • {currentIntensity}% Kraft
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-cyan-300 font-mono font-medium hidden sm:inline">
+              {currentSpeed}x Speed • {currentIntensity}% Kraft
+            </span>
+            {onOpenCustomizer && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  onOpenCustomizer();
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                title="Lively Customizer: 3D-Parallax, Mausinteraktion, Shader-Filter, Framerate & Performance"
+              >
+                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Lively Customizer</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Speed Selector */}

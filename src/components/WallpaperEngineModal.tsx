@@ -21,6 +21,10 @@ import {
   Wind,
   CircleDot,
   CheckCircle2,
+  Film,
+  Plus,
+  Play,
+  Globe,
 } from 'lucide-react';
 import {
   CURATED_WALLPAPERS,
@@ -31,6 +35,10 @@ import {
 import { ANIMATED_BACKGROUNDS, AnimatedBgDef } from '../data/animatedBackgrounds';
 import { AnimatedBackgroundBrowser } from './AnimatedBackgroundBrowser';
 import { SmartLiveWallpaperCard } from './SmartLiveWallpaperCard';
+import {
+  CURATED_LIVELY_VIDEOS,
+  CuratedLivelyVideo,
+} from './LivelyAddWallpaperModal';
 import {
   captureLiveBackgroundSnapshot,
   recommendLiveEffectForWallpaper,
@@ -48,6 +56,8 @@ export interface WallpaperEngineModalProps {
   onOpenGeminiStudio?: () => void;
   onOpenGeminiBg?: () => void;
   onUploadImage?: (file: File) => void;
+  onOpenLivelyCustomizer?: () => void;
+  onOpenLivelyAddWallpaper?: () => void;
   showFeedback?: (msg: string) => void;
   backdropBlur?: number;
 }
@@ -60,6 +70,8 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
   onOpenGeminiStudio,
   onOpenGeminiBg,
   onUploadImage,
+  onOpenLivelyCustomizer,
+  onOpenLivelyAddWallpaper,
   showFeedback,
   backdropBlur = 16,
 }) => {
@@ -396,6 +408,38 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
                 <Layers className="w-3.5 h-3.5" />
                 <span>Live-Engine</span>
               </button>
+
+              {/* Lively Customizer Button */}
+              {onOpenLivelyCustomizer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    onOpenLivelyCustomizer();
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-cyan-500/40 bg-slate-900/80 hover:bg-cyan-950/60 text-cyan-300 text-xs font-semibold transition-all cursor-pointer"
+                  title="Lively Customizer: 3D-Parallax, Mausreaktion, Filter & Performance anpassen"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="hidden sm:inline">Lively</span> Anpassen
+                </button>
+              )}
+
+              {/* Lively Add Wallpaper Button */}
+              {onOpenLivelyAddWallpaper && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    onOpenLivelyAddWallpaper();
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-blue-500/40 bg-blue-950/40 hover:bg-blue-900/60 text-blue-200 text-xs font-semibold transition-all cursor-pointer"
+                  title="Video-Wallpaper, Web-URL oder Datei hinzufügen wie in Lively Wallpaper"
+                >
+                  <Plus className="w-3.5 h-3.5 text-blue-400" />
+                  <span>+ Video/Web</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -408,6 +452,8 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
                   ? CURATED_WALLPAPERS.length
                   : cat.id === 'animated'
                   ? ANIMATED_BACKGROUNDS.length
+                  : cat.id === 'video'
+                  ? CURATED_LIVELY_VIDEOS.length + (settings.customLiveWallpapers?.length || 0)
                   : CURATED_WALLPAPERS.filter((w) => w.category === cat.id).length;
 
               return (
@@ -547,7 +593,264 @@ export const WallpaperEngineModal: React.FC<WallpaperEngineModalProps> = ({
               onUpdateIntensity={(intensity) => {
                 onUpdateSettings((prev) => ({ ...prev, animatedBgIntensity: intensity }));
               }}
+              onOpenCustomizer={onOpenLivelyCustomizer}
             />
+          ) : selectedCategory === 'video' ? (
+            <div className="space-y-5">
+              {/* Lively Video Header Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-blue-950/50 to-indigo-950/60 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shrink-0">
+                    <Film className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Lively Video & Motion Wallpapers</span>
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                        Hardware-Accelerated
+                      </span>
+                    </h4>
+                    <p className="text-xs text-cyan-200/80">
+                      Endlos-Loops mit anpassbarer Geschwindigkeit, Stummschaltung & 3D-Maus-Parallaxe.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  {onOpenLivelyCustomizer && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        onOpenLivelyCustomizer();
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Anpassen</span>
+                    </button>
+                  )}
+                  {onOpenLivelyAddWallpaper && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        onOpenLivelyAddWallpaper();
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-600/30 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Video / URL</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Video Wallpapers Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {/* Custom user live wallpapers if any */}
+                {settings.customLiveWallpapers?.map((item) => {
+                  const isActive =
+                    (settings.bgType === 'video' && settings.activeVideoUrl === item.url) ||
+                    (settings.bgType === 'web' && settings.activeWebUrl === item.url);
+                  return (
+                    <div
+                      key={item.id}
+                      className={`group relative rounded-2xl overflow-hidden border text-left transition-all duration-300 flex flex-col ${
+                        isActive
+                          ? 'border-cyan-400 ring-2 ring-cyan-500/40 bg-slate-900/90 shadow-xl shadow-cyan-500/20'
+                          : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80'
+                      }`}
+                    >
+                      <div className="relative aspect-video w-full overflow-hidden bg-slate-950 flex items-center justify-center">
+                        {item.type === 'video' ? (
+                          <video
+                            src={item.url}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-500 space-y-1">
+                            <Globe className="w-8 h-8 text-cyan-400" />
+                            <span className="text-[11px] font-mono">Web-Hintergrund</span>
+                          </div>
+                        )}
+                        {/* Type Badge */}
+                        <div className="absolute top-2.5 left-2.5 z-10">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/30">
+                            {item.type === 'video' ? '🎬 Eigener Video-Loop' : '🌐 Web URL'}
+                          </span>
+                        </div>
+                        {isActive && (
+                          <div className="absolute top-2.5 right-2.5 z-10">
+                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/20 backdrop-blur-md text-emerald-300 border border-emerald-500/40">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              Aktiv
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-white line-clamp-1">{item.title}</h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Eigener Live-Hintergrund</p>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('success');
+                              if (item.type === 'video') {
+                                onUpdateSettings((prev) => ({
+                                  ...prev,
+                                  bgType: 'video',
+                                  activeWallpaperType: 'video',
+                                  activeVideoUrl: item.url,
+                                  activeWallpaperId: item.id,
+                                }));
+                                showFeedback?.(`Video "${item.title}" aktiviert!`);
+                              } else {
+                                onUpdateSettings((prev) => ({
+                                  ...prev,
+                                  bgType: 'web',
+                                  activeWebUrl: item.url,
+                                  activeWallpaperId: item.id,
+                                }));
+                                showFeedback?.(`Web-Hintergrund "${item.title}" aktiviert!`);
+                              }
+                            }}
+                            className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                              isActive
+                                ? 'bg-cyan-500 text-slate-950 font-extrabold shadow'
+                                : 'bg-slate-800 hover:bg-slate-700 text-white'
+                            }`}
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            <span>{isActive ? 'Wird abgespielt' : 'Aktivieren'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('selection');
+                              onUpdateSettings((prev) => ({
+                                ...prev,
+                                customLiveWallpapers: prev.customLiveWallpapers?.filter((w) => w.id !== item.id),
+                              }));
+                            }}
+                            className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-950/80 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-800 transition-colors cursor-pointer"
+                            title="Aus Bibliothek entfernen"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Curated Lively Videos */}
+                {CURATED_LIVELY_VIDEOS.map((vid) => {
+                  const isActive =
+                    settings.bgType === 'video' &&
+                    (settings.activeVideoUrl === vid.videoUrl || settings.activeWallpaperId === vid.id);
+                  return (
+                    <div
+                      key={vid.id}
+                      className={`group relative rounded-2xl overflow-hidden border text-left transition-all duration-300 flex flex-col ${
+                        isActive
+                          ? 'border-cyan-400 ring-2 ring-cyan-500/40 bg-slate-900/90 shadow-xl shadow-cyan-500/20'
+                          : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80'
+                      }`}
+                    >
+                      {/* Thumbnail */}
+                      <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+                        <img
+                          src={vid.thumbnailUrl}
+                          alt={vid.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+                        
+                        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/30">
+                            {vid.category}
+                          </span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-900/80 text-slate-300">
+                            1080p 60fps
+                          </span>
+                        </div>
+
+                        {isActive && (
+                          <div className="absolute top-2.5 right-2.5 z-10">
+                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/20 backdrop-blur-md text-emerald-300 border border-emerald-500/40">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              Aktiv
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info & Actions */}
+                      <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-white line-clamp-1">{vid.title}</h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Lively Hardware-beschleunigter Video-Loop</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('success');
+                              onUpdateSettings((prev) => {
+                                const next: ClockSettings = {
+                                  ...prev,
+                                  bgType: 'video',
+                                  activeWallpaperType: 'video',
+                                  activeVideoUrl: vid.videoUrl,
+                                  activeWallpaperId: vid.id,
+                                };
+                                if (autoColors) {
+                                  next.clockColor = vid.recommendedClockColor;
+                                  next.accentColor = vid.recommendedAccentColor;
+                                }
+                                return next;
+                              });
+                              showFeedback?.(`Lively Video "${vid.title}" aktiviert!`);
+                            }}
+                            className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                              isActive
+                                ? 'bg-cyan-500 text-slate-950 font-extrabold shadow'
+                                : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md shadow-cyan-600/20'
+                            }`}
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            <span>{isActive ? 'Aktiv (Wird geloopt)' : 'Als Live-Video aktivieren'}</span>
+                          </button>
+
+                          {onOpenLivelyCustomizer && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic('selection');
+                                onOpenLivelyCustomizer();
+                              }}
+                              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors cursor-pointer"
+                              title="Geschwindigkeit, Filter, 3D Parallaxe anpassen"
+                            >
+                              <Sliders className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           ) : filteredWallpapers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
               <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500">

@@ -1,4 +1,50 @@
-import { ClockSettings, GradientPreset, CuratedTheme, PomodoroConfig, AmbientSoundConfig } from '../types';
+import {
+  ClockSettings,
+  GradientPreset,
+  CuratedTheme,
+  PomodoroConfig,
+  AmbientSoundConfig,
+  LivelySettings,
+  ScreensaverConfig,
+  CalendarSettings,
+} from '../types';
+
+export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
+  enabled: true,
+  alertLeadMinutes: 15, // Alert 15 minutes before scheduled event
+  showOnClock: true,
+  soundAlert: true,
+};
+
+export const DEFAULT_SCREENSAVER_CONFIG: ScreensaverConfig = {
+  enabled: true,
+  timeoutMinutes: 5, // 5 minutes inactivity default
+  antiBurnInShift: true, // periodic smooth pixel shift
+  brightness: 25, // 25% dimmed luminance for OLED protection
+  showDate: true,
+  showBattery: true,
+  showSeconds: false,
+  displayStyle: 'minimal',
+};
+
+export const DEFAULT_LIVELY_CONFIG: LivelySettings = {
+  isPaused: false,
+  targetFps: 60,
+  pauseOnBattery: false,
+  mouseInteraction: true,
+  interactionType: 'attract',
+  interactionRadius: 140,
+  interactionStrength: 1.0,
+  enableParallax: true,
+  parallaxStrength: 16,
+  hueShift: 0,
+  saturation: 100,
+  brightness: 100,
+  contrast: 100,
+  bloomIntensity: 25,
+  audioReactive: false,
+  audioSensitivity: 1.0,
+};
 
 export const DEFAULT_AMBIENT_SOUND_CONFIG: AmbientSoundConfig = {
   activeSound: 'none',
@@ -81,6 +127,8 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   liveWallpaperSpeed: 1.0,
   liveWallpaperIntensity: 80,
   liveWallpaperHarmonizeColors: true,
+  lively: DEFAULT_LIVELY_CONFIG,
+  customLiveWallpapers: [],
 
   // UHR (Digitale Uhr-Funktionen)
   is24Hour: true,
@@ -135,6 +183,12 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 
   // ATMOSPHÄRISCHE HINTERGRUND-GERÄUSCHE (AUDIO-TAB)
   ambientSound: DEFAULT_AMBIENT_SOUND_CONFIG,
+
+  // BILDSCHIRMSCHONER & OLED SLEEP-MODUS
+  screensaver: DEFAULT_SCREENSAVER_CONFIG,
+
+  // GOOGLE KALENDER INTEGRATION & TERMIN-ALARME
+  calendar: DEFAULT_CALENDAR_SETTINGS,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [

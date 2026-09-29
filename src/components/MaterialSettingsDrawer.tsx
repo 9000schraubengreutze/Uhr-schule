@@ -28,6 +28,8 @@ import { ZenScheduleCard } from './ZenScheduleCard';
 import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
 import { AudioSettingsTab } from './AudioSettingsTab';
 import { PerformanceInfoOverlay } from './PerformanceInfoOverlay';
+import { ScreensaverSettingsCard } from './ScreensaverSettingsCard';
+import { CalendarSettingsCard } from './CalendarSettingsCard';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -89,6 +91,8 @@ interface MaterialSettingsDrawerProps {
   onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
+  onOpenLivelyCustomizer?: () => void;
+  onOpenLivelyAddWallpaper?: () => void;
   statusResult?: SchoolStatusResult;
   onSetSimulationMode?: (mode: SchoolSimulationMode) => void;
   teacherOverride?: boolean;
@@ -106,6 +110,10 @@ interface MaterialSettingsDrawerProps {
   onToggleZenMode?: () => void;
   initialTab?: SettingsTab;
   onTogglePlayAmbient?: (type: any) => void;
+  onTestScreensaver?: () => void;
+  onOpenCalendarModal?: () => void;
+  isCalendarConnected?: boolean;
+  userCalendarEmail?: string | null;
 }
 
 interface NavItem {
@@ -132,6 +140,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onOpenWallpapers,
   onOpenGeminiBg,
   onOpenChat,
+  onOpenLivelyCustomizer,
+  onOpenLivelyAddWallpaper,
   statusResult,
   onSetSimulationMode,
   teacherOverride = false,
@@ -149,6 +159,10 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onToggleZenMode,
   initialTab = 'darstellung',
   onTogglePlayAmbient,
+  onTestScreensaver,
+  onOpenCalendarModal,
+  isCalendarConnected = false,
+  userCalendarEmail,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'darstellung');
 
@@ -831,6 +845,7 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                         onUpdateIntensity={(inte) =>
                           onUpdateSettings((p) => ({ ...p, animatedBgIntensity: inte }))
                         }
+                        onOpenCustomizer={onOpenLivelyCustomizer}
                       />
                     </div>
                   )}
@@ -2118,6 +2133,27 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
+                {/* OLED Bildschirmschoner & Sleep-Modus (Anti-Burn-In) */}
+                <ScreensaverSettingsCard
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  onTestScreensaver={onTestScreensaver}
+                  showFeedback={showFeedback}
+                />
+
+                {/* Google Kalender Integration & Termin-Alarme */}
+                <CalendarSettingsCard
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  onOpenCalendarModal={() => {
+                    onClose();
+                    onOpenCalendarModal?.();
+                  }}
+                  isConnected={isCalendarConnected}
+                  userEmail={userCalendarEmail}
+                  showFeedback={showFeedback}
+                />
+
                 {/* Energiespar- & Performance-Modus (CPU-Optimierung) */}
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">

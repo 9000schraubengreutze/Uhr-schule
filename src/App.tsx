@@ -30,6 +30,19 @@ import {
   setAmbientVolume,
 } from './utils/ambientSound';
 import { AmbientSoundType } from './types';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles } from 'lucide-react';
+import { LivelyVideoBackground } from './components/LivelyVideoBackground';
+import { LivelyWebBackground } from './components/LivelyWebBackground';
+import { LivelyQuickBar } from './components/LivelyQuickBar';
+import { LivelyCustomizerModal } from './components/LivelyCustomizerModal';
+import { LivelyAddWallpaperModal } from './components/LivelyAddWallpaperModal';
+import { OledScreensaver } from './components/OledScreensaver';
+import { useInactivityScreensaver } from './hooks/useInactivityScreensaver';
+import { CalendarAlertBanner } from './components/CalendarAlertBanner';
+import { CalendarClockWidget } from './components/CalendarClockWidget';
+import { CalendarModal } from './components/CalendarModal';
+import { useGoogleCalendar } from './hooks/useGoogleCalendar';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
@@ -38,11 +51,36 @@ export default function App() {
   const [isGamesOpen, setIsGamesOpen] = useState(false);
   const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [isClockColorPickerOpen, setIsClockColorPickerOpen] = useState(false);
+  const [isScreensaverActive, setIsScreensaverActive] = useState(false);
   const [settingsDrawerTab, setSettingsDrawerTab] = useState<SettingsTab>('darstellung');
+  const [isLivelyCustomizerOpen, setIsLivelyCustomizerOpen] = useState(false);
+  const [isLivelyAddWallpaperOpen, setIsLivelyAddWallpaperOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Inactivity detection for OLED Anti-Burn-In Screensaver
+  useInactivityScreensaver({
+    enabled: settings.screensaver?.enabled ?? true,
+    timeoutMinutes: settings.screensaver?.timeoutMinutes ?? 5,
+    isActive: isScreensaverActive,
+    onActivate: () => setIsScreensaverActive(true),
+    onDeactivate: () => setIsScreensaverActive(false),
+    ignoreWhenModalOpen: false,
+    isModalOpen: isSettingsOpen || isWallpapersOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isCalendarOpen,
+  });
+
+  const handleShowFeedback = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 3200);
+  }, []);
 
   // Online Atomic Clock synchronization state
   const [atomicState, setAtomicState] = useState<AtomicTimeState>({
@@ -52,6 +90,26 @@ export default function App() {
     lastSyncTime: null,
     syncSource: '',
     errorMessage: null,
+  });
+
+  // Accurate ticking clock state for calendar relative countdowns
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const updateTime = () => {
+      const nowMs = Date.now();
+      setCurrentTime(new Date(settings.useAtomicSync ? nowMs + atomicState.offsetMs : nowMs));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 4000);
+    return () => clearInterval(interval);
+  }, [settings.useAtomicSync, atomicState.offsetMs]);
+
+  // Google Calendar Integration Hook
+  const calendar = useGoogleCalendar({
+    settings,
+    currentTime,
+    onShowFeedback: handleShowFeedback,
   });
 
   // Perform time synchronization with online atomic clock servers
@@ -273,14 +331,26 @@ export default function App() {
         }
         return;
       }
+      if (isScreensaverActive) {
+        setIsScreensaverActive(false);
+        return;
+      }
+      if (e.altKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        setIsScreensaverActive((prev) => !prev);
+        return;
+      }
       if (e.key === 'Escape') {
-        if (isChatOpen) setIsChatOpen(false);
+        if (isCalendarOpen) setIsCalendarOpen(false);
+        else if (isChatOpen) setIsChatOpen(false);
         else if (isWallpapersOpen) setIsWallpapersOpen(false);
         else if (isGeminiBgOpen) setIsGeminiBgOpen(false);
         else if (isGamesOpen) setIsGamesOpen(false);
         else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
+      } else if (e.key === 'k' || e.key === 'K') {
+        setIsCalendarOpen((prev) => !prev);
       } else if (e.key === 's' || e.key === 'S') {
         setIsSettingsOpen((prev) => !prev);
       } else if (e.key === 'h' || e.key === 'H') {
@@ -300,7 +370,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isZenMode, isClockColorPickerOpen, toggleFullscreen]);
+  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isCalendarOpen, isZenMode, isClockColorPickerOpen, isScreensaverActive, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -487,7 +557,7 @@ export default function App() {
         blur={settings.bgBlur}
       />
 
-      {/* Real-time Animated 60 FPS GPU-Canvas Background with subtle CSS cross-fade transitions */}
+      {/* Real-time Animated 60 FPS GPU-Canvas Background with subtle CSS cross-fade transitions & Lively features */}
       {settings.bgType === 'animated' && (
         <SmoothAnimatedBackground
           effectId={settings.animatedBgId || 'aurora'}
@@ -495,6 +565,28 @@ export default function App() {
           intensity={settings.animatedBgIntensity || 80}
           ecoMode={settings.ecoMode}
           blur={settings.bgBlur}
+          lively={isScreensaverActive ? { ...settings.lively, isPaused: true } : settings.lively}
+        />
+      )}
+
+      {/* Hardware-Accelerated Video Wallpaper (Lively Video Loops & Uploads) */}
+      {settings.bgType === 'video' && (settings.activeVideoUrl || settings.activeWallpaperUrl) && (
+        <LivelyVideoBackground
+          src={settings.activeVideoUrl || settings.activeWallpaperUrl || ''}
+          speed={settings.videoPlaybackSpeed ?? 1.0}
+          muted={settings.videoMuted ?? true}
+          loop={settings.videoLoop ?? true}
+          blur={settings.bgBlur}
+          lively={isScreensaverActive ? { ...settings.lively, isPaused: true } : settings.lively}
+        />
+      )}
+
+      {/* Hardware-Accelerated Web / HTML5 Wallpaper (Lively Web Engine) */}
+      {settings.bgType === 'web' && settings.activeWebUrl && (
+        <LivelyWebBackground
+          url={settings.activeWebUrl}
+          blur={settings.bgBlur}
+          lively={isScreensaverActive ? { ...settings.lively, isPaused: true } : settings.lively}
         />
       )}
 
@@ -508,6 +600,7 @@ export default function App() {
           blur={settings.bgBlur}
           blendMode={settings.liveWallpaperBlendMode || 'screen'}
           opacity={(settings.liveWallpaperOpacity ?? 70) / 100}
+          lively={isScreensaverActive ? { ...settings.lively, isPaused: true } : settings.lively}
         />
       )}
 
@@ -523,7 +616,7 @@ export default function App() {
 
       {/* Animated Background Particles (e.g. Snow, Dust, Stars, Rain) */}
       <ParticleBackground
-        effect={settings.particleEffect}
+        effect={isScreensaverActive ? 'none' : settings.particleEffect}
         intensity={settings.particleIntensity}
         color={settings.particleColor}
         speed={settings.particleSpeed}
@@ -563,7 +656,7 @@ export default function App() {
             : undefined
         }
         backdropBlur={settings.backdropBlurIntensity}
-        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen || isCalendarOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
@@ -574,6 +667,10 @@ export default function App() {
           settings.zenScheduleEndTime || '07:00'
         )}
         zenScheduleRange={`${settings.zenScheduleStartTime || '22:00'} – ${settings.zenScheduleEndTime || '07:00'}`}
+        onActivateScreensaver={() => setIsScreensaverActive(true)}
+        onOpenCalendar={() => setIsCalendarOpen(true)}
+        isCalendarConnected={!calendar.needsAuth && !!calendar.user}
+        approachingEventCount={calendar.approachingEvents.length}
       />
 
       {/* Subtle Mobile Battery Indicator (Appears when not in fullscreen mode) */}
@@ -586,6 +683,20 @@ export default function App() {
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
       <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4 pb-16 sm:pb-20">
+        {/* Approaching Calendar Event Alert Banner (Directly on Clock Interface) */}
+        {settings.calendar?.enabled && calendar.activeAlertEvent && (
+          <div className="mb-3 sm:mb-5 w-full flex justify-center z-20">
+            <CalendarAlertBanner
+              event={calendar.activeAlertEvent}
+              currentTime={currentTime}
+              alertLeadMinutes={settings.calendar?.alertLeadMinutes}
+              onOpenDetails={() => setIsCalendarOpen(true)}
+              onDismiss={calendar.dismissAlert}
+              backdropBlur={settings.backdropBlurIntensity}
+            />
+          </div>
+        )}
+
         <DigitalClock
           settings={settings}
           offsetMs={atomicState.offsetMs}
@@ -599,9 +710,24 @@ export default function App() {
             isGamesOpen ||
             isGeminiBgOpen ||
             isChatOpen ||
+            isCalendarOpen ||
             isClockColorPickerOpen
           }
         />
+
+        {/* Next Upcoming Scheduled Event Pill / Widget under Clock */}
+        {settings.calendar?.enabled && settings.calendar?.showOnClock && !isZenMode && (
+          <div className="mt-4 sm:mt-5 flex justify-center z-10">
+            <CalendarClockWidget
+              event={calendar.nextEvent}
+              currentTime={currentTime}
+              onClick={() => setIsCalendarOpen(true)}
+              isConnected={!calendar.needsAuth && !!calendar.user}
+              onConnect={() => setIsCalendarOpen(true)}
+              backdropBlur={settings.backdropBlurIntensity}
+            />
+          </div>
+        )}
       </main>
 
       {/* Wallpaper Engine Categorized Gallery Modal */}
@@ -614,6 +740,9 @@ export default function App() {
           setIsWallpapersOpen(false);
           setIsGeminiBgOpen(true);
         }}
+        onOpenLivelyCustomizer={() => setIsLivelyCustomizerOpen(true)}
+        onOpenLivelyAddWallpaper={() => setIsLivelyAddWallpaperOpen(true)}
+        showFeedback={handleShowFeedback}
         backdropBlur={settings.backdropBlurIntensity}
       />
 
@@ -651,6 +780,8 @@ export default function App() {
         onOpenWallpapers={() => setIsWallpapersOpen(true)}
         onOpenGeminiBg={() => setIsGeminiBgOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
+        onOpenLivelyCustomizer={() => setIsLivelyCustomizerOpen(true)}
+        onOpenLivelyAddWallpaper={() => setIsLivelyAddWallpaperOpen(true)}
         settings={settings}
         onUpdateSettings={setSettings}
         currentWallpaperUrl={customImageUrl}
@@ -664,7 +795,99 @@ export default function App() {
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         initialTab={settingsDrawerTab}
         onTogglePlayAmbient={handleTogglePlayAmbient}
+        onTestScreensaver={() => {
+          setIsSettingsOpen(false);
+          setIsScreensaverActive(true);
+        }}
+        onOpenCalendarModal={() => setIsCalendarOpen(true)}
+        isCalendarConnected={!calendar.needsAuth && !!calendar.user}
+        userCalendarEmail={calendar.user?.email}
       />
+
+      {/* Google Calendar Manager & Events Modal */}
+      <CalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        user={calendar.user}
+        needsAuth={calendar.needsAuth}
+        events={calendar.events}
+        isLoading={calendar.isLoading}
+        isSyncing={calendar.isSyncing}
+        error={calendar.error}
+        lastSyncTime={calendar.lastSyncTime}
+        currentTime={currentTime}
+        onLogin={calendar.login}
+        onLogout={calendar.logout}
+        onRefresh={calendar.refresh}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        backdropBlur={settings.backdropBlurIntensity}
+      />
+
+      {/* Lively Wallpaper Quick Controls Bar (Play/Pause 0% CPU, FPS, Mouse, Parallax, Customizer, Add) */}
+      <LivelyQuickBar
+        settings={settings}
+        onUpdateSettings={setSettings}
+        onOpenCustomizer={() => setIsLivelyCustomizerOpen(true)}
+        onOpenAddWallpaper={() => setIsLivelyAddWallpaperOpen(true)}
+        showFeedback={handleShowFeedback}
+        isZenMode={isZenMode}
+        isAnyModalOpen={
+          isSettingsOpen ||
+          isWallpapersOpen ||
+          isGamesOpen ||
+          isGeminiBgOpen ||
+          isChatOpen ||
+          isCalendarOpen ||
+          isLivelyCustomizerOpen ||
+          isLivelyAddWallpaperOpen ||
+          isScreensaverActive
+        }
+      />
+
+      {/* Lively Customizer Modal (Speed, 3D Parallax, Mouse Reactivity, FPS, GLSL Filters, Performance) */}
+      <LivelyCustomizerModal
+        isOpen={isLivelyCustomizerOpen}
+        onClose={() => setIsLivelyCustomizerOpen(false)}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        showFeedback={handleShowFeedback}
+      />
+
+      {/* Lively Add Wallpaper Modal (Curated Video Loops, Upload, Video URLs, Web URLs) */}
+      <LivelyAddWallpaperModal
+        isOpen={isLivelyAddWallpaperOpen}
+        onClose={() => setIsLivelyAddWallpaperOpen(false)}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        showFeedback={handleShowFeedback}
+      />
+
+      {/* Global Feedback Toast Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            className="fixed bottom-24 z-50 px-4 py-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-white text-xs sm:text-sm font-medium shadow-2xl backdrop-blur-xl flex items-center gap-2 pointer-events-none"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* OLED Minimalist Sleep Screensaver (Anti-Burn-In Protection) */}
+      <AnimatePresence>
+        {isScreensaverActive && (
+          <OledScreensaver
+            settings={settings}
+            offsetMs={atomicState.offsetMs}
+            onWake={() => setIsScreensaverActive(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

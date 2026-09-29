@@ -72,6 +72,28 @@ export function loadSettings(): ClockSettings {
         typeof parsed.liveWallpaperHarmonizeColors === 'boolean'
           ? parsed.liveWallpaperHarmonizeColors
           : DEFAULT_SETTINGS.liveWallpaperHarmonizeColors,
+      lively: {
+        ...DEFAULT_SETTINGS.lively,
+        ...(parsed.lively || {}),
+        isPaused: typeof parsed.lively?.isPaused === 'boolean' ? parsed.lively.isPaused : DEFAULT_SETTINGS.lively.isPaused,
+        targetFps: [15, 30, 60, 120].includes(parsed.lively?.targetFps) ? parsed.lively.targetFps : DEFAULT_SETTINGS.lively.targetFps,
+        pauseOnBattery: typeof parsed.lively?.pauseOnBattery === 'boolean' ? parsed.lively.pauseOnBattery : DEFAULT_SETTINGS.lively.pauseOnBattery,
+        mouseInteraction: typeof parsed.lively?.mouseInteraction === 'boolean' ? parsed.lively.mouseInteraction : DEFAULT_SETTINGS.lively.mouseInteraction,
+        interactionType: ['attract', 'repel', 'ripple', 'glow', 'none'].includes(parsed.lively?.interactionType) ? parsed.lively.interactionType : DEFAULT_SETTINGS.lively.interactionType,
+        interactionRadius: typeof parsed.lively?.interactionRadius === 'number' ? Math.max(30, Math.min(400, parsed.lively.interactionRadius)) : DEFAULT_SETTINGS.lively.interactionRadius,
+        interactionStrength: typeof parsed.lively?.interactionStrength === 'number' ? Math.max(0.1, Math.min(3.0, parsed.lively.interactionStrength)) : DEFAULT_SETTINGS.lively.interactionStrength,
+        enableParallax: typeof parsed.lively?.enableParallax === 'boolean' ? parsed.lively.enableParallax : DEFAULT_SETTINGS.lively.enableParallax,
+        parallaxStrength: typeof parsed.lively?.parallaxStrength === 'number' ? Math.max(2, Math.min(50, parsed.lively.parallaxStrength)) : DEFAULT_SETTINGS.lively.parallaxStrength,
+        hueShift: typeof parsed.lively?.hueShift === 'number' ? Math.max(0, Math.min(360, parsed.lively.hueShift)) : DEFAULT_SETTINGS.lively.hueShift,
+        saturation: typeof parsed.lively?.saturation === 'number' ? Math.max(0, Math.min(250, parsed.lively.saturation)) : DEFAULT_SETTINGS.lively.saturation,
+        brightness: typeof parsed.lively?.brightness === 'number' ? Math.max(30, Math.min(200, parsed.lively.brightness)) : DEFAULT_SETTINGS.lively.brightness,
+        contrast: typeof parsed.lively?.contrast === 'number' ? Math.max(30, Math.min(200, parsed.lively.contrast)) : DEFAULT_SETTINGS.lively.contrast,
+        bloomIntensity: typeof parsed.lively?.bloomIntensity === 'number' ? Math.max(0, Math.min(100, parsed.lively.bloomIntensity)) : DEFAULT_SETTINGS.lively.bloomIntensity,
+        audioReactive: typeof parsed.lively?.audioReactive === 'boolean' ? parsed.lively.audioReactive : DEFAULT_SETTINGS.lively.audioReactive,
+        audioSensitivity: typeof parsed.lively?.audioSensitivity === 'number' ? Math.max(0.1, Math.min(3.0, parsed.lively.audioSensitivity)) : DEFAULT_SETTINGS.lively.audioSensitivity,
+      },
+      activeWebUrl: typeof parsed.activeWebUrl === 'string' ? parsed.activeWebUrl : undefined,
+      customLiveWallpapers: Array.isArray(parsed.customLiveWallpapers) ? parsed.customLiveWallpapers : [],
       timeZone: parsed.timeZone || DEFAULT_SETTINGS.timeZone,
       showAdditionalTimeZones:
         typeof parsed.showAdditionalTimeZones === 'boolean'
@@ -296,6 +318,62 @@ export function loadSettings(): ClockSettings {
                 : false,
           }
         : DEFAULT_SETTINGS.ambientSound,
+      screensaver: parsed.screensaver
+        ? {
+            enabled:
+              typeof parsed.screensaver.enabled === 'boolean'
+                ? parsed.screensaver.enabled
+                : DEFAULT_SETTINGS.screensaver.enabled,
+            timeoutMinutes:
+              typeof parsed.screensaver.timeoutMinutes === 'number'
+                ? Math.max(1, Math.min(60, parsed.screensaver.timeoutMinutes))
+                : DEFAULT_SETTINGS.screensaver.timeoutMinutes,
+            antiBurnInShift:
+              typeof parsed.screensaver.antiBurnInShift === 'boolean'
+                ? parsed.screensaver.antiBurnInShift
+                : DEFAULT_SETTINGS.screensaver.antiBurnInShift,
+            brightness:
+              typeof parsed.screensaver.brightness === 'number'
+                ? Math.max(10, Math.min(80, parsed.screensaver.brightness))
+                : DEFAULT_SETTINGS.screensaver.brightness,
+            showDate:
+              typeof parsed.screensaver.showDate === 'boolean'
+                ? parsed.screensaver.showDate
+                : DEFAULT_SETTINGS.screensaver.showDate,
+            showBattery:
+              typeof parsed.screensaver.showBattery === 'boolean'
+                ? parsed.screensaver.showBattery
+                : DEFAULT_SETTINGS.screensaver.showBattery,
+            showSeconds:
+              typeof parsed.screensaver.showSeconds === 'boolean'
+                ? parsed.screensaver.showSeconds
+                : DEFAULT_SETTINGS.screensaver.showSeconds,
+            displayStyle:
+              ['minimal', 'modern', 'dots', 'vertical'].includes(parsed.screensaver.displayStyle)
+                ? parsed.screensaver.displayStyle
+                : DEFAULT_SETTINGS.screensaver.displayStyle,
+          }
+        : DEFAULT_SETTINGS.screensaver,
+      calendar: parsed.calendar
+        ? {
+            enabled:
+              typeof parsed.calendar.enabled === 'boolean'
+                ? parsed.calendar.enabled
+                : DEFAULT_SETTINGS.calendar.enabled,
+            alertLeadMinutes:
+              typeof parsed.calendar.alertLeadMinutes === 'number'
+                ? Math.max(1, Math.min(120, parsed.calendar.alertLeadMinutes))
+                : DEFAULT_SETTINGS.calendar.alertLeadMinutes,
+            showOnClock:
+              typeof parsed.calendar.showOnClock === 'boolean'
+                ? parsed.calendar.showOnClock
+                : DEFAULT_SETTINGS.calendar.showOnClock,
+            soundAlert:
+              typeof parsed.calendar.soundAlert === 'boolean'
+                ? parsed.calendar.soundAlert
+                : DEFAULT_SETTINGS.calendar.soundAlert,
+          }
+        : DEFAULT_SETTINGS.calendar,
     };
   } catch (err) {
     console.warn('Failed to parse saved settings, using defaults', err);
