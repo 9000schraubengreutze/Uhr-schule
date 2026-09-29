@@ -990,23 +990,6 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
               )}
             </button>
           </form>
-
-          <div className="flex items-center justify-between px-1 pt-2 text-[10px] text-slate-400">
-            <div className="flex items-center gap-2">
-              <span>Shift + Enter für neue Zeile</span>
-              <span>•</span>
-              <span className="text-slate-400">
-                Modell: <strong className="text-slate-300">{getEffectiveModel(inputPrompt)}</strong>
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowRoleConfig((p) => !p)}
-              className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
-            >
-              Rolle & System-Prompt anpassen
-            </button>
-          </div>
         </div>
 
         {/* Confirmation Overlay for Clearing All Messages */}
