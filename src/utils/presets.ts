@@ -7,7 +7,17 @@ import {
   LivelySettings,
   ScreensaverConfig,
   CalendarSettings,
+  WeatherSettings,
 } from '../types';
+
+export const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
+  enabled: true,
+  unit: 'celsius',
+  autoLocation: true,
+  showDetailsOnClock: true,
+  showConditionText: true,
+  showRainProbability: true,
+};
 
 export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
   enabled: true,
@@ -128,13 +138,14 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   liveWallpaperIntensity: 80,
   liveWallpaperHarmonizeColors: true,
   lively: DEFAULT_LIVELY_CONFIG,
+  showLivelyQuickBar: false,
   customLiveWallpapers: [],
 
   // UHR (Digitale Uhr-Funktionen)
   is24Hour: true,
   showSeconds: true,
   showMilliseconds: true,
-  showNanoseconds: true,
+  showNanoseconds: false,
   showDate: true,
   dateFormat: 'DD.MM.YYYY',
   showDayOfWeek: true,
@@ -152,6 +163,10 @@ export const DEFAULT_SETTINGS: ClockSettings = {
     { id: 'tz-ny', name: 'New York', timeZone: 'America/New_York', flag: '🇺🇸' },
     { id: 'tz-tokyo', name: 'Tokio', timeZone: 'Asia/Tokyo', flag: '🇯🇵' },
   ],
+  worldClockLayout: 'rows',
+  worldClockShowSeconds: false,
+  worldClockShowOffset: true,
+  worldClockAutoTheme: true,
 
   // ZEN-MODUS AUTOMATISCHER ZEITPLAN
   zenScheduleEnabled: false,
@@ -191,6 +206,9 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 
   // GOOGLE KALENDER INTEGRATION & TERMIN-ALARME
   calendar: DEFAULT_CALENDAR_SETTINGS,
+
+  // WETTER-WIDGET & STANDORT (OPEN-METEO)
+  weather: DEFAULT_WEATHER_SETTINGS,
 };
 
 export const GRADIENT_PRESETS: GradientPreset[] = [

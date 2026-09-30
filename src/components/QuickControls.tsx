@@ -17,6 +17,7 @@ import {
   Volume2,
   Calendar,
   Bell,
+  CloudSun,
 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
 
@@ -28,6 +29,8 @@ interface QuickControlsProps {
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
   onOpenCalendar?: () => void;
+  onOpenWeather?: () => void;
+  currentTemperature?: number;
   isCalendarConnected?: boolean;
   approachingEventCount?: number;
   statusResult?: SchoolStatusResult;
@@ -53,6 +56,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenGeminiBg,
   onOpenChat,
   onOpenCalendar,
+  onOpenWeather,
+  currentTemperature,
   isCalendarConnected = false,
   approachingEventCount = 0,
   statusResult,
@@ -353,6 +358,27 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               {isCalendarConnected && approachingEventCount === 0 && (
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               )}
+            </button>
+          )}
+
+          {/* Wetter Button */}
+          {onOpenWeather && (
+            <button
+              id="open-weather-btn"
+              type="button"
+              onClick={onOpenWeather}
+              title={
+                currentTemperature !== undefined
+                  ? `Wetter: ${currentTemperature}° – Vorhersage & Details (Taste: W)`
+                  : 'Wetter & Vorhersage öffnen (Taste: W)'
+              }
+              aria-label="Wetter & Vorhersage öffnen"
+              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-sky-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(56,189,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            >
+              <CloudSun className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-115 group-hover:text-sky-300" />
+              <span className="hidden sm:inline">
+                {currentTemperature !== undefined ? `${currentTemperature}° Wetter` : 'Wetter'}
+              </span>
             </button>
           )}
 

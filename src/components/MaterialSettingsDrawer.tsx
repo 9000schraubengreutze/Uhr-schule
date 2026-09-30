@@ -76,6 +76,10 @@ import {
 import { SchoolStatusResult, SchoolSimulationMode } from '../utils/timetable';
 import { SavedWallpaperItem } from '../types';
 import { getSavedWallpapers, setActiveWallpaper, deleteSavedWallpaper } from '../utils/storage';
+import { WeatherSettingsCard } from './WeatherSettingsCard';
+import { WeatherData } from '../services/weatherService';
+import { WorldClockSettingsCard } from './WorldClockSettingsCard';
+import { LivelySettingsCard } from './LivelySettingsCard';
 import {
   CURATED_WALLPAPERS,
   WALLPAPER_CATEGORIES,
@@ -114,6 +118,8 @@ interface MaterialSettingsDrawerProps {
   onOpenCalendarModal?: () => void;
   isCalendarConnected?: boolean;
   userCalendarEmail?: string | null;
+  onOpenWeatherModal?: () => void;
+  weatherData?: WeatherData | null;
 }
 
 interface NavItem {
@@ -163,6 +169,8 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   onOpenCalendarModal,
   isCalendarConnected = false,
   userCalendarEmail,
+  onOpenWeatherModal,
+  weatherData,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'darstellung');
 
@@ -913,6 +921,15 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                       </button>
                     </div>
                   )}
+
+                  {/* Lively Live-Wallpaper & Effekte Steuerung (Play/Pause, FPS, Parallax, Anpassen, Hinzufügen) */}
+                  <LivelySettingsCard
+                    settings={settings}
+                    onUpdateSettings={onUpdateSettings}
+                    onOpenCustomizer={onOpenLivelyCustomizer}
+                    onOpenAddWallpaper={onOpenLivelyAddWallpaper}
+                    showFeedback={showFeedback}
+                  />
 
                   {/* Gradient Presets */}
                   {settings.bgType === 'gradient' && (
@@ -1863,26 +1880,13 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
 
                   <MaterialSwitch
                     label="Millisekunden anzeigen (.000 ms)"
-                    description="Echtzeit-Millisekunden mit bis zu 120 FPS neben den Sekunden einblenden"
+                    description="Echtzeit-Millisekunden neben den Sekunden einblenden (kleinste Zeiteinheit)"
                     checked={Boolean(settings.showMilliseconds)}
                     onChange={(v) =>
                       onUpdateSettings((p) => ({
                         ...p,
                         showMilliseconds: v,
-                        showSeconds: v ? true : p.showSeconds,
-                      }))
-                    }
-                  />
-
-                  <MaterialSwitch
-                    label="Nanosekunden anzeigen (.000 000 000 ns)"
-                    description="Ultra-Präzision: Zeigt Mikrosekunden und Nanosekunden in Echtzeit an"
-                    checked={Boolean(settings.showNanoseconds)}
-                    onChange={(v) =>
-                      onUpdateSettings((p) => ({
-                        ...p,
-                        showNanoseconds: v,
-                        showMilliseconds: v ? true : p.showMilliseconds,
+                        showNanoseconds: false,
                         showSeconds: v ? true : p.showSeconds,
                       }))
                     }
@@ -1949,15 +1953,11 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                     />
                   )}
 
-                  {/* Weltuhren auf Hauptbildschirm anzeigen */}
-                  <MaterialSwitch
-                    label="Weltuhren auf Hauptbildschirm anzeigen"
-                    description="Ausgewählte Weltzeitzonen mit Live-Uhrzeiten direkt unter der großen Digitaluhr ein- oder ausblenden"
-                    checked={settings.showAdditionalTimeZones}
-                    onChange={(v) => {
-                      onUpdateSettings((p) => ({ ...p, showAdditionalTimeZones: v }));
-                      showFeedback(v ? 'Weltuhren eingeblendet' : 'Weltuhren ausgeblendet');
-                    }}
+                  {/* Weltzeit-Widget (Minimalistische Zeilen & Kacheln) */}
+                  <WorldClockSettingsCard
+                    settings={settings}
+                    onUpdateSettings={onUpdateSettings}
+                    showFeedback={showFeedback}
                   />
 
                   {/* Mobile Akku-Anzeige */}
@@ -2178,6 +2178,18 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   }}
                   isConnected={isCalendarConnected}
                   userEmail={userCalendarEmail}
+                  showFeedback={showFeedback}
+                />
+
+                {/* Wetter-Widget & Standort (Open-Meteo) */}
+                <WeatherSettingsCard
+                  settings={settings}
+                  onUpdateSettings={onUpdateSettings}
+                  onOpenWeatherModal={() => {
+                    onClose();
+                    onOpenWeatherModal?.();
+                  }}
+                  weatherData={weatherData}
                   showFeedback={showFeedback}
                 />
 

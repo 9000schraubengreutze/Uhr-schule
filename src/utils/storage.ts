@@ -22,10 +22,7 @@ export function loadSettings(): ClockSettings {
         typeof parsed.showMilliseconds === 'boolean'
           ? parsed.showMilliseconds
           : DEFAULT_SETTINGS.showMilliseconds,
-      showNanoseconds:
-        typeof parsed.showNanoseconds === 'boolean'
-          ? parsed.showNanoseconds
-          : DEFAULT_SETTINGS.showNanoseconds,
+      showNanoseconds: false,
       dateFormat:
         parsed.dateFormat === 'MM/DD/YYYY' || parsed.dateFormat === 'YYYY-MM-DD' || parsed.dateFormat === 'DD.MM.YYYY'
           ? parsed.dateFormat
@@ -382,6 +379,66 @@ export function loadSettings(): ClockSettings {
                 : DEFAULT_SETTINGS.calendar.soundAlert,
           }
         : DEFAULT_SETTINGS.calendar,
+      weather: parsed.weather
+        ? {
+            enabled:
+              typeof parsed.weather.enabled === 'boolean'
+                ? parsed.weather.enabled
+                : DEFAULT_SETTINGS.weather.enabled,
+            unit:
+              parsed.weather.unit === 'fahrenheit' || parsed.weather.unit === 'celsius'
+                ? parsed.weather.unit
+                : DEFAULT_SETTINGS.weather.unit,
+            autoLocation:
+              typeof parsed.weather.autoLocation === 'boolean'
+                ? parsed.weather.autoLocation
+                : DEFAULT_SETTINGS.weather.autoLocation,
+            manualLocation:
+              parsed.weather.manualLocation &&
+              typeof parsed.weather.manualLocation.latitude === 'number' &&
+              typeof parsed.weather.manualLocation.longitude === 'number'
+                ? {
+                    name: String(parsed.weather.manualLocation.name || 'Berlin'),
+                    country: typeof parsed.weather.manualLocation.country === 'string' ? parsed.weather.manualLocation.country : undefined,
+                    admin1: typeof parsed.weather.manualLocation.admin1 === 'string' ? parsed.weather.manualLocation.admin1 : undefined,
+                    latitude: parsed.weather.manualLocation.latitude,
+                    longitude: parsed.weather.manualLocation.longitude,
+                  }
+                : DEFAULT_SETTINGS.weather.manualLocation,
+            showDetailsOnClock:
+              typeof parsed.weather.showDetailsOnClock === 'boolean'
+                ? parsed.weather.showDetailsOnClock
+                : DEFAULT_SETTINGS.weather.showDetailsOnClock,
+            showConditionText:
+              typeof parsed.weather.showConditionText === 'boolean'
+                ? parsed.weather.showConditionText
+                : DEFAULT_SETTINGS.weather.showConditionText,
+            showRainProbability:
+              typeof parsed.weather.showRainProbability === 'boolean'
+                ? parsed.weather.showRainProbability
+                : DEFAULT_SETTINGS.weather.showRainProbability,
+          }
+        : DEFAULT_SETTINGS.weather,
+      showLivelyQuickBar:
+        typeof parsed.showLivelyQuickBar === 'boolean'
+          ? parsed.showLivelyQuickBar
+          : false,
+      worldClockLayout:
+        parsed.worldClockLayout === 'chips' || parsed.worldClockLayout === 'rows'
+          ? parsed.worldClockLayout
+          : DEFAULT_SETTINGS.worldClockLayout,
+      worldClockShowSeconds:
+        typeof parsed.worldClockShowSeconds === 'boolean'
+          ? parsed.worldClockShowSeconds
+          : DEFAULT_SETTINGS.worldClockShowSeconds,
+      worldClockShowOffset:
+        typeof parsed.worldClockShowOffset === 'boolean'
+          ? parsed.worldClockShowOffset
+          : DEFAULT_SETTINGS.worldClockShowOffset,
+      worldClockAutoTheme:
+        typeof parsed.worldClockAutoTheme === 'boolean'
+          ? parsed.worldClockAutoTheme
+          : DEFAULT_SETTINGS.worldClockAutoTheme,
     };
   } catch (err) {
     console.warn('Failed to parse saved settings, using defaults', err);

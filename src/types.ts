@@ -250,6 +250,7 @@ export interface ClockSettings {
 
   // Lively Wallpaper Engine (Interaktivität, 3D-Parallax, Performance-Regeln & Shader)
   lively: LivelySettings;
+  showLivelyQuickBar?: boolean; // Ob die Schnellleiste auf dem Hauptbildschirm schweben soll (Standard: false)
   activeWebUrl?: string; // Direct URL when bgType is 'web'
   customLiveWallpapers?: LivelyCustomWallpaper[]; // User-imported video, web, or custom live wallpapers
 
@@ -271,6 +272,10 @@ export interface ClockSettings {
   // Zusätzliche Zeitzonen (Weltuhr direkt unter der Hauptuhr)
   showAdditionalTimeZones: boolean;
   additionalTimeZones: AdditionalTimeZone[];
+  worldClockLayout?: 'rows' | 'chips'; // 'rows' = kleine, minimalistische Zeilen, 'chips' = kompakte Kacheln
+  worldClockShowSeconds?: boolean; // Sekunden in Weltzeit anzeigen
+  worldClockShowOffset?: boolean; // Zeitunterschied (+/- Std.) anzeigen
+  worldClockAutoTheme?: boolean; // Automatische Farbanpassung an Design & Zen-Modus
 
   // === ZEN-MODUS AUTOMATISCHER ZEITPLAN ===
   zenScheduleEnabled: boolean; // Automatischer Timer für Zen-Modus
@@ -310,6 +315,29 @@ export interface ClockSettings {
 
   // === GOOGLE KALENDER INTEGRATION & TERMIN-ALARME ===
   calendar: CalendarSettings;
+
+  // === WETTER-WIDGET & STANDORT (OPEN-METEO) ===
+  weather: WeatherSettings;
+}
+
+export type WeatherUnit = 'celsius' | 'fahrenheit';
+
+export interface WeatherManualLocation {
+  name: string;
+  country?: string;
+  admin1?: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface WeatherSettings {
+  enabled: boolean; // Wetter-Widget auf der Uhr aktiv
+  unit: WeatherUnit; // 'celsius' | 'fahrenheit'
+  autoLocation: boolean; // Automatische Standortermittlung via GPS / IP
+  manualLocation?: WeatherManualLocation; // Manuell ausgewählte Stadt
+  showDetailsOnClock: boolean; // Min/Max & Luftfeuchtigkeit direkt auf dem Clock-Pill anzeigen
+  showConditionText: boolean; // Wetterlage wie "Sonnig", "Teils bewölkt"
+  showRainProbability: boolean; // Regenwahrscheinlichkeit im Widget
 }
 
 export interface CalendarSettings {

@@ -43,6 +43,9 @@ import { CalendarAlertBanner } from './components/CalendarAlertBanner';
 import { CalendarClockWidget } from './components/CalendarClockWidget';
 import { CalendarModal } from './components/CalendarModal';
 import { useGoogleCalendar } from './hooks/useGoogleCalendar';
+import { WeatherModal } from './components/WeatherModal';
+import { useWeather } from './hooks/useWeather';
+import { DEFAULT_WEATHER_SETTINGS } from './utils/presets';
 
 export default function App() {
   const [settings, setSettings] = useState<ClockSettings>(() => loadSettings());
@@ -52,6 +55,7 @@ export default function App() {
   const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isWeatherOpen, setIsWeatherOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
@@ -71,7 +75,7 @@ export default function App() {
     onActivate: () => setIsScreensaverActive(true),
     onDeactivate: () => setIsScreensaverActive(false),
     ignoreWhenModalOpen: false,
-    isModalOpen: isSettingsOpen || isWallpapersOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isCalendarOpen,
+    isModalOpen: isSettingsOpen || isWallpapersOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isCalendarOpen || isWeatherOpen,
   });
 
   const handleShowFeedback = useCallback((msg: string) => {
@@ -109,6 +113,12 @@ export default function App() {
   const calendar = useGoogleCalendar({
     settings,
     currentTime,
+    onShowFeedback: handleShowFeedback,
+  });
+
+  // Weather Forecast & Location Hook
+  const weather = useWeather({
+    settings,
     onShowFeedback: handleShowFeedback,
   });
 
@@ -341,7 +351,8 @@ export default function App() {
         return;
       }
       if (e.key === 'Escape') {
-        if (isCalendarOpen) setIsCalendarOpen(false);
+        if (isWeatherOpen) setIsWeatherOpen(false);
+        else if (isCalendarOpen) setIsCalendarOpen(false);
         else if (isChatOpen) setIsChatOpen(false);
         else if (isWallpapersOpen) setIsWallpapersOpen(false);
         else if (isGeminiBgOpen) setIsGeminiBgOpen(false);
@@ -349,6 +360,8 @@ export default function App() {
         else if (isSettingsOpen) setIsSettingsOpen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
+      } else if (e.key === 'w' || e.key === 'W') {
+        setIsWeatherOpen((prev) => !prev);
       } else if (e.key === 'k' || e.key === 'K') {
         setIsCalendarOpen((prev) => !prev);
       } else if (e.key === 's' || e.key === 'S') {
@@ -370,7 +383,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isCalendarOpen, isZenMode, isClockColorPickerOpen, isScreensaverActive, toggleFullscreen]);
+  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isCalendarOpen, isWeatherOpen, isZenMode, isClockColorPickerOpen, isScreensaverActive, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -656,7 +669,7 @@ export default function App() {
             : undefined
         }
         backdropBlur={settings.backdropBlurIntensity}
-        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen || isCalendarOpen}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen || isCalendarOpen || isWeatherOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
@@ -669,6 +682,8 @@ export default function App() {
         zenScheduleRange={`${settings.zenScheduleStartTime || '22:00'} – ${settings.zenScheduleEndTime || '07:00'}`}
         onActivateScreensaver={() => setIsScreensaverActive(true)}
         onOpenCalendar={() => setIsCalendarOpen(true)}
+        onOpenWeather={() => setIsWeatherOpen(true)}
+        currentTemperature={weather.weatherData?.current.temperature}
         isCalendarConnected={!calendar.needsAuth && !!calendar.user}
         approachingEventCount={calendar.approachingEvents.length}
       />
@@ -711,8 +726,17 @@ export default function App() {
             isGeminiBgOpen ||
             isChatOpen ||
             isCalendarOpen ||
+            isWeatherOpen ||
             isClockColorPickerOpen
           }
+          weatherData={weather.weatherData}
+          isWeatherLoading={weather.isLoading}
+          isWeatherRefreshing={weather.isRefreshing}
+          onOpenWeatherModal={() => setIsWeatherOpen(true)}
+          onRefreshWeather={(e) => {
+            e.stopPropagation();
+            weather.refreshWeather();
+          }}
         />
 
         {/* Next Upcoming Scheduled Event Pill / Widget under Clock */}
@@ -802,6 +826,8 @@ export default function App() {
         onOpenCalendarModal={() => setIsCalendarOpen(true)}
         isCalendarConnected={!calendar.needsAuth && !!calendar.user}
         userCalendarEmail={calendar.user?.email}
+        onOpenWeatherModal={() => setIsWeatherOpen(true)}
+        weatherData={weather.weatherData}
       />
 
       {/* Google Calendar Manager & Events Modal */}
@@ -824,26 +850,48 @@ export default function App() {
         backdropBlur={settings.backdropBlurIntensity}
       />
 
-      {/* Lively Wallpaper Quick Controls Bar (Play/Pause 0% CPU, FPS, Mouse, Parallax, Customizer, Add) */}
-      <LivelyQuickBar
-        settings={settings}
-        onUpdateSettings={setSettings}
-        onOpenCustomizer={() => setIsLivelyCustomizerOpen(true)}
-        onOpenAddWallpaper={() => setIsLivelyAddWallpaperOpen(true)}
-        showFeedback={handleShowFeedback}
-        isZenMode={isZenMode}
-        isAnyModalOpen={
-          isSettingsOpen ||
-          isWallpapersOpen ||
-          isGamesOpen ||
-          isGeminiBgOpen ||
-          isChatOpen ||
-          isCalendarOpen ||
-          isLivelyCustomizerOpen ||
-          isLivelyAddWallpaperOpen ||
-          isScreensaverActive
-        }
+      {/* Weather Forecast & Radar Details Modal */}
+      <WeatherModal
+        isOpen={isWeatherOpen}
+        onClose={() => setIsWeatherOpen(false)}
+        weatherData={weather.weatherData}
+        isLoading={weather.isLoading}
+        isRefreshing={weather.isRefreshing}
+        error={weather.error}
+        onRefresh={weather.refreshWeather}
+        weatherSettings={settings.weather || DEFAULT_WEATHER_SETTINGS}
+        onUpdateWeatherSettings={(updater) => {
+          setSettings((prev) => ({
+            ...prev,
+            weather: updater(prev.weather || DEFAULT_WEATHER_SETTINGS),
+          }));
+        }}
+        backdropBlur={settings.backdropBlurIntensity}
       />
+
+      {/* Lively Wallpaper Quick Controls Bar (Only when explicitly enabled by user) */}
+      {settings.showLivelyQuickBar && (
+        <LivelyQuickBar
+          settings={settings}
+          onUpdateSettings={setSettings}
+          onOpenCustomizer={() => setIsLivelyCustomizerOpen(true)}
+          onOpenAddWallpaper={() => setIsLivelyAddWallpaperOpen(true)}
+          showFeedback={handleShowFeedback}
+          isZenMode={isZenMode}
+          isAnyModalOpen={
+            isSettingsOpen ||
+            isWallpapersOpen ||
+            isGamesOpen ||
+            isGeminiBgOpen ||
+            isChatOpen ||
+            isCalendarOpen ||
+            isWeatherOpen ||
+            isLivelyCustomizerOpen ||
+            isLivelyAddWallpaperOpen ||
+            isScreensaverActive
+          }
+        />
+      )}
 
       {/* Lively Customizer Modal (Speed, 3D Parallax, Mouse Reactivity, FPS, GLSL Filters, Performance) */}
       <LivelyCustomizerModal

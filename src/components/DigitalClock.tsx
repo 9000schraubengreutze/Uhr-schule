@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { motion, useAnimation } from 'motion/react';
-import { Coffee, GraduationCap, Lock, Palette, Clock } from 'lucide-react';
+import { Coffee, GraduationCap, Lock, Palette } from 'lucide-react';
 import { ClockSettings } from '../types';
 import { playTickSound } from '../utils/audio';
 import { AdditionalTimeZonesBar } from './AdditionalTimeZonesBar';
@@ -9,6 +9,8 @@ import { SpringDigit } from './SpringDigit';
 import { SchoolStatusResult } from '../utils/timetable';
 import { ClockColorPickerPopover, ColorScope } from './ClockColorPickerPopover';
 import { colorWithAlpha, calculateRadiatingTextShadow } from '../utils/colorUtils';
+import { WeatherClockWidget } from './WeatherClockWidget';
+import { WeatherData } from '../services/weatherService';
 
 interface DigitalClockProps {
   settings: ClockSettings;
@@ -20,6 +22,11 @@ interface DigitalClockProps {
   isZenMode?: boolean;
   isSettingsOpen?: boolean;
   isAnyMenuOpen?: boolean;
+  weatherData?: WeatherData | null;
+  isWeatherLoading?: boolean;
+  isWeatherRefreshing?: boolean;
+  onOpenWeatherModal?: () => void;
+  onRefreshWeather?: (e: React.MouseEvent) => void;
 }
 
 export const DigitalClock: React.FC<DigitalClockProps> = ({
@@ -32,6 +39,11 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
   isZenMode,
   isSettingsOpen,
   isAnyMenuOpen,
+  weatherData,
+  isWeatherLoading,
+  isWeatherRefreshing,
+  onOpenWeatherModal,
+  onRefreshWeather,
 }) => {
   // Directly calculate time based on online atomic clock offset
   const getCalculatedTime = () => {
@@ -185,13 +197,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
     return Math.max(36, Math.min(480, Math.round(approx)));
   });
 
-  const shouldShowSeconds = Boolean(settings.showSeconds || settings.showMilliseconds || settings.showNanoseconds);
-  const shouldShowSubseconds = Boolean(settings.showMilliseconds || settings.showNanoseconds);
+  const shouldShowSeconds = Boolean(settings.showSeconds || settings.showMilliseconds);
+  const shouldShowSubseconds = Boolean(settings.showMilliseconds);
 
   const msRef = useRef<HTMLSpanElement>(null);
-  const nsRef = useRef<HTMLSpanElement>(null);
 
-  // High-performance 60/120 FPS subsecond ticker using requestAnimationFrame (direct DOM update with 0% React re-render overhead)
+  // High-performance subsecond ticker using requestAnimationFrame (direct DOM update with 0% React re-render overhead)
   useEffect(() => {
     if (!shouldShowSubseconds) return;
 
@@ -200,7 +211,6 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
 
     const updateSubseconds = () => {
       const nowMs = Date.now() + (settings.useAtomicSync ? offsetMs : 0);
-      const perfNow = performance.now();
 
       const ms = Math.floor(nowMs % 1000);
       if (msRef.current && ms !== lastMsVal) {
@@ -208,34 +218,12 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
         lastMsVal = ms;
       }
 
-      if (settings.showNanoseconds && nsRef.current) {
-        // High-resolution sub-millisecond fraction
-        const subMsFraction = perfNow % 1;
-        const totalSubMsNano = Math.floor(subMsFraction * 1_000_000);
-        const micros = Math.floor(totalSubMsNano / 1000);
-        const nanos = totalSubMsNano % 1000;
-        nsRef.current.textContent = `${String(micros).padStart(3, '0')} ${String(nanos).padStart(3, '0')}`;
-      }
-
       animId = requestAnimationFrame(updateSubseconds);
     };
 
     animId = requestAnimationFrame(updateSubseconds);
     return () => cancelAnimationFrame(animId);
-  }, [shouldShowSubseconds, settings.showNanoseconds, settings.useAtomicSync, offsetMs]);
-
-  const handleCycleSubseconds = () => {
-    if (!onUpdateSettings) return;
-    onUpdateSettings((prev) => {
-      if (prev.showMilliseconds && prev.showNanoseconds) {
-        return { ...prev, showMilliseconds: true, showNanoseconds: false };
-      } else if (prev.showMilliseconds && !prev.showNanoseconds) {
-        return { ...prev, showMilliseconds: false, showNanoseconds: false };
-      } else {
-        return { ...prev, showMilliseconds: true, showNanoseconds: true, showSeconds: true };
-      }
-    });
-  };
+  }, [shouldShowSubseconds, settings.useAtomicSync, offsetMs]);
 
   useEffect(() => {
     // Adaptive timer: In ecoMode or when seconds are hidden, tick every 500ms or 1000ms.
@@ -569,14 +557,10 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
         totalEmWidth += colonEm + 2 * (digitEm * 0.82);
       }
 
-      // Milliseconds & Nanoseconds
+      // Milliseconds
       if (shouldShowSubseconds) {
         // Dot + 3 digits for ms
-        totalEmWidth += colonEm * 0.4 + 3 * (digitEm * (settings.showNanoseconds ? 0.38 : 0.52));
-        if (settings.showNanoseconds) {
-          // Middle dot + 6 digits for micro/nano + unit badge
-          totalEmWidth += colonEm * 0.3 + 6 * (digitEm * 0.38) + 0.4;
-        }
+        totalEmWidth += colonEm * 0.4 + 3 * (digitEm * 0.52);
       }
 
       // 12-Hour AM/PM badge
@@ -925,20 +909,18 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               </>
             )}
 
-            {/* Optional Milliseconds & Nanoseconds */}
+            {/* Optional Milliseconds */}
             {shouldShowSubseconds && (
               <span
                 id="clock-subseconds-group"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCycleSubseconds();
+                  openColorPicker('seconds');
                 }}
-                title="Präzisionsanzeige: Klicken zum Durchschalten (ms / ns / aus)"
+                title="Klicken, um Ziffernfarbe anzupassen"
                 className={`${
                   isAutoScaling
-                    ? settings.showNanoseconds
-                      ? 'text-[0.38em]'
-                      : 'text-[0.52em]'
+                    ? 'text-[0.52em]'
                     : 'text-[clamp(1.4rem,5.5vw,4.5rem)]'
                 } inline-flex items-baseline font-mono tabular-numbers select-none opacity-90 ml-[0.08em] transition-all duration-200 hover:opacity-100 hover:scale-[1.02] cursor-pointer rounded-xl px-1`}
                 style={{
@@ -949,17 +931,6 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
                 <span className="opacity-50 text-[0.85em] font-normal mr-[0.03em] select-none">.</span>
                 <span ref={msRef} id="clock-milliseconds" className="font-semibold">
                   000
-                </span>
-                {settings.showNanoseconds && (
-                  <>
-                    <span className="opacity-30 mx-[0.05em] text-[0.7em] select-none">·</span>
-                    <span ref={nsRef} id="clock-nanoseconds" className="opacity-85 font-normal tracking-tight">
-                      000 000
-                    </span>
-                  </>
-                )}
-                <span className="text-[0.34em] font-sans font-bold uppercase tracking-wider text-cyan-300/80 ml-1 sm:ml-1.5 self-center px-1.5 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 shadow-xs hidden sm:inline-block select-none">
-                  {settings.showNanoseconds ? 'ns' : 'ms'}
                 </span>
               </span>
             )}
@@ -983,52 +954,26 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             )}
           </div>
 
-          {/* Quick Hover Action Chips: Farbe anpassen & Präzision (ms/ns) */}
+          {/* Quick Hover Action Chip for Changing Color */}
           <div
-            className={`inline-flex items-center gap-2 mt-2.5 transition-all duration-200 ease-out ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 mt-2.5 rounded-full text-xs font-medium border shadow-lg transition-all duration-200 ease-out cursor-pointer active:scale-95 ${
               isHovered
-                ? 'opacity-100 translate-y-0'
+                ? 'opacity-100 translate-y-0 bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-blue-500/50 text-slate-200 hover:text-white hover:scale-105 hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)]'
                 : 'opacity-0 -translate-y-1 pointer-events-none'
             }`}
+            style={{
+              backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+              WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              openColorPicker('all');
+            }}
+            title="Klicken, um Ziffernfarbe zu ändern"
           >
-            <div
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-lg transition-all duration-200 ease-out cursor-pointer active:scale-95 bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-blue-500/50 text-slate-200 hover:text-white hover:scale-105 hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)]"
-              style={{
-                backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-                WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                openColorPicker('all');
-              }}
-              title="Klicken, um Ziffernfarbe zu ändern"
-            >
-              <Palette className="w-3.5 h-3.5 text-blue-400" />
-              <span>Farbe anpassen</span>
-            </div>
-
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border shadow-lg transition-all duration-200 ease-out cursor-pointer active:scale-95 bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-cyan-500/50 text-cyan-300 hover:text-white hover:scale-105 hover:shadow-[0_6px_20px_rgba(34,211,238,0.25)]"
-              style={{
-                backdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-                WebkitBackdropFilter: `blur(${settings.backdropBlurIntensity ?? 16}px)`,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCycleSubseconds();
-              }}
-              title="Präzision umschalten: ms / ns / aus"
-            >
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span>
-                {settings.showNanoseconds
-                  ? 'Präzision: ms + ns'
-                  : settings.showMilliseconds
-                  ? 'Präzision: ms'
-                  : 'Präzision: aus'}
-              </span>
-            </button>
+            <Palette className="w-3.5 h-3.5 text-blue-400" />
+            <span>Farbe anpassen</span>
+            <span className="text-[10px] text-slate-400 hidden sm:inline">(Ziffern anklicken)</span>
           </div>
 
           {/* Optional Date String */}
@@ -1049,6 +994,19 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
             </div>
           )}
 
+          {/* Optional Weather Widget directly below date on main clock */}
+          {settings.weather?.enabled && !isZenMode && (
+            <WeatherClockWidget
+              weatherData={weatherData ?? null}
+              isLoading={isWeatherLoading}
+              isRefreshing={isWeatherRefreshing}
+              onClick={() => onOpenWeatherModal?.()}
+              onRefresh={onRefreshWeather}
+              backdropBlur={settings.backdropBlurIntensity}
+              settings={settings.weather}
+            />
+          )}
+
           {/* Additional Time Zones (World Clock directly below main clock) */}
           {settings.showAdditionalTimeZones && (
             <AdditionalTimeZonesBar
@@ -1056,6 +1014,7 @@ export const DigitalClock: React.FC<DigitalClockProps> = ({
               settings={settings}
               mainTimeZone={targetTimeZone}
               onUpdateSettings={onUpdateSettings}
+              isZenMode={isZenMode}
             />
           )}
 
