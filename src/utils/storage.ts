@@ -18,6 +18,14 @@ export function loadSettings(): ClockSettings {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      showMilliseconds:
+        typeof parsed.showMilliseconds === 'boolean'
+          ? parsed.showMilliseconds
+          : DEFAULT_SETTINGS.showMilliseconds,
+      showNanoseconds:
+        typeof parsed.showNanoseconds === 'boolean'
+          ? parsed.showNanoseconds
+          : DEFAULT_SETTINGS.showNanoseconds,
       dateFormat:
         parsed.dateFormat === 'MM/DD/YYYY' || parsed.dateFormat === 'YYYY-MM-DD' || parsed.dateFormat === 'DD.MM.YYYY'
           ? parsed.dateFormat

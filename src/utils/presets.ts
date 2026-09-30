@@ -133,6 +133,8 @@ export const DEFAULT_SETTINGS: ClockSettings = {
   // UHR (Digitale Uhr-Funktionen)
   is24Hour: true,
   showSeconds: true,
+  showMilliseconds: true,
+  showNanoseconds: true,
   showDate: true,
   dateFormat: 'DD.MM.YYYY',
   showDayOfWeek: true,

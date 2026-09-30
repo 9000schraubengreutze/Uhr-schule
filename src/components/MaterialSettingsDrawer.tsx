@@ -1862,6 +1862,33 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   />
 
                   <MaterialSwitch
+                    label="Millisekunden anzeigen (.000 ms)"
+                    description="Echtzeit-Millisekunden mit bis zu 120 FPS neben den Sekunden einblenden"
+                    checked={Boolean(settings.showMilliseconds)}
+                    onChange={(v) =>
+                      onUpdateSettings((p) => ({
+                        ...p,
+                        showMilliseconds: v,
+                        showSeconds: v ? true : p.showSeconds,
+                      }))
+                    }
+                  />
+
+                  <MaterialSwitch
+                    label="Nanosekunden anzeigen (.000 000 000 ns)"
+                    description="Ultra-Präzision: Zeigt Mikrosekunden und Nanosekunden in Echtzeit an"
+                    checked={Boolean(settings.showNanoseconds)}
+                    onChange={(v) =>
+                      onUpdateSettings((p) => ({
+                        ...p,
+                        showNanoseconds: v,
+                        showMilliseconds: v ? true : p.showMilliseconds,
+                        showSeconds: v ? true : p.showSeconds,
+                      }))
+                    }
+                  />
+
+                  <MaterialSwitch
                     label="Datum anzeigen"
                     description="Ausgeschriebenes Datum unterhalb der Ziffern einblenden"
                     checked={settings.showDate}

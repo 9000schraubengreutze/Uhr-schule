@@ -236,12 +236,17 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
               <span style={{ color: minsCol }} className="transition-colors duration-200">
                 34
               </span>
-              {settings.showSeconds && (
+              {(settings.showSeconds || settings.showMilliseconds || settings.showNanoseconds) && (
                 <>
                   <span className="text-slate-500">:</span>
                   <span style={{ color: secsCol }} className="text-base transition-colors duration-200">
                     56
                   </span>
+                  {(settings.showMilliseconds || settings.showNanoseconds) && (
+                    <span style={{ color: secsCol }} className="text-xs opacity-80 font-mono transition-colors duration-200">
+                      .{settings.showNanoseconds ? '482·195' : '482'}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -258,7 +263,7 @@ export const ClockColorPickerPopover: React.FC<ClockColorPickerPopoverProps> = (
                   ? 'Nur Stunden (HH)'
                   : activeScope === 'minutes'
                   ? 'Nur Minuten (MM)'
-                  : 'Nur Sekunden (SS)'}
+                  : 'Sekunden & Präzision (SS.ms)'}
               </span>
             </div>
 

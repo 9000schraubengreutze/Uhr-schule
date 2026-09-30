@@ -256,6 +256,8 @@ export interface ClockSettings {
   // === UHR (Digitale Uhr-Funktionen) ===
   is24Hour: boolean; // 24-hour vs 12-hour AM/PM format
   showSeconds: boolean; // Toggle seconds display
+  showMilliseconds?: boolean; // Toggle milliseconds display (.000 to .999 ms)
+  showNanoseconds?: boolean; // Toggle nanoseconds display (.000 000 000 ns)
   showDate: boolean; // Toggle date string
   dateFormat: DateFormat; // 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'
   showDayOfWeek: boolean; // Toggle weekday name (e.g. Dienstag)
