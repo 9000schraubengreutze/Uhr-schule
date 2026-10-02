@@ -313,9 +313,6 @@ export interface ClockSettings {
   // === BILDSCHIRMSCHONER & OLED SLEEP-MODUS ===
   screensaver: ScreensaverConfig;
 
-  // === GOOGLE KALENDER INTEGRATION & TERMIN-ALARME ===
-  calendar: CalendarSettings;
-
   // === WETTER-WIDGET & STANDORT (OPEN-METEO) ===
   weather: WeatherSettings;
 }
@@ -338,13 +335,6 @@ export interface WeatherSettings {
   showDetailsOnClock: boolean; // Min/Max & Luftfeuchtigkeit direkt auf dem Clock-Pill anzeigen
   showConditionText: boolean; // Wetterlage wie "Sonnig", "Teils bewölkt"
   showRainProbability: boolean; // Regenwahrscheinlichkeit im Widget
-}
-
-export interface CalendarSettings {
-  enabled: boolean; // Kalender-Synchronisation aktiviert
-  alertLeadMinutes: number; // Vorwarnzeit für herannahende Termine in Minuten (z. B. 5, 10, 15, 30 Min.)
-  showOnClock: boolean; // Termin-Alerts & Next-Event-Widget direkt auf der Uhr anzeigen
-  soundAlert: boolean; // Dezenter Signalton bei herannahendem Termin
 }
 
 export type ScreensaverStyle = 'minimal' | 'modern' | 'dots' | 'vertical';

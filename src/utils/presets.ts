@@ -6,7 +6,6 @@ import {
   AmbientSoundConfig,
   LivelySettings,
   ScreensaverConfig,
-  CalendarSettings,
   WeatherSettings,
 } from '../types';
 
@@ -17,13 +16,6 @@ export const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
   showDetailsOnClock: true,
   showConditionText: true,
   showRainProbability: true,
-};
-
-export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
-  enabled: true,
-  alertLeadMinutes: 15, // Alert 15 minutes before scheduled event
-  showOnClock: true,
-  soundAlert: true,
 };
 
 export const DEFAULT_SCREENSAVER_CONFIG: ScreensaverConfig = {
@@ -203,9 +195,6 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 
   // BILDSCHIRMSCHONER & OLED SLEEP-MODUS
   screensaver: DEFAULT_SCREENSAVER_CONFIG,
-
-  // GOOGLE KALENDER INTEGRATION & TERMIN-ALARME
-  calendar: DEFAULT_CALENDAR_SETTINGS,
 
   // WETTER-WIDGET & STANDORT (OPEN-METEO)
   weather: DEFAULT_WEATHER_SETTINGS,

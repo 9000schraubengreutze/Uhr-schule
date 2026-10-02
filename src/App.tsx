@@ -39,10 +39,6 @@ import { LivelyCustomizerModal } from './components/LivelyCustomizerModal';
 import { LivelyAddWallpaperModal } from './components/LivelyAddWallpaperModal';
 import { OledScreensaver } from './components/OledScreensaver';
 import { useInactivityScreensaver } from './hooks/useInactivityScreensaver';
-import { CalendarAlertBanner } from './components/CalendarAlertBanner';
-import { CalendarClockWidget } from './components/CalendarClockWidget';
-import { CalendarModal } from './components/CalendarModal';
-import { useGoogleCalendar } from './hooks/useGoogleCalendar';
 import { WeatherModal } from './components/WeatherModal';
 import { useWeather } from './hooks/useWeather';
 import { DEFAULT_WEATHER_SETTINGS } from './utils/presets';
@@ -54,7 +50,6 @@ export default function App() {
   const [isGamesOpen, setIsGamesOpen] = useState(false);
   const [isGeminiBgOpen, setIsGeminiBgOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isWeatherOpen, setIsWeatherOpen] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -75,7 +70,7 @@ export default function App() {
     onActivate: () => setIsScreensaverActive(true),
     onDeactivate: () => setIsScreensaverActive(false),
     ignoreWhenModalOpen: false,
-    isModalOpen: isSettingsOpen || isWallpapersOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isCalendarOpen || isWeatherOpen,
+    isModalOpen: isSettingsOpen || isWallpapersOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWeatherOpen,
   });
 
   const handleShowFeedback = useCallback((msg: string) => {
@@ -94,26 +89,6 @@ export default function App() {
     lastSyncTime: null,
     syncSource: '',
     errorMessage: null,
-  });
-
-  // Accurate ticking clock state for calendar relative countdowns
-  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
-
-  useEffect(() => {
-    const updateTime = () => {
-      const nowMs = Date.now();
-      setCurrentTime(new Date(settings.useAtomicSync ? nowMs + atomicState.offsetMs : nowMs));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 4000);
-    return () => clearInterval(interval);
-  }, [settings.useAtomicSync, atomicState.offsetMs]);
-
-  // Google Calendar Integration Hook
-  const calendar = useGoogleCalendar({
-    settings,
-    currentTime,
-    onShowFeedback: handleShowFeedback,
   });
 
   // Weather Forecast & Location Hook
@@ -352,7 +327,6 @@ export default function App() {
       }
       if (e.key === 'Escape') {
         if (isWeatherOpen) setIsWeatherOpen(false);
-        else if (isCalendarOpen) setIsCalendarOpen(false);
         else if (isChatOpen) setIsChatOpen(false);
         else if (isWallpapersOpen) setIsWallpapersOpen(false);
         else if (isGeminiBgOpen) setIsGeminiBgOpen(false);
@@ -362,8 +336,6 @@ export default function App() {
         toggleFullscreen();
       } else if (e.key === 'w' || e.key === 'W') {
         setIsWeatherOpen((prev) => !prev);
-      } else if (e.key === 'k' || e.key === 'K') {
-        setIsCalendarOpen((prev) => !prev);
       } else if (e.key === 's' || e.key === 'S') {
         setIsSettingsOpen((prev) => !prev);
       } else if (e.key === 'h' || e.key === 'H') {
@@ -383,7 +355,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isCalendarOpen, isWeatherOpen, isZenMode, isClockColorPickerOpen, isScreensaverActive, toggleFullscreen]);
+  }, [isGamesOpen, isWallpapersOpen, isSettingsOpen, isGeminiBgOpen, isChatOpen, isWeatherOpen, isZenMode, isClockColorPickerOpen, isScreensaverActive, toggleFullscreen]);
 
   const handleApplyOrUploadImage = async (
     file: File,
@@ -669,7 +641,7 @@ export default function App() {
             : undefined
         }
         backdropBlur={settings.backdropBlurIntensity}
-        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen || isCalendarOpen || isWeatherOpen}
+        anyModalOpen={isSettingsOpen || isGamesOpen || isGeminiBgOpen || isChatOpen || isWallpapersOpen || isWeatherOpen}
         isZenMode={isZenMode}
         onToggleZenMode={() => setIsZenMode((prev) => !prev)}
         disabled={isClockColorPickerOpen}
@@ -681,11 +653,8 @@ export default function App() {
         )}
         zenScheduleRange={`${settings.zenScheduleStartTime || '22:00'} – ${settings.zenScheduleEndTime || '07:00'}`}
         onActivateScreensaver={() => setIsScreensaverActive(true)}
-        onOpenCalendar={() => setIsCalendarOpen(true)}
         onOpenWeather={() => setIsWeatherOpen(true)}
         currentTemperature={weather.weatherData?.current.temperature}
-        isCalendarConnected={!calendar.needsAuth && !!calendar.user}
-        approachingEventCount={calendar.approachingEvents.length}
       />
 
       {/* Subtle Mobile Battery Indicator (Appears when not in fullscreen mode) */}
@@ -698,20 +667,6 @@ export default function App() {
 
       {/* Centerpiece: Clean, Gorgeous Digital Clock driven by Online Atomic Time */}
       <main className="relative z-10 w-full flex-1 flex flex-col items-center justify-center p-4 pb-16 sm:pb-20">
-        {/* Approaching Calendar Event Alert Banner (Directly on Clock Interface) */}
-        {settings.calendar?.enabled && calendar.activeAlertEvent && (
-          <div className="mb-3 sm:mb-5 w-full flex justify-center z-20">
-            <CalendarAlertBanner
-              event={calendar.activeAlertEvent}
-              currentTime={currentTime}
-              alertLeadMinutes={settings.calendar?.alertLeadMinutes}
-              onOpenDetails={() => setIsCalendarOpen(true)}
-              onDismiss={calendar.dismissAlert}
-              backdropBlur={settings.backdropBlurIntensity}
-            />
-          </div>
-        )}
-
         <DigitalClock
           settings={settings}
           offsetMs={atomicState.offsetMs}
@@ -725,7 +680,6 @@ export default function App() {
             isGamesOpen ||
             isGeminiBgOpen ||
             isChatOpen ||
-            isCalendarOpen ||
             isWeatherOpen ||
             isClockColorPickerOpen
           }
@@ -738,20 +692,6 @@ export default function App() {
             weather.refreshWeather();
           }}
         />
-
-        {/* Next Upcoming Scheduled Event Pill / Widget under Clock */}
-        {settings.calendar?.enabled && settings.calendar?.showOnClock && !isZenMode && (
-          <div className="mt-4 sm:mt-5 flex justify-center z-10">
-            <CalendarClockWidget
-              event={calendar.nextEvent}
-              currentTime={currentTime}
-              onClick={() => setIsCalendarOpen(true)}
-              isConnected={!calendar.needsAuth && !!calendar.user}
-              onConnect={() => setIsCalendarOpen(true)}
-              backdropBlur={settings.backdropBlurIntensity}
-            />
-          </div>
-        )}
       </main>
 
       {/* Wallpaper Engine Categorized Gallery Modal */}
@@ -823,31 +763,8 @@ export default function App() {
           setIsSettingsOpen(false);
           setIsScreensaverActive(true);
         }}
-        onOpenCalendarModal={() => setIsCalendarOpen(true)}
-        isCalendarConnected={!calendar.needsAuth && !!calendar.user}
-        userCalendarEmail={calendar.user?.email}
         onOpenWeatherModal={() => setIsWeatherOpen(true)}
         weatherData={weather.weatherData}
-      />
-
-      {/* Google Calendar Manager & Events Modal */}
-      <CalendarModal
-        isOpen={isCalendarOpen}
-        onClose={() => setIsCalendarOpen(false)}
-        user={calendar.user}
-        needsAuth={calendar.needsAuth}
-        events={calendar.events}
-        isLoading={calendar.isLoading}
-        isSyncing={calendar.isSyncing}
-        error={calendar.error}
-        lastSyncTime={calendar.lastSyncTime}
-        currentTime={currentTime}
-        onLogin={calendar.login}
-        onLogout={calendar.logout}
-        onRefresh={calendar.refresh}
-        settings={settings}
-        onUpdateSettings={setSettings}
-        backdropBlur={settings.backdropBlurIntensity}
       />
 
       {/* Weather Forecast & Radar Details Modal */}
@@ -884,7 +801,6 @@ export default function App() {
             isGamesOpen ||
             isGeminiBgOpen ||
             isChatOpen ||
-            isCalendarOpen ||
             isWeatherOpen ||
             isLivelyCustomizerOpen ||
             isLivelyAddWallpaperOpen ||

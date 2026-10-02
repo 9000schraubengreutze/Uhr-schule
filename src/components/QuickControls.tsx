@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings,
   Gamepad2,
@@ -10,13 +10,8 @@ import {
   Wand2,
   Eye,
   EyeOff,
-  Maximize2,
-  Minimize2,
-  Clock,
   Moon,
   Volume2,
-  Calendar,
-  Bell,
   CloudSun,
 } from 'lucide-react';
 import { SchoolStatusResult } from '../utils/timetable';
@@ -28,11 +23,8 @@ interface QuickControlsProps {
   onOpenWallpapers?: () => void;
   onOpenGeminiBg?: () => void;
   onOpenChat?: () => void;
-  onOpenCalendar?: () => void;
   onOpenWeather?: () => void;
   currentTemperature?: number;
-  isCalendarConnected?: boolean;
-  approachingEventCount?: number;
   statusResult?: SchoolStatusResult;
   backdropBlur?: number;
   anyModalOpen?: boolean;
@@ -55,11 +47,8 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   onOpenWallpapers,
   onOpenGeminiBg,
   onOpenChat,
-  onOpenCalendar,
   onOpenWeather,
   currentTemperature,
-  isCalendarConnected = false,
-  approachingEventCount = 0,
   statusResult,
   backdropBlur = 16,
   anyModalOpen = false,
@@ -74,7 +63,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
   activeAmbientTitle,
   onActivateScreensaver,
 }) => {
-  // Hidden by default: only display when user hovers over the top trigger area
+  // Hidden by default: only display when user hovers over the bottom trigger area
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -148,11 +137,11 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               : 'Minimalismus-Modus beenden & Menüband wieder per Hover aktivieren (Taste: Z)'
           }
           aria-label="Minimalismus-Modus beenden"
-          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/60 hover:bg-slate-900/95 backdrop-blur-xl border border-white/10 hover:border-white/25 text-slate-400 hover:text-white transition-all duration-300 shadow-lg hover:shadow-[0_8px_25px_rgba(0,0,0,0.5),0_0_18px_rgba(255,255,255,0.12)] hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 cursor-pointer flex items-center gap-1.5 group"
+          className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-slate-950/60 hover:bg-slate-900/95 backdrop-blur-xl border border-white/10 hover:border-white/25 text-slate-400 hover:text-white transition-all duration-300 shadow-lg hover:shadow-[0_8px_25px_rgba(0,0,0,0.5),0_0_18px_rgba(255,255,255,0.12)] hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 cursor-pointer flex items-center gap-1.5 group shrink-0"
         >
           <Eye className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
           {zenScheduleEnabled && zenScheduleActive && (
-            <span className="hidden group-hover:inline text-[11px] font-medium text-indigo-300 pr-1 transition-all">
+            <span className="hidden group-hover:inline text-[11px] font-medium text-indigo-300 pr-1 transition-all whitespace-nowrap">
               Plan aktiv
             </span>
           )}
@@ -173,7 +162,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
       {/* Unified Material Frosted Island Dock at Bottom */}
       <footer
         id="quick-controls-footer"
-        className={`fixed bottom-0 left-0 right-0 z-30 p-3 sm:p-5 flex items-center justify-center pointer-events-none transition-all duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 z-30 p-2.5 sm:p-5 flex items-center justify-center pointer-events-none transition-all duration-300 ease-out ${
           isVisible
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 translate-y-4 pointer-events-none'
@@ -188,7 +177,7 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             backdropFilter: `blur(${backdropBlur}px)`,
             WebkitBackdropFilter: `blur(${backdropBlur}px)`,
           }}
-          className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 max-w-[calc(100vw-1.5rem)] overflow-x-auto scrollbar-none rounded-full bg-slate-950/60 hover:bg-slate-950/80 border border-white/10 hover:border-white/20 shadow-2xl shadow-black/60 hover:shadow-[0_20px_45px_rgba(0,0,0,0.7),0_0_24px_rgba(255,255,255,0.06)] transition-all duration-300"
+          className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 max-w-[calc(100vw-1.5rem)] overflow-x-auto scrollbar-none rounded-full bg-slate-950/75 hover:bg-slate-950/90 border border-white/10 hover:border-white/20 shadow-2xl shadow-black/70 hover:shadow-[0_20px_45px_rgba(0,0,0,0.7),0_0_24px_rgba(255,255,255,0.06)] transition-all duration-300"
         >
           {/* Optional Stundenplan */}
           {onOpenTimetable && (
@@ -198,10 +187,10 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenTimetable}
               title="Stundenplan HO 2 (Frau Schmitz) öffnen"
               aria-label="Stundenplan öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-amber-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(251,191,36,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-amber-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(251,191,36,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-115 group-hover:-rotate-12" />
-              <span className="hidden sm:inline">Stundenplan</span>
+              <GraduationCap className="w-3.5 h-3.5 text-amber-400 transition-transform duration-200 group-hover:scale-115 group-hover:-rotate-12 shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Stundenplan</span>
             </button>
           )}
 
@@ -219,31 +208,31 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                   : `Unterrichtszeit: Games gesperrt. Nächste Pause: ${statusResult?.nextBreak?.start || '10:30'} Uhr`
               }
               aria-label="Pausen-Spiele öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-emerald-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(52,211,153,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-emerald-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(52,211,153,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
               {!isGameAllowed ? (
                 <>
-                  <Lock className="w-3.5 h-3.5 text-rose-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
-                  <span>Games</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <Lock className="w-3.5 h-3.5 text-rose-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6 shrink-0" />
+                  <span className="whitespace-nowrap">Games</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                 </>
               ) : isBreak ? (
                 <>
-                  <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse transition-transform duration-200 group-hover:scale-110" />
-                  <span className="text-emerald-300">Games</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <Coffee className="w-3.5 h-3.5 text-emerald-400 animate-pulse transition-transform duration-200 group-hover:scale-110 shrink-0" />
+                  <span className="text-emerald-300 whitespace-nowrap">Games</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
                 </>
               ) : (
                 <>
-                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-                  <span>Games</span>
+                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 shrink-0" />
+                  <span className="whitespace-nowrap">Games</span>
                 </>
               )}
             </button>
           )}
 
           {/* Divider */}
-          <div className="w-px h-4 bg-white/10 mx-0.5" />
+          <div className="shrink-0 w-px h-4 bg-white/10 mx-0.5" />
 
           {/* Wallpaper Engine Button */}
           {onOpenWallpapers && (
@@ -253,10 +242,10 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenWallpapers}
               title="Wallpaper Engine: Kategorisierte 4K-Hintergründe & Partikel (Taste: H)"
               aria-label="Wallpaper Engine Galerie öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.18] hover:shadow-[0_4px_16px_rgba(56,189,248,0.35),0_0_12px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.18] hover:shadow-[0_4px_16px_rgba(56,189,248,0.35),0_0_12px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400 transition-all duration-300 group-hover:scale-125 group-hover:rotate-12 group-hover:text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
-              <span>Wallpapers</span>
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 transition-all duration-300 group-hover:scale-125 group-hover:rotate-12 group-hover:text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] shrink-0" />
+              <span className="whitespace-nowrap">Wallpapers</span>
             </button>
           )}
 
@@ -268,10 +257,10 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenGeminiBg}
               title="Gemini Bild-Studio: Bilder generieren & bearbeiten (Taste: B)"
               aria-label="Gemini Bild-Studio öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-blue-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(96,165,250,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-blue-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(96,165,250,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Wand2 className="w-3.5 h-3.5 text-blue-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-blue-300" />
-              <span className="hidden md:inline">Bild-Studio</span>
+              <Wand2 className="w-3.5 h-3.5 text-blue-400 transition-all duration-200 group-hover:scale-115 group-hover:rotate-12 group-hover:text-blue-300 shrink-0" />
+              <span className="hidden md:inline whitespace-nowrap">Bild-Studio</span>
             </button>
           )}
 
@@ -283,10 +272,10 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onOpenChat}
               title="Gemini KI-Chat öffnen (Taste: C)"
               aria-label="Gemini KI-Chat öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(129,140,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(129,140,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-indigo-300" />
-              <span className="hidden sm:inline">KI-Chat</span>
+              <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-indigo-300 shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">KI-Chat</span>
             </button>
           )}
 
@@ -302,61 +291,24 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                   : 'Beruhigende Hintergrundgeräusche & Audio-Einstellungen'
               }
               aria-label="Audio-Einstellungen & Hintergrundgeräusche"
-              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer ${
                 isAmbientPlaying
                   ? 'text-cyan-200 bg-cyan-500/20 border-cyan-400/40 shadow-[0_0_14px_rgba(34,211,238,0.3)]'
                   : 'text-slate-300 hover:text-white border-transparent hover:border-cyan-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(34,211,238,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95'
               }`}
             >
               <Volume2
-                className={`w-3.5 h-3.5 transition-all duration-200 ${
+                className={`w-3.5 h-3.5 transition-all duration-200 shrink-0 ${
                   isAmbientPlaying
                     ? 'text-cyan-300 animate-pulse'
                     : 'text-cyan-400 group-hover:scale-115'
                 }`}
               />
-              <span className="hidden sm:inline">
+              <span className="hidden sm:inline whitespace-nowrap">
                 {isAmbientPlaying ? 'Audio aktiv' : 'Audio'}
               </span>
               {isAmbientPlaying && (
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-              )}
-            </button>
-          )}
-
-          {/* Google Calendar Button */}
-          {onOpenCalendar && (
-            <button
-              id="open-calendar-btn"
-              type="button"
-              onClick={onOpenCalendar}
-              title={
-                approachingEventCount > 0
-                  ? `Google Kalender: ${approachingEventCount} anstehender Termin! Klicken zum Öffnen (Taste: K)`
-                  : isCalendarConnected
-                  ? 'Google Kalender & Termine (Taste: K)'
-                  : 'Google Kalender verknüpfen (Taste: K)'
-              }
-              aria-label="Google Kalender öffnen"
-              className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ease-out cursor-pointer ${
-                approachingEventCount > 0
-                  ? 'text-amber-200 bg-amber-500/25 border-amber-400/50 shadow-[0_0_16px_rgba(245,158,11,0.35)] animate-pulse'
-                  : isCalendarConnected
-                  ? 'text-indigo-200 bg-indigo-500/20 border-indigo-400/35 hover:bg-indigo-500/30'
-                  : 'text-slate-300 hover:text-white border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16]'
-              }`}
-            >
-              {approachingEventCount > 0 ? (
-                <Bell className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
-              ) : (
-                <Calendar className="w-3.5 h-3.5 text-indigo-400 transition-all duration-200 group-hover:scale-115" />
-              )}
-              <span className="hidden sm:inline">Kalender</span>
-              {approachingEventCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              )}
-              {isCalendarConnected && approachingEventCount === 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
               )}
             </button>
           )}
@@ -373,17 +325,17 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                   : 'Wetter & Vorhersage öffnen (Taste: W)'
               }
               aria-label="Wetter & Vorhersage öffnen"
-              className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-sky-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(56,189,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white border border-transparent hover:border-sky-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_14px_rgba(56,189,248,0.18)] hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <CloudSun className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-115 group-hover:text-sky-300" />
-              <span className="hidden sm:inline">
+              <CloudSun className="w-3.5 h-3.5 text-sky-400 transition-all duration-200 group-hover:scale-115 group-hover:text-sky-300 shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">
                 {currentTemperature !== undefined ? `${currentTemperature}° Wetter` : 'Wetter'}
               </span>
             </button>
           )}
 
           {/* Divider */}
-          <div className="w-px h-4 bg-white/10 mx-0.5" />
+          <div className="shrink-0 w-px h-4 bg-white/10 mx-0.5" />
 
           {/* Einstellungen Button - refined subtle glass accent with hover lift & spin */}
           <button
@@ -392,10 +344,10 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
             onClick={onOpenSettings}
             title="Einstellungen öffnen (Taste: S)"
             aria-label="Einstellungen öffnen"
-            className="group relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 border border-transparent hover:border-white/30 hover:shadow-[0_6px_22px_rgba(0,0,0,0.45),0_0_18px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 hover:scale-[1.04] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            className="shrink-0 whitespace-nowrap group relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 border border-white/10 hover:border-white/30 hover:shadow-[0_6px_22px_rgba(0,0,0,0.45),0_0_18px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 hover:scale-[1.04] active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-90 group-hover:scale-115 transition-all duration-500 ease-out" />
-            <span>Einstellungen</span>
+            <Settings className="w-3.5 h-3.5 text-slate-200 group-hover:rotate-90 group-hover:scale-115 transition-all duration-500 ease-out shrink-0" />
+            <span className="whitespace-nowrap">Einstellungen</span>
           </button>
 
           {/* Zen / Clean Mode Toggle */}
@@ -409,9 +361,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
                 : 'Aufgeräumter Zen-Modus: Alle Leisten ausblenden (Taste: Z)'
             }
             aria-label="Zen-Modus aktivieren"
-            className="group relative p-1.5 rounded-full text-slate-400 hover:text-white border border-transparent hover:border-white/20 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+            className="shrink-0 whitespace-nowrap group relative p-1.5 rounded-full text-slate-400 hover:text-white border border-transparent hover:border-white/20 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
           >
-            <EyeOff className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
+            <EyeOff className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 shrink-0" />
             {zenScheduleEnabled && (
               <span
                 className={`absolute 0.5 top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
@@ -430,9 +382,9 @@ export const QuickControls: React.FC<QuickControlsProps> = ({
               onClick={onActivateScreensaver}
               title="OLED Sleep-Modus / Bildschirmschoner aktivieren (Anti-Burn-In)"
               aria-label="OLED Sleep-Modus aktivieren"
-              className="group relative p-1.5 rounded-full text-indigo-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(99,102,241,0.25)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
+              className="shrink-0 whitespace-nowrap group relative p-1.5 rounded-full text-indigo-300 hover:text-white border border-transparent hover:border-indigo-400/30 hover:bg-white/[0.16] hover:shadow-[0_6px_16px_rgba(99,102,241,0.25)] hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-95 transition-all duration-200 ease-out cursor-pointer"
             >
-              <Moon className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12" />
+              <Moon className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12 shrink-0" />
             </button>
           )}
         </nav>

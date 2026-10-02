@@ -359,26 +359,6 @@ export function loadSettings(): ClockSettings {
                 : DEFAULT_SETTINGS.screensaver.displayStyle,
           }
         : DEFAULT_SETTINGS.screensaver,
-      calendar: parsed.calendar
-        ? {
-            enabled:
-              typeof parsed.calendar.enabled === 'boolean'
-                ? parsed.calendar.enabled
-                : DEFAULT_SETTINGS.calendar.enabled,
-            alertLeadMinutes:
-              typeof parsed.calendar.alertLeadMinutes === 'number'
-                ? Math.max(1, Math.min(120, parsed.calendar.alertLeadMinutes))
-                : DEFAULT_SETTINGS.calendar.alertLeadMinutes,
-            showOnClock:
-              typeof parsed.calendar.showOnClock === 'boolean'
-                ? parsed.calendar.showOnClock
-                : DEFAULT_SETTINGS.calendar.showOnClock,
-            soundAlert:
-              typeof parsed.calendar.soundAlert === 'boolean'
-                ? parsed.calendar.soundAlert
-                : DEFAULT_SETTINGS.calendar.soundAlert,
-          }
-        : DEFAULT_SETTINGS.calendar,
       weather: parsed.weather
         ? {
             enabled:

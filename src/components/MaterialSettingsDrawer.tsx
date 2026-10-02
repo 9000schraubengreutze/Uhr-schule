@@ -29,7 +29,6 @@ import { DailyQuoteSettingsCard } from './DailyQuoteSettingsCard';
 import { AudioSettingsTab } from './AudioSettingsTab';
 import { PerformanceInfoOverlay } from './PerformanceInfoOverlay';
 import { ScreensaverSettingsCard } from './ScreensaverSettingsCard';
-import { CalendarSettingsCard } from './CalendarSettingsCard';
 import { TYPOGRAPHY_SETS, inferTypographySet } from '../utils/typography';
 import {
   X,
@@ -115,9 +114,6 @@ interface MaterialSettingsDrawerProps {
   initialTab?: SettingsTab;
   onTogglePlayAmbient?: (type: any) => void;
   onTestScreensaver?: () => void;
-  onOpenCalendarModal?: () => void;
-  isCalendarConnected?: boolean;
-  userCalendarEmail?: string | null;
   onOpenWeatherModal?: () => void;
   weatherData?: WeatherData | null;
 }
@@ -166,9 +162,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
   initialTab = 'darstellung',
   onTogglePlayAmbient,
   onTestScreensaver,
-  onOpenCalendarModal,
-  isCalendarConnected = false,
-  userCalendarEmail,
   onOpenWeatherModal,
   weatherData,
 }) => {
@@ -2165,19 +2158,6 @@ export const MaterialSettingsDrawer: React.FC<MaterialSettingsDrawerProps> = ({
                   settings={settings}
                   onUpdateSettings={onUpdateSettings}
                   onTestScreensaver={onTestScreensaver}
-                  showFeedback={showFeedback}
-                />
-
-                {/* Google Kalender Integration & Termin-Alarme */}
-                <CalendarSettingsCard
-                  settings={settings}
-                  onUpdateSettings={onUpdateSettings}
-                  onOpenCalendarModal={() => {
-                    onClose();
-                    onOpenCalendarModal?.();
-                  }}
-                  isConnected={isCalendarConnected}
-                  userEmail={userCalendarEmail}
                   showFeedback={showFeedback}
                 />
 
